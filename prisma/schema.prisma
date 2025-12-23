@@ -1,0 +1,1091 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Auth and billing (Prompt 9)
+// ============================================================================
+
+model User {
+  id            String    @id @default(uuid()) @map("id") @db.Uuid
+  name          String?   @map("name")
+  email         String?   @unique @map("email")
+  emailVerified DateTime? @map("email_verified")
+  image         String?   @map("image")
+
+  // Minimal role model for now: "user" or "admin" via allowlist.
+  role String @default("user") @map("role")
+
+  // Stripe linkage and entitlement state.
+  stripeCustomerId     String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
+  subscriptionStatus   String?   @map("subscription_status")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  isPremium            Boolean   @default(false) @map("is_premium")
+  premiumSince         DateTime? @map("premium_since")
+  premiumUntil         DateTime? @map("premium_until")
+
+  // Export credits (for CSV/JSON exports)
+  exportCredits        Int      @default(0) @map("export_credits")
+
+  // Referral tracking
+  referredByUserId     String?  @map("referred_by_user_id") @db.Uuid
+  referredByCode       String?  @map("referred_by_code")
+  referralLtv          Decimal? @map("referral_ltv") @db.Decimal(18, 2) // Lifetime value from referrals
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accounts                 Account[]
+  sessions                 Session[]
+  companyClaims            CompanyClaim[]      @relation("UserCompanyClaims")
+  companySubmissions       CompanySubmission[]
+  reviewedSubmissions      CompanySubmission[] @relation("SubmissionReviewer")
+  reviewedClaims           CompanyClaim[]      @relation("ClaimReviewer")
+  watchlistItems           WatchlistItem[]
+  watchlistSettings        WatchlistSettings?
+  notificationSettings     UserNotificationSettings?
+  adminAuditLogs           AdminAuditLog[]
+  referralCode             ReferralCode?
+  referralCredits          ReferralCredit[]
+  referralEventsAsReferrer ReferralEvent[]     @relation("ReferralReferrer")
+  referralEventsAsReferred ReferralEvent[]     @relation("ReferralReferred")
+  alertRules               UserAlertRule[]
+  savedComparisons         SavedComparison[]
+
+  @@index([email])
+  @@index([stripeCustomerId])
+  @@map("users")
+}
+
+enum NewsletterSubscriberStatus {
+  ACTIVE
+  UNSUB
+}
+
+enum ApiKeyPlan {
+  FREE
+  PARTNER
+  PREMIUM
+}
+
+model Account {
+  id                String  @id @default(uuid()) @map("id") @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String  @map("type")
+  provider          String  @map("provider")
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @map("refresh_token")
+  access_token      String? @map("access_token")
+  expires_at        Int?    @map("expires_at")
+  token_type        String? @map("token_type")
+  scope             String? @map("scope")
+  id_token          String? @map("id_token")
+  session_state     String? @map("session_state")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @map("id") @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @map("expires")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @map("identifier")
+  token      String   @unique @map("token")
+  expires    DateTime @map("expires")
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// Day 5 – Canonical company entity + core time-series tables
+// ============================================================================
+//
+// Design principles:
+// - Append-only mindset: financials/scores/signals/valuations are time-series; do not overwrite.
+// - Explainability first: scores have version + short explanation; inputs can be attached elsewhere later.
+// - ML-ready: normalized tables, queryable by company + time.
+// - SEO-ready: stable slug + public URL; slug should not be derived from mutable fields.
+//
+// DB convention:
+// - snake_case columns/tables in Postgres via @map/@@map
+// - camelCase fields in Prisma/TypeScript for ergonomics
+
+enum CompanyVisibilityStatus {
+  PUBLIC
+  HIDDEN
+  RESTRICTED
+}
+
+enum CompanyMetricSource {
+  ANAF
+  ESTIMATE
+  USER_SUBMITTED
+  SOURCE0
+}
+
+enum CompanyIngestSignalType {
+  SEAP_CONTRACT
+  EU_FUNDS
+  JOBS
+  WEB_TRAFFIC
+  SOCIAL_MENTIONS
+  TECH_STACK
+}
+
+enum ImportRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum ImportItemStatus {
+  CREATED
+  UPDATED
+  SKIPPED
+  FAILED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PartnerLeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+enum ReferralEventKind {
+  LANDING
+  PREMIUM_CONVERSION
+}
+
+enum ReferralRewardStatus {
+  PENDING
+  APPLIED
+  INVALID
+}
+
+enum CorrectionRequestStatus {
+  NEW
+  REVIEWED
+  CLOSED
+}
+
+enum UserAlertMetric {
+  ROMC_AI
+  VALUATION
+  RISK
+}
+
+enum UserAlertOperator {
+  GT
+  LT
+  PCT_CHANGE
+}
+
+enum UserAlertScope {
+  COMPANY
+  INDUSTRY
+  COUNTY
+}
+
+enum CompanyChangeType {
+  SCORE_CHANGE
+  FORECAST_CHANGE
+  ENRICHMENT
+  CLAIM_APPROVED
+  SUBMISSION_APPROVED
+}
+
+enum CompanyFinancialDataSource {
+  ANAF
+  ESTIMATE
+  USER_SUBMITTED
+}
+
+enum CompanySignalDirection {
+  UP
+  DOWN
+  NEUTRAL
+}
+
+// Keep signal types explicit for integrity; add new values via migration when needed.
+enum CompanySignalType {
+  HIRING_VELOCITY
+  WEB_TRAFFIC_CHANGE
+  PRESS_MENTIONS
+  FUNDING_SIGNAL
+  GOVERNMENT_CONTRACTS
+  OTHER
+}
+
+// Scores must be versioned and typed; expand as new score families are introduced.
+enum CompanyScoreType {
+  ROMC_SCORE
+  GROWTH_SCORE
+  RISK_SCORE
+  LIQUIDITY_SCORE
+  OTHER
+}
+
+enum ScoreStabilityProfile {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum CompanyRiskFlag {
+  SUBMISSION_SPIKE
+  COORDINATED_CLAIMS
+  ENRICHMENT_FAILURES
+  ABNORMAL_OSCILLATIONS
+  SUSPICIOUS_ACTIVITY
+}
+
+// ============================================================================
+// Prompt 7 – scoring engine tables (latest metrics + daily score history)
+// ============================================================================
+
+model Company {
+  id   String @id @default(uuid()) @map("id") @db.Uuid
+  // SEO-friendly, stable slug (e.g. "bitdefender-srl"). Do not regenerate automatically.
+  slug String @unique @map("slug")
+  // Canonical slug (may differ from slug if slug changed due to collision or claim approval)
+  // If null, slug is canonical. Used for redirects from old slugs.
+  canonicalSlug String? @unique @map("canonical_slug")
+
+  // Display name (used for UI/SEO). This is kept separate from legal/trade names for flexibility.
+  name String @map("name")
+
+  // Legal identity
+  legalName          String  @map("legal_name")
+  tradeName          String? @map("trade_name")
+  // Romanian unique identifier (CUI). Required for canonical entity.
+  // Optional during early ingestion; unique if present.
+  cui                String? @unique @map("cui")
+  regCom             String? @map("reg_com")
+  registrationNumber String? @map("registration_number")
+
+  // Location & classification
+  country               String  @default("RO") @map("country")
+  county                String? @map("county")
+  countySlug            String? @map("county_slug")
+  city                  String? @map("city")
+  address               String? @map("address")
+  foundedYear           Int?    @map("founded_year")
+  employeeCountEstimate Int?    @map("employee_count_estimate")
+  caenCode              String? @map("caen_code")
+  caenDescription       String? @map("caen_description")
+  // Optional single-field CAEN representation for ingestion sources.
+  caen                  String? @map("caen")
+  industry              String? @map("industry")
+  industrySlug          String? @map("industry_slug")
+
+  // Web presence
+  website String? @map("website")
+  domain  String? @map("domain")
+  email   String? @map("email")
+  phone   String? @map("phone")
+  socials Json?   @map("socials")
+
+  // Localized public description (optional for now)
+  descriptionRo    String? @map("description_ro")
+  descriptionEn    String? @map("description_en")
+  // Short description derived from enrichment, max 240 chars, cleaned.
+  descriptionShort String? @map("description_short")
+  // Array of strings, max 10 tags, max 24 chars each.
+  tags             Json?   @map("tags")
+
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  enrichVersion  Int       @default(1) @map("enrich_version")
+
+  // Denormalized latest financials (v1 ingestion)
+  employees     Int?     @map("employees")
+  revenueLatest Decimal? @map("revenue_latest") @db.Decimal(18, 2)
+  profitLatest  Decimal? @map("profit_latest") @db.Decimal(18, 2)
+  currency      String   @default("RON") @map("currency")
+
+  // Denormalized ROMC v1 fields (computed)
+  romcScore          Int?      @map("romc_score") // 0..100
+  romcConfidence     Int?      @map("romc_confidence") // 0..100
+  romcComponents     Json?     @map("romc_components")
+  valuationRangeLow  Decimal?  @map("valuation_range_low") @db.Decimal(18, 2)
+  valuationRangeHigh Decimal?  @map("valuation_range_high") @db.Decimal(18, 2)
+  valuationCurrency  String    @default("EUR") @map("valuation_currency")
+  lastScoredAt       DateTime? @map("last_scored_at")
+
+  // ROMC AI score (separate from ROMC v1). Deterministic and explainable.
+  romcAiScore           Int?                  @map("romc_ai_score") // 0..100
+  romcAiComponents      Json?                 @map("romc_ai_components")
+  romcAiUpdatedAt       DateTime?              @map("romc_ai_updated_at")
+  previousRomcAiScore   Int?                  @map("previous_romc_ai_score") // For delta calculation
+  romcAiScoreDelta      Float?                 @map("romc_ai_score_delta") // Daily change
+  scoreStabilityProfile  ScoreStabilityProfile? @map("score_stability_profile")
+
+  // Operational flags
+  isActive         Boolean                 @default(true) @map("is_active")
+  isClaimed        Boolean                 @default(false) @map("is_claimed")
+  visibilityStatus CompanyVisibilityStatus @default(PUBLIC) @map("visibility_status")
+  sourceConfidence Int                     @default(50) @map("source_confidence") // 0..100
+  isPublic         Boolean                 @default(true) @map("is_public")
+  isDemo           Boolean                 @default(false) @map("is_demo") // Demo mode companies
+
+  // System Integrity & Trust (Prompt 21)
+  companyRiskFlags     CompanyRiskFlag[] @default([]) @map("company_risk_flags")
+  companyIntegrityScore Int?             @map("company_integrity_score") // 0..100
+  dataConfidence        Int?             @map("data_confidence") // 0..100
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  // Named explicitly for SEO/content pipelines.
+  lastUpdatedAt DateTime @updatedAt @map("updated_at")
+
+  financials         CompanyFinancialSnapshot[]
+  signals            CompanySignal[]
+  scores             CompanyScore[]
+  valuations         CompanyValuationEstimate[]
+  metrics            CompanyMetrics?
+  scoreHistory       CompanyScoreSnapshot[]
+  yearlyMetrics      CompanyMetric[]
+  ingestSignals      CompanyIngestSignal[]
+  scoreSnapshots     ScoreSnapshot[]
+  claims             CompanyClaim[]
+  submissions        CompanySubmission[]
+  scoreHistoryV1     CompanyScoreHistory[]
+  forecasts          CompanyForecast[]
+  watchlistItems     WatchlistItem[]
+  changeLogs         CompanyChangeLog[]
+  correctionRequests CorrectionRequest[]
+  userAlertRules     UserAlertRule[]
+  provenance         CompanyProvenance[]
+
+  // CRM-lite tagging for outreach
+  outreachStatus      String?   @map("outreach_status")
+  outreachNotes       String?   @map("outreach_notes") @db.Text
+  outreachContactedAt DateTime? @map("outreach_contacted_at")
+  outreachRespondedAt DateTime? @map("outreach_responded_at")
+  outreachConvertedAt DateTime? @map("outreach_converted_at")
+
+  // Read-heavy indexes for directory/search facets at scale.
+  @@index([slug])
+  @@index([canonicalSlug])
+  @@index([cui])
+  @@index([caenCode])
+  @@index([county])
+  @@index([countySlug])
+  @@index([city])
+  @@index([name])
+  @@index([legalName])
+  @@index([industrySlug])
+  @@index([domain])
+  @@index([lastEnrichedAt])
+  @@index([lastScoredAt])
+  @@index([romcAiScore])
+  @@index([dataConfidence])
+  @@index([isPublic, visibilityStatus])
+  @@index([industrySlug, countySlug])
+  @@index([industrySlug, romcAiScore])
+  @@index([countySlug, romcAiScore])
+  @@index([isDemo])
+  @@index([outreachStatus])
+  @@map("companies")
+}
+
+model CompanyScoreHistory {
+  id         String   @id @default(cuid()) @map("id")
+  companyId  String   @map("company_id") @db.Uuid
+  recordedAt DateTime @map("recorded_at")
+
+  romcScore          Float  @map("romc_score")
+  romcConfidence     Int    @map("romc_confidence")
+  valuationRangeLow  Float? @map("valuation_range_low")
+  valuationRangeHigh Float? @map("valuation_range_high")
+
+  employees     Int?   @map("employees")
+  revenueLatest Float? @map("revenue_latest")
+  profitLatest  Float? @map("profit_latest")
+
+  source String @default("cron") @map("source")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([recordedAt])
+  @@index([companyId, recordedAt])
+  @@map("company_score_history")
+}
+
+model CompanyForecast {
+  id         String   @id @default(cuid()) @map("id")
+  companyId  String   @map("company_id") @db.Uuid
+  computedAt DateTime @map("computed_at")
+
+  horizonDays        Int    @map("horizon_days")
+  forecastScore      Float  @map("forecast_score")
+  forecastConfidence Int    @map("forecast_confidence")
+  forecastBandLow    Float  @map("forecast_band_low")
+  forecastBandHigh   Float  @map("forecast_band_high")
+  reasoning          Json   @map("reasoning")
+  modelVersion       String @default("pred-v1") @map("model_version")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, horizonDays, modelVersion])
+  @@index([computedAt])
+  @@index([companyId])
+  @@map("company_forecasts")
+}
+
+model NewsletterSubscriber {
+  id          String                     @id @default(cuid()) @map("id")
+  email       String                     @unique @map("email")
+  lang        String                     @default("ro") @map("lang")
+  source      String                     @default("website") @map("source")
+  status      NewsletterSubscriberStatus @default(ACTIVE) @map("status")
+  createdAt   DateTime                   @default(now()) @map("created_at")
+  confirmedAt DateTime?                  @map("confirmed_at")
+
+  // Email tracking
+  lastEmailSentAt DateTime? @map("last_email_sent_at")
+  totalEmailsSent Int       @default(0) @map("total_emails_sent")
+  totalOpens      Int       @default(0) @map("total_opens")
+  totalClicks     Int       @default(0) @map("total_clicks")
+  lastOpenedAt    DateTime? @map("last_opened_at")
+  lastClickedAt   DateTime? @map("last_clicked_at")
+
+  @@index([createdAt])
+  @@map("newsletter_subscribers")
+}
+
+model WeeklyDigestIssue {
+  id        String   @id @default(cuid()) @map("id")
+  weekStart DateTime @unique @map("week_start")
+  weekEnd   DateTime @map("week_end")
+
+  subjectRo String @map("subject_ro")
+  subjectEn String @map("subject_en")
+  htmlRo    String @map("html_ro")
+  htmlEn    String @map("html_en")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([weekStart])
+  @@map("weekly_digest_issues")
+}
+
+model WatchlistItem {
+  id        String   @id @default(cuid()) @map("id")
+  userId    String   @map("user_id") @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("watchlist_items")
+}
+
+model WatchlistSettings {
+  id                String   @id @default(cuid()) @map("id")
+  userId            String   @unique @map("user_id") @db.Uuid
+  weeklyDigestOnly  Boolean  @default(true) @map("weekly_digest_only")
+  scoreChangeAlerts Boolean  @default(false) @map("score_change_alerts")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("watchlist_settings")
+}
+
+model UserNotificationSettings {
+  id               String   @id @default(cuid()) @map("id")
+  userId           String   @unique @map("user_id") @db.Uuid
+  watchlistAlerts  Boolean  @default(true) @map("watchlist_alerts")
+  weeklyDigest     Boolean  @default(true) @map("weekly_digest")
+  partnerOffers    Boolean  @default(false) @map("partner_offers")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_notification_settings")
+}
+
+model ApiKey {
+  id            String     @id @default(cuid()) @map("id")
+  label         String     @map("label")
+  keyHash       String     @unique @map("key_hash")
+  last4         String     @map("last4")
+  plan          ApiKeyPlan @default(FREE) @map("plan")
+  rateLimitKind String     @default("anon") @map("rate_limit_kind") // anon | auth | premium
+  active        Boolean    @default(true) @map("active")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  lastUsedAt    DateTime?  @map("last_used_at")
+
+  @@index([plan])
+  @@index([active])
+  @@map("api_keys")
+}
+
+model PartnerLead {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  name    String @map("name")
+  email   String @map("email")
+  company String @map("company")
+  useCase String @map("use_case")
+  message String @map("message")
+
+  status PartnerLeadStatus @default(NEW) @map("status")
+  notes  String?           @map("notes")
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([email])
+  @@map("partner_leads")
+}
+
+model ReferralCode {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userId String @unique @map("user_id") @db.Uuid
+  code   String @unique @map("code")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("referral_codes")
+}
+
+model ReferralEvent {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  kind         ReferralEventKind    @map("kind")
+  rewardStatus ReferralRewardStatus @default(PENDING) @map("reward_status")
+
+  // For idempotency (e.g. Stripe checkout session id).
+  externalId String? @unique @map("external_id")
+
+  referralCode      String  @map("referral_code")
+  referrerUserId    String  @map("referrer_user_id") @db.Uuid
+  referredUserId    String? @map("referred_user_id") @db.Uuid
+  referredEmailHash String? @map("referred_email_hash")
+
+  metadata Json? @map("metadata")
+
+  referrer User  @relation("ReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referred User? @relation("ReferralReferred", fields: [referredUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([kind])
+  @@index([referrerUserId])
+  @@index([referredUserId])
+  @@map("referral_events")
+}
+
+model ReferralCredit {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userId    String               @map("user_id") @db.Uuid
+  days      Int                  @default(0) @map("days")
+  exportCredits Int              @default(0) @map("export_credits")
+  status    ReferralRewardStatus @default(PENDING) @map("status")
+  appliedAt DateTime?            @map("applied_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([status])
+  @@map("referral_credits")
+}
+
+model CorrectionRequest {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  companyId  String? @map("company_id") @db.Uuid
+  companyCui String? @map("company_cui")
+
+  name    String? @map("name")
+  email   String  @map("email")
+  message String  @map("message")
+
+  status CorrectionRequestStatus @default(NEW) @map("status")
+  notes  String?                 @map("notes")
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([email])
+  @@map("correction_requests")
+}
+
+model UserAlertRule {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId String @map("user_id") @db.Uuid
+
+  name      String            @map("name")
+  metric    UserAlertMetric   @map("metric")
+  operator  UserAlertOperator @map("operator")
+  threshold Float             @map("threshold")
+
+  scope        UserAlertScope @map("scope")
+  companyId    String?        @map("company_id") @db.Uuid
+  industrySlug String?        @map("industry_slug")
+  countySlug   String?        @map("county_slug")
+
+  // For PCT_CHANGE operator: lookback period in days (1-90)
+  lookbackDays Int? @map("lookback_days")
+
+  active Boolean @default(true) @map("active")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([active])
+  @@index([companyId])
+  @@map("user_alert_rules")
+}
+
+model CompanyChangeLog {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  companyId  String            @map("company_id") @db.Uuid
+  changeType CompanyChangeType @map("change_type")
+
+  // Change details (JSON for flexibility)
+  metadata Json? @map("metadata")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([changeType])
+  @@map("company_change_logs")
+}
+
+model SavedComparison {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId String @map("user_id") @db.Uuid
+  name   String @map("name")
+
+  // Array of CUI strings (2-5)
+  cuis Json @map("cuis") // Array<string>
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_comparisons")
+}
+
+model AdminAuditLog {
+  id          String   @id @default(cuid()) @map("id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  actorUserId String   @map("actor_user_id") @db.Uuid
+
+  action     String @map("action")
+  entityType String @map("entity_type")
+  entityId   String @map("entity_id")
+  metadata   Json?  @map("metadata")
+  prevHash   String? @map("prev_hash") // Hash-chain for audit integrity
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([entityType])
+  @@map("admin_audit_logs")
+}
+
+model SystemSnapshot {
+  id        String   @id @default(cuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Snapshot metadata
+  companyCount        Int      @map("company_count")
+  avgRomcScore        Decimal? @map("avg_romc_score") @db.Decimal(10, 2)
+  forecastDistribution Json?   @map("forecast_distribution")
+  integrityScoreDist  Json?    @map("integrity_score_dist")
+  metadata            Json?   @map("metadata")
+
+  @@index([createdAt])
+  @@map("system_snapshots")
+}
+
+// ============================================================================
+// Prompt 28 – Data Bootstrapping Pipeline
+// ============================================================================
+
+enum ImportJobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model ImportJob {
+  id           String          @id @default(cuid()) @map("id")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  status       ImportJobStatus @default(PENDING) @map("status")
+  sourceName   String          @map("source_name")
+  totalRows    Int             @default(0) @map("total_rows")
+  processedRows Int            @default(0) @map("processed_rows")
+  errorRows    Int             @default(0) @map("error_rows")
+  startedAt    DateTime?       @map("started_at")
+  finishedAt   DateTime?       @map("finished_at")
+  notes        String?         @map("notes")
+
+  errors ImportRowError[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([sourceName])
+  @@map("import_jobs")
+}
+
+model ImportRowError {
+  id          String   @id @default(cuid()) @map("id")
+  jobId       String   @map("job_id")
+  rowNumber   Int      @map("row_number")
+  reason      String   @map("reason")
+  rawRowJson  Json     @map("raw_row_json")
+
+  job ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("import_row_errors")
+}
+
+model CompanyProvenance {
+  id         String   @id @default(cuid()) @map("id")
+  companyId  String   @map("company_id") @db.Uuid
+  sourceName String   @map("source_name")
+  importedAt DateTime @default(now()) @map("imported_at")
+  rowHash    String   @map("row_hash")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, sourceName, rowHash], name: "company_provenance_unique")
+  @@index([companyId])
+  @@index([sourceName])
+  @@map("company_provenance")
+}
+
+model CompanyClaim {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  userId    String @map("user_id") @db.Uuid
+
+  role        String           @map("role") // founder | employee | other
+  status      ModerationStatus @default(PENDING) @map("status")
+  evidenceUrl String?          @map("evidence_url")
+  note        String?          @map("note")
+
+  reviewedByUserId String?   @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt       DateTime? @map("reviewed_at")
+  reviewNote       String?   @map("review_note")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user       User    @relation("UserCompanyClaims", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?   @relation("ClaimReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([userId, status])
+  @@map("company_claims")
+}
+
+model CompanySubmission {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  userId    String @map("user_id") @db.Uuid
+
+  type    String           @map("type")
+  payload Json             @map("payload")
+  status  ModerationStatus @default(PENDING) @map("status")
+
+  reviewedByUserId String?   @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt       DateTime? @map("reviewed_at")
+  reviewNote       String?   @map("review_note")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?   @relation("SubmissionReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([status, createdAt])
+  @@map("company_submissions")
+}
+
+model CompanyMetrics {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @unique @map("company_id") @db.Uuid
+
+  employeesCount  Int?     @map("employees_count")
+  revenueLastYear Decimal? @map("revenue_last_year") @db.Decimal(18, 2)
+  profitLastYear  Decimal? @map("profit_last_year") @db.Decimal(18, 2)
+
+  seapContractsCount Int?     @map("seap_contracts_count")
+  seapContractsValue Decimal? @map("seap_contracts_value") @db.Decimal(18, 2)
+
+  linkedinFollowers Int?   @map("linkedin_followers")
+  linkedinGrowth90d Float? @map("linkedin_growth_90d")
+
+  websiteTrafficMonthly Int? @map("website_traffic_monthly")
+  mentions30d           Int? @map("mentions_30d")
+  fundingSignals        Int? @map("funding_signals")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("company_metrics")
+}
+
+model CompanyMetric {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  year      Int    @map("year")
+
+  revenue     Decimal?            @map("revenue") @db.Decimal(18, 2)
+  profit      Decimal?            @map("profit") @db.Decimal(18, 2)
+  employees   Int?                @map("employees")
+  assets      Decimal?            @map("assets") @db.Decimal(18, 2)
+  liabilities Decimal?            @map("liabilities") @db.Decimal(18, 2)
+  currency    String              @default("RON") @map("currency")
+  source      CompanyMetricSource @map("source")
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, year])
+  @@map("company_metric")
+}
+
+model CompanyIngestSignal {
+  id           String                  @id @default(uuid()) @map("id") @db.Uuid
+  companyId    String                  @map("company_id") @db.Uuid
+  type         CompanyIngestSignalType @map("type")
+  valueNumeric Float?                  @map("value_numeric")
+  valueText    String?                 @map("value_text")
+  sourceUrl    String?                 @map("source_url")
+  observedAt   DateTime                @map("observed_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, type, observedAt])
+  @@map("company_signal")
+}
+
+model ScoreSnapshot {
+  id             String   @id @default(uuid()) @map("id") @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  romcScore      Int      @map("romc_score")
+  growthScore    Int      @map("growth_score")
+  riskScore      Int      @map("risk_score")
+  liquidityScore Int      @map("liquidity_score")
+  confidence     Int      @map("confidence")
+  explanationRo  String   @map("explanation_ro")
+  explanationEn  String   @map("explanation_en")
+  computedAt     DateTime @map("computed_at")
+  version        String   @map("version")
+  componentsJson Json     @map("components_json")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, computedAt, version])
+  @@index([companyId, computedAt])
+  @@map("score_snapshot")
+}
+
+model ImportRun {
+  id         String          @id @default(uuid()) @map("id") @db.Uuid
+  source     String          @map("source")
+  status     ImportRunStatus @map("status")
+  startedAt  DateTime        @default(now()) @map("started_at")
+  finishedAt DateTime?       @map("finished_at")
+  statsJson  Json?           @map("stats_json")
+
+  items ImportItem[]
+
+  @@index([source, startedAt])
+  @@map("import_run")
+}
+
+model ImportItem {
+  id          String           @id @default(uuid()) @map("id") @db.Uuid
+  importRunId String           @map("import_run_id") @db.Uuid
+  externalId  String           @map("external_id")
+  companyCui  String?          @map("company_cui")
+  status      ImportItemStatus @map("status")
+  error       String?          @map("error")
+  rawJson     Json             @map("raw_json")
+
+  importRun ImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+
+  @@index([importRunId])
+  @@index([externalId])
+  @@map("import_item")
+}
+
+model CompanyScoreSnapshot {
+  id        String   @id @default(uuid()) @map("id") @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  asOfDate  DateTime @map("as_of_date") @db.Date
+
+  romcScore   Int @map("romc_score")
+  romcAiScore Int @map("romc_ai_score")
+  confidence  Int @map("confidence")
+
+  // Stable JSON payload: normalized features, sub-scores, weights, flags.
+  componentsJson Json     @map("components_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, asOfDate])
+  @@index([companyId, asOfDate])
+  @@map("company_score")
+}
+
+model CompanyFinancialSnapshot {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  // Annual financials (ANUAL). We keep history for all years.
+  fiscalYear Int @map("fiscal_year")
+
+  // Amounts are stored as DECIMAL for precision. Currency is implicit to source (usually RON),
+  // but we keep it future-proof by adding a currency column.
+  currency    String   @default("RON") @map("currency")
+  revenue     Decimal? @map("revenue") @db.Decimal(18, 2)
+  profit      Decimal? @map("profit") @db.Decimal(18, 2)
+  expenses    Decimal? @map("expenses") @db.Decimal(18, 2)
+  assets      Decimal? @map("assets") @db.Decimal(18, 2)
+  liabilities Decimal? @map("liabilities") @db.Decimal(18, 2)
+  equity      Decimal? @map("equity") @db.Decimal(18, 2)
+
+  dataSource      CompanyFinancialDataSource @map("data_source")
+  // 0–100, confidence in the snapshot values (source reliability + completeness).
+  confidenceScore Int                        @map("confidence_score")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Append-only: allow multiple sources for same fiscal year, but prevent duplicates per source.
+  @@unique([companyId, fiscalYear, dataSource])
+  @@index([companyId, fiscalYear])
+  @@index([fiscalYear])
+  @@map("company_financial_snapshots")
+}
+
+model CompanySignal {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  signalType      CompanySignalType      @map("signal_type")
+  signalValue     Float                  @map("signal_value")
+  signalDirection CompanySignalDirection @map("signal_direction")
+
+  // Source is stored as string for flexibility (e.g. "linkedin", "similarweb", "press_crawler_v1").
+  source     String   @map("source")
+  detectedAt DateTime @map("detected_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, detectedAt])
+  @@index([companyId, signalType, detectedAt])
+  @@map("company_signals")
+}
+
+model CompanyScore {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  scoreType    CompanyScoreType @map("score_type")
+  // 0–100
+  scoreValue   Int              @map("score_value")
+  // Version string (e.g. "romc-v1.0.0") so we can re-run models and compare results.
+  scoreVersion String           @map("score_version")
+  // Short human-readable explanation; long-form explanation can be added later.
+  explanation  String?          @map("explanation")
+  calculatedAt DateTime         @map("calculated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Append-only: allow multiple versions per time, but prevent exact duplicates.
+  @@unique([companyId, scoreType, calculatedAt, scoreVersion])
+  @@index([companyId, scoreType, calculatedAt])
+  @@map("company_scores")
+}
+
+model CompanyValuationEstimate {
+  id        String @id @default(uuid()) @map("id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  valuationMin       Decimal  @map("valuation_min") @db.Decimal(18, 2)
+  valuationMax       Decimal  @map("valuation_max") @db.Decimal(18, 2)
+  valuationCurrency  String   @default("EUR") @map("valuation_currency")
+  modelVersion       String   @map("model_version")
+  // 0–100
+  confidence         Int      @map("confidence")
+  methodologySummary String   @map("methodology_summary")
+  calculatedAt       DateTime @map("calculated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, calculatedAt, modelVersion])
+  @@index([companyId, calculatedAt])
+  @@map("company_valuation_estimates")
+}

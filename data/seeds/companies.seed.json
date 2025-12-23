@@ -1,0 +1,9 @@
+[
+  { "name": "Carpathia Software SRL", "cui": "RO90000001", "county": "Cluj", "city": "Cluj-Napoca", "caen": "6201", "website": "https://carpathiasoftware.ro" },
+  { "name": "Danube Logistics SRL", "cui": "RO90000002", "county": "Constanța", "city": "Constanța", "caen": "4941", "website": "https://danubelogistics.ro" },
+  { "name": "Transilvania Foods SRL", "cui": "RO90000003", "county": "Brașov", "city": "Brașov", "caen": "1071" },
+  { "name": "Miorita Health SRL", "cui": "RO90000004", "county": "Iași", "city": "Iași", "caen": "8622", "website": "https://mioritahealth.ro" },
+  { "name": "Dobrogea Agro SRL", "cui": "RO90000005", "county": "Tulcea", "city": "Tulcea", "caen": "0111" }
+]
+
+

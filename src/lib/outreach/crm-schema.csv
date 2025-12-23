@@ -1,0 +1,3 @@
+target_name,contact_name,contact_email,icp_type,qualification_score,status,last_contact,response_status,company_size,industry,location,website,linkedin,notes,created_at,updated_at
+"[Company Name]","[Contact Name]","[email@example.com]","Funds","4","Qualified","2024-01-15","No Response","50","Software","Bucharest","https://example.com","https://linkedin.com/company/example","Active VC fund investing in Romanian startups","2024-01-10","2024-01-15"
+
