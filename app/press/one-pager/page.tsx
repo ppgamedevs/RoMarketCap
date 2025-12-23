@@ -2,27 +2,26 @@ import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/seo/site";
 import { readFile } from "fs/promises";
 import { join } from "path";
-// Note: Install 'marked' package if needed
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const canonical = `${getSiteUrl()}/press/journalist-faq`;
+  const canonical = `${getSiteUrl()}/press/one-pager`;
   return {
-    title: "FAQ for Journalists - RoMarketCap",
-    description: "Frequently asked questions for journalists.",
+    title: "One-Pager - RoMarketCap",
+    description: "One-page summary about RoMarketCap.",
     alternates: { canonical },
     robots: { index: true, follow: true },
   };
 }
 
-export default async function JournalistFaqPage() {
+export default async function OnePagerPage() {
   let content = "";
   try {
-    content = await readFile(join(process.cwd(), "press/journalist-faq.md"), "utf-8");
+    content = await readFile(join(process.cwd(), "press/one-pager-outline.md"), "utf-8");
   } catch (error) {
-    console.error("Error reading journalist FAQ:", error);
+    console.error("Error reading one-pager:", error);
     content = "Content not available. Please check the server logs.";
   }
 
@@ -39,14 +38,8 @@ export default async function JournalistFaqPage() {
       if (line.startsWith("### ")) {
         return `<h3 class="text-xl font-medium mt-4 mb-2">${line.slice(4)}</h3>`;
       }
-      if (line.startsWith("###")) {
-        return `<h3 class="text-xl font-medium mt-4 mb-2">${line.slice(3)}</h3>`;
-      }
       if (line.startsWith("- ") || line.startsWith("* ")) {
         return `<li class="ml-4 mb-2">${line.slice(2)}</li>`;
-      }
-      if (line.startsWith("**") && line.endsWith("**")) {
-        return `<p class="font-semibold mb-2">${line.slice(2, -2)}</p>`;
       }
       if (line.trim() === "") {
         return "<br />";

@@ -10,21 +10,30 @@ export const dynamic = "force-dynamic";
 
 export default async function RoHomePage() {
   const lang = await getLangFromRequest();
-  const latest = await prisma.scoreSnapshot.findMany({
-    where: { version: "romc_v0" },
-    orderBy: [{ computedAt: "desc" }],
-    take: 200,
-    include: { company: { select: { slug: true, name: true } } },
-  });
+  
+  let top: Array<{ id: string; company: { slug: string; name: string }; romcScore: number }> = [];
+  
+  try {
+    const latest = await prisma.scoreSnapshot.findMany({
+      where: { version: "romc_v0" },
+      orderBy: [{ computedAt: "desc" }],
+      take: 200,
+      include: { company: { select: { slug: true, name: true } } },
+    });
 
-  // De-dup per company, then take top by score.
-  const byCompany = new Map<string, (typeof latest)[number]>();
-  for (const s of latest) {
-    if (!byCompany.has(s.companyId)) byCompany.set(s.companyId, s);
+    // De-dup per company, then take top by score.
+    const byCompany = new Map<string, (typeof latest)[number]>();
+    for (const s of latest) {
+      if (!byCompany.has(s.companyId)) byCompany.set(s.companyId, s);
+    }
+    top = Array.from(byCompany.values())
+      .sort((a, b) => b.romcScore - a.romcScore)
+      .slice(0, 10);
+  } catch (error) {
+    // Database connection error - show empty state
+    console.error("[RoHomePage] Database error:", error);
+    // Continue with empty top array - page will show "N/A"
   }
-  const top = Array.from(byCompany.values())
-    .sort((a, b) => b.romcScore - a.romcScore)
-    .slice(0, 10);
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-1px)] max-w-3xl flex-col gap-6 px-6 py-16">
