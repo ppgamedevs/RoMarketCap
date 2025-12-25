@@ -30,29 +30,36 @@ export async function GET() {
       where: { sourceName: "EU_FUNDS" },
     });
 
-    // Get top companies by public money (totalValue)
-    const topByPublicMoney = await prisma.companyProvenance.findMany({
-      where: {
-        totalValue: { not: null },
-      },
-      orderBy: { totalValue: "desc" },
-      take: 20,
-      select: {
-        company: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            cui: true,
-          },
-        },
-        sourceName: true,
-        totalValue: true,
-        contractValue: true,
-        contractYear: true,
-        contractingAuthority: true,
-      },
-    });
+    // Get top companies by public money (sum of contract values)
+    // Use raw SQL to aggregate contract values per company
+    const topByPublicMoneyRaw = await prisma.$queryRaw<Array<{
+      company_id: string;
+      company_slug: string;
+      company_name: string;
+      company_cui: string | null;
+      source_name: string;
+      total_value: bigint | number;
+      max_contract_value: bigint | number | null;
+      max_contract_year: number | null;
+      max_contracting_authority: string | null;
+    }>>`
+      SELECT 
+        c.id::text as company_id,
+        c.slug as company_slug,
+        c.name as company_name,
+        c.cui as company_cui,
+        cp.source_name,
+        COALESCE(SUM(cp.contract_value), 0) as total_value,
+        MAX(cp.contract_value) as max_contract_value,
+        MAX(cp.contract_year) as max_contract_year,
+        MAX(cp.contracting_authority) as max_contracting_authority
+      FROM company_provenance cp
+      JOIN companies c ON cp.company_id = c.id
+      WHERE cp.contract_value IS NOT NULL
+      GROUP BY c.id, c.slug, c.name, c.cui, cp.source_name
+      ORDER BY total_value DESC
+      LIMIT 20
+    `;
 
     // Get recent errors (from last 24h)
     const recentErrors = await prisma.importItem.findMany({
@@ -89,13 +96,18 @@ export async function GET() {
         SEAP: seapCompanies,
         EU_FUNDS: euFundsCompanies,
       },
-      topByPublicMoney: topByPublicMoney.map((p) => ({
-        company: p.company,
-        source: p.sourceName,
-        totalValue: p.totalValue?.toString() || null,
-        contractValue: p.contractValue?.toString() || null,
-        contractYear: p.contractYear,
-        contractingAuthority: p.contractingAuthority,
+      topByPublicMoney: topByPublicMoneyRaw.map((p) => ({
+        company: {
+          id: p.company_id,
+          slug: p.company_slug,
+          name: p.company_name,
+          cui: p.company_cui,
+        },
+        source: p.source_name,
+        totalValue: p.total_value ? String(p.total_value) : null,
+        contractValue: p.max_contract_value ? String(p.max_contract_value) : null,
+        contractYear: p.max_contract_year,
+        contractingAuthority: p.max_contracting_authority,
       })),
       recentErrors: recentErrors.map((e) => ({
         id: e.id,
