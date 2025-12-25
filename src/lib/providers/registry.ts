@@ -8,7 +8,6 @@
 import type { ProviderAdapter } from "./types";
 import { DummyBusinessRegistry } from "./dummy/DummyBusinessRegistry";
 import { DummyTrafficProvider } from "./dummy/DummyTrafficProvider";
-import { isFlagEnabled } from "../flags/flags";
 import { kv } from "@vercel/kv";
 
 class ProviderRegistry {
@@ -51,8 +50,9 @@ class ProviderRegistry {
 
     for (const provider of all) {
       const metadata = provider.getMetadata();
-      const flagKey = `PROVIDER_${metadata.id.toUpperCase().replace(/-/g, "_")}`;
-      const enabled = await isFlagEnabled(flagKey, false);
+      // Use KV directly since flag names are dynamic
+      const flagKey = `flag:PROVIDER_${metadata.id.toUpperCase().replace(/-/g, "_")}`;
+      const enabled = await kv.get<boolean>(flagKey).catch(() => true); // Default to enabled if not set
       if (enabled) {
         active.push(provider);
       }

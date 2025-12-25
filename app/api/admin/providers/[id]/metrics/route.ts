@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { providerRegistry } from "@/src/lib/providers/registry";
 import { storeMetricsAsSignal } from "@/src/lib/providers/store";
-import { isFlagEnabled } from "@/src/lib/flags/flags";
+import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,9 +29,9 @@ export async function POST(req: Request, ctx: Ctx) {
       return NextResponse.json({ ok: false, error: "Provider not found" }, { status: 404 });
     }
 
-    // Check feature flag
-    const flagKey = `PROVIDER_${id.toUpperCase().replace(/-/g, "_")}`;
-    const enabled = await isFlagEnabled(flagKey, false);
+    // Check feature flag (using KV directly since flag names are dynamic)
+    const flagKey = `flag:PROVIDER_${id.toUpperCase().replace(/-/g, "_")}`;
+    const enabled = await kv.get<boolean>(flagKey).catch(() => true); // Default to enabled if not set
     if (!enabled) {
       return NextResponse.json({ ok: false, error: "Provider is disabled" }, { status: 403 });
     }

@@ -21,6 +21,9 @@ export type FeatureFlag =
   | "CRON_WATCHLIST_ALERTS"
   | "CRON_BILLING_RECONCILE"
   | "CRON_SNAPSHOT"
+  | "CRON_PROVIDERS_ENRICH"
+  | "CRON_INGEST_NATIONAL"
+  | "CRON_VERIFY_ANAF"
   | "READ_ONLY_MODE";
 
 /**
@@ -95,6 +98,9 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
     "CRON_WATCHLIST_ALERTS",
     "CRON_BILLING_RECONCILE",
     "CRON_SNAPSHOT",
+    "CRON_PROVIDERS_ENRICH",
+    "CRON_INGEST_NATIONAL",
+    "CRON_VERIFY_ANAF",
     "READ_ONLY_MODE",
   ];
 
