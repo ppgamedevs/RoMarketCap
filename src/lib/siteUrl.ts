@@ -1,5 +1,5 @@
 const DEV_FALLBACK = "http://localhost:3000";
-const PROD_FALLBACK = "https://romarketcap.ro";
+const PROD_FALLBACK = "https://romarketcap.com";
 
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();

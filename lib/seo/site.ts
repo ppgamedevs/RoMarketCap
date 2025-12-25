@@ -6,7 +6,7 @@ export function getSiteUrl(): string {
   return getSiteUrlImpl();
 }
 
-export const SITE_NAME = "RoMarketCap.ro";
+export const SITE_NAME = "RoMarketCap.com";
 
 export const SUPPORTED_LOCALES = ["ro", "en"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];

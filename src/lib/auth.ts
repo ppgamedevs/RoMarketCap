@@ -1,7 +1,36 @@
 import type { NextAuthOptions } from "next-auth";
-import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/src/lib/db";
+
+// Vercel OAuth2 provider (generic OAuth2 since NextAuth doesn't have built-in Vercel provider)
+function VercelProvider(options: { clientId: string; clientSecret: string }) {
+  return {
+    id: "vercel",
+    name: "Vercel",
+    type: "oauth",
+    authorization: {
+      url: "https://vercel.com/integrations/auth/authorize",
+      params: {
+        scope: "user:email",
+        response_type: "code",
+      },
+    },
+    token: "https://vercel.com/integrations/auth/token",
+    userinfo: "https://api.vercel.com/v2/user",
+    client: {
+      id: options.clientId,
+      secret: options.clientSecret,
+    },
+    profile(profile: any) {
+      return {
+        id: profile.user.id,
+        name: profile.user.name,
+        email: profile.user.email,
+        image: profile.user.avatar,
+      };
+    },
+  };
+}
 
 type UserFlags = { role?: string | null; isPremium?: boolean | null };
 
@@ -18,10 +47,10 @@ function getAdminEmails(): Set<string> {
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    GitHubProvider({
-      clientId: process.env.GITHUB_ID ?? "",
-      clientSecret: process.env.GITHUB_SECRET ?? "",
-    }),
+    VercelProvider({
+      clientId: process.env.VERCEL_CLIENT_ID ?? "",
+      clientSecret: process.env.VERCEL_CLIENT_SECRET ?? "",
+    }) as any,
   ],
   session: { strategy: "database" },
   callbacks: {
