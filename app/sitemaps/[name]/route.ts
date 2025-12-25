@@ -30,33 +30,43 @@ export async function GET(_req: Request, ctx: Ctx) {
   if (name === "static.xml") {
     const { getEffectiveDemoMode } = await import("@/src/lib/launch/mode");
     const isDemoMode = getEffectiveDemoMode();
-    const [industries, counties, digests] = await Promise.all([
-      prisma.company.groupBy({
-        by: ["industrySlug"],
-        where: {
-          isPublic: true,
-          visibilityStatus: "PUBLIC",
-          industrySlug: { not: null },
-          ...(isDemoMode ? {} : { isDemo: false }),
-        },
-        _count: { _all: true },
-      }),
-      prisma.company.groupBy({
-        by: ["countySlug"],
-        where: {
-          isPublic: true,
-          visibilityStatus: "PUBLIC",
-          countySlug: { not: null },
-          ...(isDemoMode ? {} : { isDemo: false }),
-        },
-        _count: { _all: true },
-      }),
-      prisma.weeklyDigestIssue.findMany({
-        orderBy: { weekStart: "desc" },
-        take: 20,
-        select: { weekStart: true },
-      }),
-    ]);
+    
+    let industries: Array<{ industrySlug: string | null; _count: { _all: number } }> = [];
+    let counties: Array<{ countySlug: string | null; _count: { _all: number } }> = [];
+    let digests: Array<{ weekStart: Date }> = [];
+    
+    try {
+      [industries, counties, digests] = await Promise.all([
+        prisma.company.groupBy({
+          by: ["industrySlug"],
+          where: {
+            isPublic: true,
+            visibilityStatus: "PUBLIC",
+            industrySlug: { not: null },
+            ...(isDemoMode ? {} : { isDemo: false }),
+          },
+          _count: { _all: true },
+        }),
+        prisma.company.groupBy({
+          by: ["countySlug"],
+          where: {
+            isPublic: true,
+            visibilityStatus: "PUBLIC",
+            countySlug: { not: null },
+            ...(isDemoMode ? {} : { isDemo: false }),
+          },
+          _count: { _all: true },
+        }),
+        prisma.weeklyDigestIssue.findMany({
+          orderBy: { weekStart: "desc" },
+          take: 20,
+          select: { weekStart: true },
+        }),
+      ]);
+    } catch (error) {
+      // Database error - continue with empty arrays
+      console.error("[sitemap:static] Database error:", error);
+    }
 
     // Filter industries/counties with at least MIN_COMPANIES_FOR_INDEX companies
     const MIN_COMPANIES_FOR_INDEX = 5;
@@ -106,17 +116,25 @@ export async function GET(_req: Request, ctx: Ctx) {
   // Exclude demo companies unless DEMO_MODE is enabled (and not in launch mode)
   const { getEffectiveDemoMode } = await import("@/src/lib/launch/mode");
   const isDemoMode = getEffectiveDemoMode();
-  const companies = await prisma.company.findMany({
-    where: {
-      isPublic: true,
-      visibilityStatus: "PUBLIC",
-      ...(isDemoMode ? {} : { isDemo: false }),
-    },
-    select: { slug: true, canonicalSlug: true, lastUpdatedAt: true },
-    orderBy: { slug: "asc" },
-    take: CHUNK_SIZE,
-    skip,
-  });
+  
+  let companies: Array<{ slug: string; canonicalSlug: string | null; lastUpdatedAt: Date }> = [];
+  try {
+    companies = await prisma.company.findMany({
+      where: {
+        isPublic: true,
+        visibilityStatus: "PUBLIC",
+        ...(isDemoMode ? {} : { isDemo: false }),
+      },
+      select: { slug: true, canonicalSlug: true, lastUpdatedAt: true },
+      orderBy: { slug: "asc" },
+      take: CHUNK_SIZE,
+      skip,
+    });
+  } catch (error) {
+    // Database error - return empty sitemap
+    console.error("[sitemap:companies] Database error:", error);
+    return new NextResponse(urlset([]), { status: 200, headers: cacheHeaders() });
+  }
 
   // Use canonicalSlug if available, otherwise slug. Deduplicate by canonical slug.
   const urlMap = new Map<string, { loc: string; lastmod: string }>();

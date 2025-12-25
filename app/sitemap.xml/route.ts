@@ -16,30 +16,52 @@ function cacheHeaders() {
 }
 
 export async function GET() {
-  const base = getSiteUrl();
-  const isDemoMode = getEffectiveDemoMode();
-  const count = await prisma.company.count({
-    where: {
-      isPublic: true,
-      visibilityStatus: "PUBLIC",
-      ...(isDemoMode ? {} : { isDemo: false }),
-    },
-  });
-  const chunks = Math.max(1, Math.ceil(count / CHUNK_SIZE));
+  try {
+    const base = getSiteUrl();
+    const isDemoMode = getEffectiveDemoMode();
+    
+    let count = 0;
+    try {
+      count = await prisma.company.count({
+        where: {
+          isPublic: true,
+          visibilityStatus: "PUBLIC",
+          ...(isDemoMode ? {} : { isDemo: false }),
+        },
+      });
+    } catch (error) {
+      // Database error - return sitemap with just static pages
+      console.error("[sitemap] Database error:", error);
+      count = 0;
+    }
+    
+    const chunks = Math.max(1, Math.ceil(count / CHUNK_SIZE));
 
-  const now = new Date().toISOString().slice(0, 10);
-  const sitemaps = [
-    { loc: `${base}/sitemaps/static.xml`, lastmod: now },
-    ...Array.from({ length: chunks }).map((_, i) => ({ loc: `${base}/sitemaps/companies-${i + 1}.xml`, lastmod: now })),
-  ];
+    const now = new Date().toISOString().slice(0, 10);
+    const sitemaps = [
+      { loc: `${base}/sitemaps/static.xml`, lastmod: now },
+      ...Array.from({ length: chunks }).map((_, i) => ({ loc: `${base}/sitemaps/companies-${i + 1}.xml`, lastmod: now })),
+    ];
 
-  const xml =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
-    sitemaps.map((s) => `<sitemap><loc>${s.loc}</loc><lastmod>${s.lastmod}</lastmod></sitemap>`).join("") +
-    `</sitemapindex>`;
+    const xml =
+      `<?xml version="1.0" encoding="UTF-8"?>` +
+      `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+      sitemaps.map((s) => `<sitemap><loc>${s.loc}</loc><lastmod>${s.lastmod}</lastmod></sitemap>`).join("") +
+      `</sitemapindex>`;
 
-  return new NextResponse(xml, { status: 200, headers: cacheHeaders() });
+    return new NextResponse(xml, { status: 200, headers: cacheHeaders() });
+  } catch (error) {
+    console.error("[sitemap] Error generating sitemap:", error);
+    // Return minimal sitemap on error
+    const base = getSiteUrl();
+    const now = new Date().toISOString().slice(0, 10);
+    const xml =
+      `<?xml version="1.0" encoding="UTF-8"?>` +
+      `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+      `<sitemap><loc>${base}/sitemaps/static.xml</loc><lastmod>${now}</lastmod></sitemap>` +
+      `</sitemapindex>`;
+    return new NextResponse(xml, { status: 200, headers: cacheHeaders() });
+  }
 }
 
 
