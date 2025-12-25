@@ -65,18 +65,24 @@ export async function GET() {
     const recentErrors = await prisma.importItem.findMany({
       where: {
         status: "FAILED",
-        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        importRun: {
+          startedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        importRun: {
+          startedAt: "desc",
+        },
+      },
       take: 50,
       select: {
         id: true,
         externalId: true,
         error: true,
-        createdAt: true,
         importRun: {
           select: {
             source: true,
+            startedAt: true,
           },
         },
       },
@@ -114,7 +120,7 @@ export async function GET() {
         externalId: e.externalId,
         error: e.error,
         source: e.importRun.source,
-        createdAt: e.createdAt.toISOString(),
+        createdAt: e.importRun.startedAt.toISOString(),
       })),
     });
   } catch (error) {
