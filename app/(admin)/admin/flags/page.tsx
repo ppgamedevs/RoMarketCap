@@ -75,6 +75,21 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable daily snapshot cron",
     risky: false,
   },
+  CRON_PROVIDERS_ENRICH: {
+    label: "Cron: Providers Enrich",
+    description: "Enable/disable automated provider-based enrichment cron",
+    risky: true,
+  },
+  CRON_INGEST_NATIONAL: {
+    label: "Cron: Ingest National",
+    description: "Enable/disable national data ingestion cron (SEAP + EU Funds)",
+    risky: true,
+  },
+  CRON_VERIFY_ANAF: {
+    label: "Cron: Verify ANAF",
+    description: "Enable/disable ANAF verification cron",
+    risky: true,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",
