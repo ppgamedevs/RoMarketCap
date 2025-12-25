@@ -15,16 +15,24 @@ type CompanyForConfidence = Pick<
 export async function calculateDataConfidence(company: CompanyForConfidence): Promise<number> {
   const { prisma } = await import("@/src/lib/db");
 
-  const [metricsCount, approvedSubmissionsCount, approvedClaimsCount] = await Promise.all([
+  const [metricsCount, approvedSubmissionsCount, approvedClaimsCount, providerProvenanceCount] = await Promise.all([
     prisma.companyMetric.count({ where: { companyId: company.id } }),
     prisma.companySubmission.count({ where: { companyId: company.id, status: "APPROVED" } }),
     prisma.companyClaim.count({ where: { companyId: company.id, status: "APPROVED" } }),
+    // Count provider provenance (third-party data sources)
+    prisma.companyProvenance.count({
+      where: {
+        companyId: company.id,
+        sourceName: { notIn: ["SEAP", "EU_FUNDS"] }, // Exclude national ingestion sources
+      },
+    }),
   ]);
 
   let score = 0;
 
   // Source count (0-30 points)
-  const sourceCount = metricsCount + approvedSubmissionsCount + approvedClaimsCount;
+  // Provider data adds more confidence (weighted by trust)
+  const sourceCount = metricsCount + approvedSubmissionsCount + approvedClaimsCount + (providerProvenanceCount * 1.5);
   score += Math.min(30, sourceCount * 5);
 
   // Freshness (0-25 points)

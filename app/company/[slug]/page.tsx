@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/seo/site";
 import { CompanyHeader } from "@/components/layout/CompanyHeader";
 import { MetricCard } from "@/components/layout/MetricCard";
+import { VerificationBadge } from "@/components/company/VerificationBadge";
 import { getCompanyBySlugOrThrow } from "@/src/lib/company";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { prisma } from "@/src/lib/db";
@@ -188,6 +189,11 @@ export default async function CompanyPage({ params }: PageProps) {
         PAGE_CACHE_TTLS.company,
       );
 
+  // Fetch verification (not cached, always fresh)
+  const verification = await prisma.companyVerification.findUnique({
+    where: { companyId: company.id },
+  });
+
   // Fetch user-specific data (not cached)
   const isWatched =
     session?.user?.id
@@ -337,6 +343,12 @@ export default async function CompanyPage({ params }: PageProps) {
         cui={company.cui}
         website={company.website}
       />
+
+      {verification && (
+        <div className="mt-4">
+          <VerificationBadge verification={verification} lang={lang} />
+        </div>
+      )}
 
       <div className="mt-4 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">

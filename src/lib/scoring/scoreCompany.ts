@@ -73,8 +73,12 @@ export function scoreCompanyV0({ company, metrics, now = new Date() }: ScoreInpu
 
   // ROMC AI score (0..100): market narrative + momentum, deterministic.
   // Uses growth, mentions, traffic, plus a small boost for fundingSignals.
+  // Provider data (from third-party sources) adds to confidence and can boost score
   const fundingBoost = clamp((fundingSignals ?? 0) / 10, 0, 1);
   const romcAiScore = clamp(Math.round(100 * (0.35 * nLinkedinGrowth + 0.35 * nMentions + 0.2 * nTraffic + 0.1 * fundingBoost)), 0, 100);
+  
+  // Note: Provider data is already incorporated via metrics (traffic, mentions, etc.)
+  // which are updated from provider signals in storeMetricsAsSignal()
 
   // Confidence: completeness + recency.
   const fieldsPresent = [

@@ -386,6 +386,7 @@ model Company {
   correctionRequests CorrectionRequest[]
   userAlertRules     UserAlertRule[]
   provenance         CompanyProvenance[]
+  verification       CompanyVerification?
 
   // CRM-lite tagging for outreach
   outreachStatus      String?   @map("outreach_status")
@@ -804,15 +805,53 @@ model CompanyProvenance {
   id         String   @id @default(cuid()) @map("id")
   companyId  String   @map("company_id") @db.Uuid
   sourceName String   @map("source_name")
+  externalId String?  @map("external_id") // External record ID (e.g., contract ID, beneficiary ID)
   importedAt DateTime @default(now()) @map("imported_at")
+  firstSeenAt DateTime @default(now()) @map("first_seen_at") // First time we saw this record
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at") // Last time we saw this record
   rowHash    String   @map("row_hash")
+  rawJson    Json?    @map("raw_json") // Full raw record for audit/debugging
+  contractValue Decimal? @map("contract_value") @db.Decimal(18, 2) // Contract value if applicable
+  contractYear Int?    @map("contract_year") // Year of contract/award
+  contractingAuthority String? @map("contracting_authority") @db.Text // Authority/program name
+  totalValue  Decimal? @map("total_value") @db.Decimal(18, 2) // Aggregated total value (computed)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, sourceName, rowHash], name: "company_provenance_unique")
+  @@unique([sourceName, externalId], name: "provenance_external_id_unique")
   @@index([companyId])
   @@index([sourceName])
+  @@index([sourceName, externalId])
+  @@index([contractYear])
   @@map("company_provenance")
+}
+
+model CompanyVerification {
+  id        String   @id @default(cuid()) @map("id")
+  companyId String   @unique @map("company_id") @db.Uuid
+  
+  // ANAF verification results
+  isActive         Boolean   @map("is_active") // Company is active in ANAF
+  isVatRegistered  Boolean   @map("is_vat_registered") // VAT registered (yes/no)
+  lastReportedYear Int?      @map("last_reported_year") // Last reported year if available
+  verifiedAt       DateTime  @default(now()) @map("verified_at") // Verification timestamp
+  
+  // Metadata
+  source           String    @default("ANAF") @map("source") // Verification source
+  rawResponse      Json?     @map("raw_response") // Full API response for audit
+  errorMessage     String?   @map("error_message") @db.Text // Error if verification failed
+  verificationStatus String  @default("SUCCESS") @map("verification_status") // SUCCESS, ERROR, PENDING
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([verifiedAt])
+  @@index([verificationStatus])
+  @@map("company_verification")
 }
 
 model CompanyClaim {

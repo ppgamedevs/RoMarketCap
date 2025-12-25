@@ -14,7 +14,14 @@ function cacheHeaders() {
   };
 }
 
-function urlset(urls: Array<{ loc: string; lastmod?: string }>) {
+function urlset(urls: Array<{ loc: string; lastmod?: string }>, baseUrl?: string) {
+  // Sitemap protocol requires at least one <url> element
+  if (urls.length === 0) {
+    // Return a minimal valid sitemap with the homepage
+    const base = baseUrl || getSiteUrl();
+    const now = new Date().toISOString().slice(0, 10);
+    return `<?xml version="1.0" encoding="UTF-8"?>` + `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc><lastmod>${now}</lastmod></url></urlset>`;
+  }
   const items = urls
     .map((u) => `<url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`)
     .join("");
@@ -103,7 +110,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       ...validIndustries.map((x) => ({ loc: `${base}/new/${encodeURIComponent(x.industrySlug as string)}`, lastmod: now })),
       ...validCounties.map((x) => ({ loc: `${base}/new/${encodeURIComponent(x.countySlug as string)}`, lastmod: now })),
     ];
-    return new NextResponse(urlset(urls), { status: 200, headers: cacheHeaders() });
+    return new NextResponse(urlset(urls, base), { status: 200, headers: cacheHeaders() });
   }
 
   const m = /^companies-(\d+)\.xml$/.exec(name);
@@ -131,9 +138,10 @@ export async function GET(_req: Request, ctx: Ctx) {
       skip,
     });
   } catch (error) {
-    // Database error - return empty sitemap
+    // Database error - return minimal valid sitemap with homepage
     console.error("[sitemap:companies] Database error:", error);
-    return new NextResponse(urlset([]), { status: 200, headers: cacheHeaders() });
+    const now = new Date().toISOString().slice(0, 10);
+    return new NextResponse(urlset([{ loc: `${base}/`, lastmod: now }], base), { status: 200, headers: cacheHeaders() });
   }
 
   // Use canonicalSlug if available, otherwise slug. Deduplicate by canonical slug.
@@ -147,7 +155,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   }
   const urls = Array.from(urlMap.values());
 
-  return new NextResponse(urlset(urls), { status: 200, headers: cacheHeaders() });
+  return new NextResponse(urlset(urls, base), { status: 200, headers: cacheHeaders() });
 }
 
 

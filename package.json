@@ -16,6 +16,8 @@
     "format:check": "prettier . --check",
     "test": "vitest run",
     "ingest:source0": "tsx scripts/ingest/source0.ts",
+    "ingest:seap": "tsx scripts/ingest/seap.ts",
+    "ingest:eu-funds": "tsx scripts/ingest/euFunds.ts",
     "score:all": "tsx scripts/score/recomputeAll.ts"
   },
   "dependencies": {
