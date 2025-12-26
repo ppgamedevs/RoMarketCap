@@ -180,8 +180,12 @@ export async function ingestOne(record: SourceCompanyRecord): Promise<IngestOneR
           }
         }
 
-        if (patch.profitLatest != null && (!existing.profitLatest || existing.profitLatest !== patch.profitLatest)) {
-          updateData.profitLatest = patch.profitLatest;
+        if (patch.profitLatest != null) {
+          const existingProfit = existing.profitLatest ? Number(existing.profitLatest) : null;
+          const patchProfit = typeof patch.profitLatest === 'number' ? patch.profitLatest : Number(patch.profitLatest);
+          if (!existingProfit || existingProfit !== patchProfit) {
+            updateData.profitLatest = patch.profitLatest;
+          }
         }
 
         if (patch.email && (!existing.email || existing.email !== patch.email)) {
