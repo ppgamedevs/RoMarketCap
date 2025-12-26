@@ -134,11 +134,19 @@ async function upsertCompanyWithMerge(
     if (record.employees != null && (!existing?.employees || existing.employees !== record.employees)) {
       updateData.employees = record.employees;
     }
-    if (record.revenueLatest != null && (!existing?.revenueLatest || existing.revenueLatest !== record.revenueLatest)) {
-      updateData.revenueLatest = record.revenueLatest;
+    if (record.revenueLatest != null) {
+      const existingRevenue = existing?.revenueLatest ? Number(existing.revenueLatest) : null;
+      const recordRevenue = typeof record.revenueLatest === 'number' ? record.revenueLatest : Number(record.revenueLatest);
+      if (!existingRevenue || existingRevenue !== recordRevenue) {
+        updateData.revenueLatest = record.revenueLatest;
+      }
     }
-    if (record.profitLatest != null && (!existing?.profitLatest || existing.profitLatest !== record.profitLatest)) {
-      updateData.profitLatest = record.profitLatest;
+    if (record.profitLatest != null) {
+      const existingProfit = existing?.profitLatest ? Number(existing.profitLatest) : null;
+      const recordProfit = typeof record.profitLatest === 'number' ? record.profitLatest : Number(record.profitLatest);
+      if (!existingProfit || existingProfit !== recordProfit) {
+        updateData.profitLatest = record.profitLatest;
+      }
     }
     if (record.descriptionShort && (!existing?.descriptionShort || existing.descriptionShort !== record.descriptionShort)) {
       updateData.descriptionShort = record.descriptionShort;
