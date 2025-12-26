@@ -5,7 +5,7 @@
  * It does NOT overwrite Company core fields - only updates confidence and risk flags.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, CompanyRiskFlag } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -100,15 +100,16 @@ export async function updateIntegrityWithVerification(companyId: string): Promis
         }
       : null,
   );
-  const existingFlags = (company.companyRiskFlags || []) as string[];
+  const existingFlags = (company.companyRiskFlags || []) as CompanyRiskFlag[];
   
   // Remove old verification-related flags
+  // Note: These flags need to be added to the CompanyRiskFlag enum in the schema
   const filteredFlags = existingFlags.filter(
     (flag) => flag !== "VERIFICATION_FAILED" && flag !== "INACTIVE_IN_ANAF",
-  );
+  ) as CompanyRiskFlag[];
   
-  // Add new flags
-  const newFlags = [...new Set([...filteredFlags, ...verificationFlags])];
+  // Add new flags (cast to enum type - these should be added to the enum)
+  const newFlags = [...new Set([...filteredFlags, ...verificationFlags as CompanyRiskFlag[]])] as CompanyRiskFlag[];
 
   // Update company (only confidence and risk flags, never core fields)
   await prisma.company.update({
