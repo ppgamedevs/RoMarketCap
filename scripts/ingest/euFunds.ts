@@ -71,10 +71,10 @@ async function ingestEUFundsFromFile(filePath: string, dryRun = false): Promise<
     const stream = createReadStream(filePath, { encoding: "utf8" });
     let rowNumber = 0;
 
-    Papa.parse(stream, {
+    Papa.parse(stream as any, {
       header: true,
       skipEmptyLines: true,
-      step: async (result, parser) => {
+      step: async (result: any, parser: any) => {
         rowNumber++;
         stats.processed++;
 
@@ -112,10 +112,10 @@ async function ingestEUFundsFromFile(filePath: string, dryRun = false): Promise<
       complete: () => {
         resolve(stats);
       },
-      error: (error) => {
+      error: (error: any) => {
         reject(error);
       },
-    });
+    } as any);
   });
 }
 
