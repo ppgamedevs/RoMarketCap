@@ -151,11 +151,15 @@ export async function storeMetricsAsSignal(
           data: updates,
         });
       } else {
+        // Convert update input to create input (exclude relation fields)
+        const createData: Prisma.CompanyMetricsUncheckedCreateInput = {
+          companyId: company.id,
+          ...(updates.websiteTrafficMonthly !== undefined && { websiteTrafficMonthly: updates.websiteTrafficMonthly as number | null }),
+          ...(updates.linkedinFollowers !== undefined && { linkedinFollowers: updates.linkedinFollowers as number | null }),
+          ...(updates.mentions30d !== undefined && { mentions30d: updates.mentions30d as number | null }),
+        };
         await prisma.companyMetrics.create({
-          data: {
-            companyId: company.id,
-            ...updates,
-          },
+          data: createData,
         });
       }
     }
