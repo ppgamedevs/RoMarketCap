@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@/src/lib/db";
-import { DiscoveryStatus, DiscoverySource } from "@prisma/client";
+import { DiscoveryStatus, DiscoverySource, Prisma } from "@prisma/client";
 import { verifyCompany } from "@/src/lib/connectors/anaf/verifyCompany";
 import { makeCompanySlug } from "@/src/lib/slug";
 import { updateCompanyRomcV1ById } from "@/src/lib/company/updateScore";
@@ -169,7 +169,7 @@ export async function verifyAndUpsert(
           confidenceScore: 70, // Good confidence for verified companies
           firstSeenAt: discovered.discoveredAt,
           lastSeenAt: new Date(),
-          rawJson: evidence,
+          rawJson: evidence as Prisma.InputJsonValue,
           externalId: (evidence.contractId || evidence.fundProjectId || evidence.awardNoticeId) as string | undefined,
           contractValue: evidence.value || evidence.amount ? (typeof (evidence.value || evidence.amount) === "number" ? (evidence.value || evidence.amount) as number : parseFloat(String(evidence.value || evidence.amount))) : undefined,
           contractYear: evidence.year as number | undefined,
