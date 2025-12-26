@@ -87,17 +87,18 @@ export async function storeMetricsAsSignal(
   }
 
   // Store as ingest signal
-  const signalType = providerId.includes("traffic") ? "WEB_TRAFFIC" : "TECH_STACK";
+  // Map provider to signal type (schema uses 'type', not 'signalType')
+  const signalType = (providerId.includes("traffic") ? "WEB_TRAFFIC" : "TECH_STACK") as "WEB_TRAFFIC" | "TECH_STACK";
   
   await prisma.companyIngestSignal.create({
     data: {
       companyId: company.id,
-      signalType,
-      signalValue: result.metrics.websiteTraffic || 0,
-      confidence: result.confidence,
-      metadata: result.metrics.metadata as Prisma.InputJsonValue,
-      source: providerId,
-      detectedAt: result.timestamp,
+      type: signalType,
+      valueNumeric: result.metrics.websiteTraffic || null,
+      valueText: null, // Metrics are numeric, not text
+      observedAt: result.timestamp,
+      // Note: schema doesn't have confidence, metadata, or source fields
+      // These would need to be added to the schema if needed
     },
   });
 
