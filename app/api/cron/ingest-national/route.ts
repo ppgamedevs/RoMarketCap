@@ -96,11 +96,18 @@ async function processCSVStream(
           }
 
           // Normalize row based on source
+          // Helper to safely extract numeric/string value
+          const getValue = (val: unknown): number | string | null => {
+            if (val === null || val === undefined) return null;
+            if (typeof val === "number" || typeof val === "string") return val;
+            return null;
+          };
+
           const normalized: NationalIngestionRow = {
             name: (row.nume_firma || row.denumire || row.nume || row.beneficiar || "") as string,
             cui,
-            contractValue: row.valoare || row.valoare_contract || row.valoare_proiect || null,
-            contractYear: row.an || row.an_contract || row.an_proiect || null,
+            contractValue: getValue(row.valoare) || getValue(row.valoare_contract) || getValue(row.valoare_proiect) || null,
+            contractYear: getValue(row.an) || getValue(row.an_contract) || getValue(row.an_proiect) || null,
             contractingAuthority: (row.autoritate_contractanta || row.nume_autoritate || row.program || row.nume_program || null) as string | null,
             externalId: (row.id_contract || row.contract_id || row.id_proiect || row.proiect_id || row.id || null) as string | null,
           };
