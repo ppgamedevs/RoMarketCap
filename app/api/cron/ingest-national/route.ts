@@ -135,7 +135,7 @@ async function processCSVStream(
           nextCursor: processedCount >= limit ? rowNumber.toString() : null,
         });
       },
-      error: (error) => {
+      error: (error: any) => {
         reject(error);
       },
     } as any);
