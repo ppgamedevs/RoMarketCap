@@ -301,7 +301,7 @@ async function storeRawSnapshot(
       providerId,
       cui: cui || null,
       payloadHash,
-      payloadJson: sanitized as Record<string, unknown>,
+      payloadJson: sanitized as Prisma.InputJsonValue,
       sizeBytes,
       runId,
     },
