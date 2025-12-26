@@ -50,8 +50,8 @@ export async function POST(req: Request, ctx: Ctx) {
       result,
     });
   } catch (error) {
-    console.error(`[admin:providers:${id}:enrich] Error:`, error);
     const { id } = await ctx.params;
+    console.error(`[admin:providers:${id}:enrich] Error:`, error);
     await providerRegistry.recordError(id, error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(
       {
