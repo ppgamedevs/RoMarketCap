@@ -346,7 +346,17 @@ export default async function CompanyPage({ params }: PageProps) {
 
       {verification && (
         <div className="mt-4">
-          <VerificationBadge verification={verification} lang={lang} />
+          <VerificationBadge
+            verification={{
+              isActive: verification.isActive,
+              isVatRegistered: verification.isVatRegistered,
+              lastReportedYear: verification.lastReportedYear,
+              verifiedAt: verification.verifiedAt,
+              verificationStatus: verification.verificationStatus as "SUCCESS" | "ERROR" | "PENDING",
+              errorMessage: verification.errorMessage,
+            }}
+            lang={lang}
+          />
         </div>
       )}
 
