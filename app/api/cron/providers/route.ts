@@ -33,7 +33,7 @@ const QuerySchema = z.object({
 export async function POST(req: Request) {
   try {
     // Check feature flag
-    const cronEnabled = await isFlagEnabled("FLAG_PROVIDERS_INGEST", false);
+    const cronEnabled = await isFlagEnabled("CRON_PROVIDERS_ENRICH", true);
     if (!cronEnabled) {
       return NextResponse.json({ ok: false, error: "Provider ingestion cron is disabled via feature flag" }, { status: 503 });
     }
