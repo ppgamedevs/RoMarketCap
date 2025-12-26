@@ -18,7 +18,7 @@ import { acquireLockWithRetry } from "@/src/lib/locks/distributed";
 import { isFlagEnabled } from "@/src/lib/flags/flags";
 import { shouldBlockMutation } from "@/src/lib/flags/readOnly";
 import * as Sentry from "@sentry/nextjs";
-import { DiscoverySource, DiscoveryStatus, IngestRunStatus } from "@prisma/client";
+import { DiscoverySource, DiscoveryStatus, IngestRunStatus, Prisma } from "@prisma/client";
 import { SEAPAdapter } from "@/src/lib/ingest/adapters/seap";
 import { EUFundsAdapter } from "@/src/lib/ingest/adapters/euFunds";
 import { verifyAndUpsert } from "@/src/lib/ingest/verifyAndUpsert";
@@ -189,7 +189,7 @@ async function processSource(
               cui: record.cui,
               source,
               status: "NEW",
-              evidenceJson: record.evidence as Record<string, unknown>,
+              evidenceJson: record.evidence as Prisma.InputJsonValue,
               discoveredAt: record.discoveredAt || new Date(),
             },
             update: {
