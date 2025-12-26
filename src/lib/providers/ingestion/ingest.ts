@@ -11,7 +11,7 @@ import type { IngestionProvider, NormalizedCompanyRecord, ProviderCompanyItem } 
 import { sanitizePayload, sha256StableJson } from "./sanitize";
 import { normalizeCUI, isValidCUI } from "@/src/lib/ingestion/cuiValidation";
 import { makeCompanySlug } from "@/src/lib/slug";
-import { logChange } from "@/src/lib/changelog/logChange";
+import { logCompanyChange } from "@/src/lib/changelog/logChange";
 
 /**
  * Validation schema for normalized records
@@ -170,10 +170,13 @@ async function upsertCompanyWithMerge(
       const changedFields = importantFields.filter((field) => updateData[field as keyof typeof updateData] !== undefined);
       
       if (changedFields.length > 0) {
-        await logChange(existing.id, {
-          type: "PROVIDER_UPDATE",
-          fields: changedFields,
-          source: providerId,
+        await logCompanyChange({
+          companyId: existing.id,
+          changeType: "ENRICHMENT",
+          metadata: {
+            fields: changedFields,
+            source: providerId,
+          },
         }).catch(() => null); // Don't fail ingestion if logging fails
       }
 

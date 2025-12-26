@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/src/lib/auth/requireAdmin";
+import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { prisma } from "@/src/lib/db";
 import { DiscoverySource } from "@prisma/client";
 import { SEAPAdapter } from "@/src/lib/ingest/adapters/seap";
@@ -20,7 +20,10 @@ const QuerySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin();
+    const session = await requireAdminSession();
+    if (!session) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
 
     const url = new URL(req.url);
     const parsed = QuerySchema.safeParse(Object.fromEntries(url.searchParams.entries()));

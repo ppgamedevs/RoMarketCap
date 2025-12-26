@@ -90,6 +90,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable ANAF verification cron",
     risky: true,
   },
+  FLAG_INGEST_NATIONAL: {
+    label: "Flag: Ingest National",
+    description: "Enable/disable national ingestion orchestrator (SEAP, EU Funds, ANAF, third-party)",
+    risky: true,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",

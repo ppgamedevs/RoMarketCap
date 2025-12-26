@@ -7,7 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/src/lib/auth/requireAdmin";
+import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { ingestionProviderRegistry } from "@/src/lib/providers/ingestion/registry";
 import { kv } from "@vercel/kv";
 
@@ -17,7 +17,10 @@ const BodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin();
+    const session = await requireAdminSession();
+    if (!session) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await req.json();
     const parsed = BodySchema.safeParse(body);
