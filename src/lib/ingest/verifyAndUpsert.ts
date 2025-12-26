@@ -165,7 +165,6 @@ export async function verifyAndUpsert(
           rowHash,
           discoverySource: discovered.source,
           evidenceUrl: evidence.url as string | undefined,
-          evidenceJson: evidence as Record<string, unknown>,
           confidenceScore: 70, // Good confidence for verified companies
           firstSeenAt: discovered.discoveredAt,
           lastSeenAt: new Date(),
