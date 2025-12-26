@@ -4,7 +4,7 @@
  * Ensures rankings are stable, fair, and not manipulable
  */
 
-import { Prisma } from "@prisma/client";
+import { Prisma, CompanyRiskFlag } from "@prisma/client";
 
 /**
  * Minimum data confidence threshold for appearing in top lists
@@ -14,10 +14,8 @@ const MIN_DATA_CONFIDENCE = 40;
 /**
  * Risk flags that should exclude companies from rankings
  */
-const EXCLUDING_RISK_FLAGS = [
-  "SUSPICIOUS_ACTIVITY",
-  "DATA_QUALITY_ISSUES",
-  "FRAUD_INDICATOR",
+const EXCLUDING_RISK_FLAGS: CompanyRiskFlag[] = [
+  CompanyRiskFlag.SUSPICIOUS_ACTIVITY,
   // Add more as needed
 ];
 
@@ -113,7 +111,7 @@ export function shouldIncludeInRanking(company: {
 
   // Must not have excluding risk flags
   for (const flag of EXCLUDING_RISK_FLAGS) {
-    if (company.companyRiskFlags.includes(flag)) {
+    if (company.companyRiskFlags.includes(flag as string)) {
       return false;
     }
   }
