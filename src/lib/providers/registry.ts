@@ -91,17 +91,17 @@ class ProviderRegistry {
     const lastErrorKey = `provider:lastError:${providerId}`;
 
     const [requests, errors, cost, lastSuccess, lastError] = await Promise.all([
-      kv.get<number>(requestsKey).catch(() => 0) || 0,
+      kv.get<number>(requestsKey).catch(() => null),
       kv.llen(errorsKey).catch(() => 0),
-      kv.get<number>(costKey).catch(() => 0) || 0,
+      kv.get<number>(costKey).catch(() => null),
       kv.get<string>(lastSuccessKey).catch(() => null),
       kv.get<string>(lastErrorKey).catch(() => null),
     ]);
 
     return {
-      requestsToday: requests,
-      errorsToday: errors,
-      costToday: cost,
+      requestsToday: requests ?? 0,
+      errorsToday: errors ?? 0,
+      costToday: cost ?? 0,
       lastSuccess: lastSuccess || undefined,
       lastError: lastError || undefined,
     };
