@@ -95,7 +95,8 @@ export async function verifyAndUpsert(
     }
 
     // Company exists and is active - upsert Company
-    const officialName = verification.officialName || discovered.evidenceJson.companyName || `Company ${discovered.cui}`;
+    const evidenceCompanyName = discovered.evidenceJson && typeof discovered.evidenceJson === 'object' && 'companyName' in discovered.evidenceJson ? String((discovered.evidenceJson as Record<string, unknown>).companyName) : null;
+    const officialName = verification.officialName || evidenceCompanyName || `Company ${discovered.cui}`;
     const slug = makeCompanySlug(officialName, discovered.cui);
     const existingSlug = await prisma.company.findUnique({ where: { slug } });
     const finalSlug = existingSlug ? `${slug}-${discovered.cui.toLowerCase()}` : slug;
