@@ -7,6 +7,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
+import { Prisma } from "@prisma/client";
 import type { IngestionProvider, NormalizedCompanyRecord, ProviderCompanyItem } from "./types";
 import { sanitizePayload, sha256StableJson } from "./sanitize";
 import { normalizeCUI, isValidCUI } from "@/src/lib/ingestion/cuiValidation";
@@ -264,7 +265,7 @@ async function upsertProvenance(
       lastPayloadHash: payloadHash,
       firstSeenAt: new Date(),
       lastSeenAt: new Date(),
-      rawJson: record as unknown as Record<string, unknown>,
+      rawJson: record as Prisma.InputJsonValue,
     },
   });
 
