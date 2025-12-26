@@ -9,12 +9,12 @@
  */
 
 import { BaseProviderAdapter } from "../base";
-import type {
-  ProviderMetadata,
+import {
   ProviderType,
-  CompanyDiscoveryResult,
-  CompanyEnrichmentResult,
-  CompanyMetricsResult,
+  type ProviderMetadata,
+  type CompanyDiscoveryResult,
+  type CompanyEnrichmentResult,
+  type CompanyMetricsResult,
 } from "../types";
 
 export class DummyBusinessRegistry extends BaseProviderAdapter {
