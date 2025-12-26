@@ -172,8 +172,12 @@ export async function ingestOne(record: SourceCompanyRecord): Promise<IngestOneR
           updateData.employees = patch.employees;
         }
 
-        if (patch.revenueLatest != null && (!existing.revenueLatest || existing.revenueLatest !== patch.revenueLatest)) {
-          updateData.revenueLatest = patch.revenueLatest;
+        if (patch.revenueLatest != null) {
+          const existingRevenue = existing.revenueLatest ? Number(existing.revenueLatest) : null;
+          const patchRevenue = typeof patch.revenueLatest === 'number' ? patch.revenueLatest : Number(patch.revenueLatest);
+          if (!existingRevenue || existingRevenue !== patchRevenue) {
+            updateData.revenueLatest = patch.revenueLatest;
+          }
         }
 
         if (patch.profitLatest != null && (!existing.profitLatest || existing.profitLatest !== patch.profitLatest)) {
