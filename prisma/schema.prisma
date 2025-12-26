@@ -152,6 +152,8 @@ enum CompanyMetricSource {
 enum CompanyIngestSignalType {
   SEAP_CONTRACT
   EU_FUNDS
+  CONTRACT_WIN  // Activity signal for SEAP contract wins
+  EU_GRANT      // Activity signal for EU funding grants
   JOBS
   WEB_TRAFFIC
   SOCIAL_MENTIONS
@@ -364,6 +366,17 @@ model Company {
   companyIntegrityScore Int?             @map("company_integrity_score") // 0..100
   dataConfidence        Int?             @map("data_confidence") // 0..100
 
+  // ANAF Verification (Prompt 52)
+  anafVerifiedAt DateTime? @map("anaf_verified_at") // Timestamp when ANAF verification was done
+  vatRegistered  Boolean?  @map("vat_registered")    // VAT registration status from ANAF
+  officialName   String?   @map("official_name")     // Official company name from ANAF
+
+  // PROMPT 55: Per-field provenance (capped JSON, max 8KB)
+  fieldProvenance Json? @map("field_provenance") // field -> {sourceId, sourceRef, seenAt, confidence}
+  
+  // PROMPT 55: Last seen from sources
+  lastSeenAtFromSources DateTime? @map("last_seen_at_from_sources") // Last time seen by any source
+
   createdAt     DateTime @default(now()) @map("created_at")
   // Named explicitly for SEO/content pipelines.
   lastUpdatedAt DateTime @updatedAt @map("updated_at")
@@ -387,6 +400,7 @@ model Company {
   userAlertRules     UserAlertRule[]
   provenance         CompanyProvenance[]
   verification       CompanyVerification?
+  discoveredCompanies DiscoveredCompany[]
 
   // CRM-lite tagging for outreach
   outreachStatus      String?   @map("outreach_status")
@@ -815,8 +829,19 @@ model CompanyProvenance {
   contractYear Int?    @map("contract_year") // Year of contract/award
   contractingAuthority String? @map("contracting_authority") @db.Text // Authority/program name
   totalValue  Decimal? @map("total_value") @db.Decimal(18, 2) // Aggregated total value (computed)
+  
+  // PROMPT 53: Provider ingestion support
+  providerId String? @map("provider_id") // Provider ID if from provider ingestion
+  runId      String? @map("run_id") // ProviderRun ID if from provider ingestion
+  lastPayloadHash String? @map("last_payload_hash") // SHA256 hash of last payload snapshot
+  
+  // PROMPT 54: Discovery support
+  discoverySource DiscoverySource? @map("discovery_source") // Source that discovered this company
+  evidenceUrl     String?          @map("evidence_url") @db.Text // URL to evidence (contract, award notice, etc.)
+  confidenceScore Int?             @map("confidence_score") // 0-100 confidence in this provenance
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  providerRun ProviderRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
 
   @@unique([companyId, sourceName, rowHash], name: "company_provenance_unique")
   @@unique([sourceName, externalId], name: "provenance_external_id_unique")
@@ -824,6 +849,8 @@ model CompanyProvenance {
   @@index([sourceName])
   @@index([sourceName, externalId])
   @@index([contractYear])
+  @@index([providerId])
+  @@index([runId])
   @@map("company_provenance")
 }
 
@@ -852,6 +879,176 @@ model CompanyVerification {
   @@index([verifiedAt])
   @@index([verificationStatus])
   @@map("company_verification")
+}
+
+// ============================================================================
+// PROMPT 54: National Company Discovery Orchestrator
+// ============================================================================
+
+enum DiscoverySource {
+  SEAP
+  EU_FUNDS
+  MANUAL
+  THIRD_PARTY
+}
+
+enum DiscoveryStatus {
+  NEW
+  INVALID
+  VERIFIED
+  REJECTED
+  ERROR
+  DUPLICATE
+}
+
+enum IngestRunStatus {
+  STARTED
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+// ============================================================================
+// PROMPT 53: Provider Ingestion System
+// ============================================================================
+
+enum ProviderRunStatus {
+  RUNNING
+  SUCCESS
+  FAIL
+  PARTIAL
+}
+
+model ProviderRun {
+  id            String            @id @default(cuid()) @map("id")
+  providerId    String             @map("provider_id")
+  startedAt     DateTime           @default(now()) @map("started_at")
+  finishedAt    DateTime?          @map("finished_at")
+  status        ProviderRunStatus  @default(RUNNING) @map("status")
+  cursorIn      String?            @map("cursor_in") // Input cursor (where we started)
+  cursorOut     String?            @map("cursor_out") // Output cursor (where we ended)
+  itemsFetched  Int                @default(0) @map("items_fetched")
+  itemsUpserted Int                @default(0) @map("items_upserted")
+  itemsRejected Int                @default(0) @map("items_rejected")
+  errorSummary  String?            @map("error_summary") @db.Text // Summary of errors
+  runtimeMs     Int?               @map("runtime_ms") // Runtime in milliseconds
+
+  rawSnapshots ProviderRawSnapshot[]
+  provenance   CompanyProvenance[]
+
+  @@index([providerId])
+  @@index([providerId, startedAt])
+  @@index([status])
+  @@index([startedAt])
+  @@map("provider_runs")
+}
+
+model ProviderRawSnapshot {
+  id          String    @id @default(cuid()) @map("id")
+  providerId  String    @map("provider_id")
+  cui         String?   @map("cui") // Nullable if unknown
+  fetchedAt   DateTime  @default(now()) @map("fetched_at")
+  payloadHash String   @map("payload_hash") // SHA256 hash
+  payloadJson Json     @map("payload_json") // Sanitized raw subset (max 8KB)
+  sizeBytes   Int      @map("size_bytes") // Size in bytes
+  runId       String   @map("run_id")
+
+  run ProviderRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([providerId, fetchedAt])
+  @@index([runId])
+  @@index([cui])
+  @@index([payloadHash])
+  @@map("provider_raw_snapshots")
+}
+
+// ============================================================================
+// PROMPT 54: Discovery Models
+// ============================================================================
+
+model DiscoveredCompany {
+  id              String          @id @default(cuid()) @map("id")
+  cui             String          @map("cui") // Normalized CUI (digits only)
+  source          DiscoverySource @map("source")
+  status          DiscoveryStatus @default(NEW) @map("status")
+  evidenceJson    Json            @map("evidence_json") // Raw evidence: contract id, award notice id, fund project id, name, URL, amount, date
+  discoveredAt    DateTime        @default(now()) @map("discovered_at")
+  lastTriedAt     DateTime?       @map("last_tried_at")
+  tryCount        Int             @default(0) @map("try_count")
+  lastError       String?         @map("last_error") @db.Text
+  linkedCompanyId String?         @map("linked_company_id") @db.Uuid // Link to Company if verified/upserted
+
+  company Company? @relation(fields: [linkedCompanyId], references: [id], onDelete: SetNull)
+
+  @@unique([cui, source], name: "discovered_company_unique")
+  @@index([status, discoveredAt])
+  @@index([cui])
+  @@index([source])
+  @@index([linkedCompanyId])
+  @@map("discovered_companies")
+}
+
+model IngestRun {
+  id         String          @id @default(cuid()) @map("id")
+  source     DiscoverySource @map("source")
+  status     IngestRunStatus @default(STARTED) @map("status")
+  startedAt  DateTime        @default(now()) @map("started_at")
+  finishedAt DateTime?        @map("finished_at")
+  cursor     String?         @map("cursor") // Persisted cursor (page token, offset, or "last seen id/date")
+  statsJson  Json            @map("stats_json") // Counts: discovered, invalid, duplicates, verified, errors
+  lastError  String?         @map("last_error") @db.Text
+
+  @@index([source, startedAt])
+  @@index([status])
+  @@index([startedAt])
+  @@map("ingest_runs")
+}
+
+// ============================================================================
+// PROMPT 55: Unified Ingestion Orchestrator v2
+// ============================================================================
+
+enum UnifiedIngestRunStatus {
+  STARTED
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+model UnifiedIngestRun {
+  id            String                 @id @default(cuid()) @map("id")
+  startedAt     DateTime                @default(now()) @map("started_at")
+  finishedAt    DateTime?               @map("finished_at")
+  status        UnifiedIngestRunStatus  @default(STARTED) @map("status")
+  sourcesEnabled Json                   @map("sources_enabled") // Array of source IDs enabled
+  counters      Json                    @map("counters") // {sourceId: {seen, upserted, errors, ...}}
+  cursorSnapshot Json                   @map("cursor_snapshot") // {sourceId: cursor}
+  notes         String?                 @map("notes") @db.Text
+
+  errors IngestItemError[]
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("unified_ingest_runs")
+}
+
+model IngestItemError {
+  id         String   @id @default(cuid()) @map("id")
+  ingestRunId String  @map("ingest_run_id")
+  sourceId   String   @map("source_id") // SEAP, EU_FUNDS, etc.
+  sourceRef  String?  @map("source_ref") // External reference
+  errorCode  String   @map("error_code") // Normalized error code
+  message    String   @map("message") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  run UnifiedIngestRun @relation(fields: [ingestRunId], references: [id], onDelete: Cascade)
+
+  @@index([ingestRunId])
+  @@index([sourceId])
+  @@index([errorCode])
+  @@index([createdAt])
+  @@map("ingest_item_errors")
 }
 
 model CompanyClaim {

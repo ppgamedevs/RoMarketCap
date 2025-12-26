@@ -216,6 +216,160 @@ Metrics are weighted by:
 5. **Error Handling**: Errors logged but don't crash system
 6. **Feature Flags**: Can disable providers instantly
 
+## Ingestion Providers (PROMPT 53)
+
+Ingestion providers are for **bulk data ingestion** - they fetch pages of companies and normalize them into our internal schema. This is different from enrichment providers which work on individual companies.
+
+### Architecture
+
+Ingestion providers implement the `IngestionProvider` interface:
+
+```typescript
+interface IngestionProvider {
+  id: string;
+  displayName: string;
+  supports: { companies, financials, employees, taxonomy };
+  rateLimit: { rpm, concurrency };
+  auth: { type, ... };
+  fetchPage(args): Promise<{ items, nextCursor? }>;
+  normalize(item): NormalizedCompanyRecord | null;
+  healthCheck(): Promise<boolean>;
+}
+```
+
+### How to Add a New Ingestion Provider in 1 File
+
+1. **Create provider file** in `src/lib/providers/ingestion/`:
+
+```typescript
+// src/lib/providers/ingestion/myProvider.ts
+import type { IngestionProvider, ProviderCompanyItem, ProviderPageResult, NormalizedCompanyRecord } from "./types";
+
+export class MyProvider implements IngestionProvider {
+  id = "provider_my";
+  displayName = "My Provider";
+  supports = { companies: true, financials: true, employees: true, taxonomy: true };
+  rateLimit = { rpm: 60, concurrency: 1 };
+  auth = { type: "api_key" as const, apiKey: process.env.MY_PROVIDER_API_KEY };
+
+  async fetchPage(args: { cursor?: string; limit?: number }): Promise<ProviderPageResult> {
+    // Fetch from API
+    const response = await fetch(`https://api.example.com/companies?cursor=${args.cursor}&limit=${args.limit}`, {
+      headers: { "Authorization": `Bearer ${this.auth.apiKey}` },
+    });
+    const data = await response.json();
+    
+    return {
+      items: data.companies,
+      nextCursor: data.nextCursor,
+    };
+  }
+
+  normalize(item: ProviderCompanyItem): NormalizedCompanyRecord | null {
+    const raw = item as { cui: string; name: string; ... };
+    
+    if (!raw.cui || !raw.name) {
+      return null;
+    }
+
+    return {
+      cui: raw.cui,
+      name: raw.name,
+      domain: raw.domain,
+      // ... other fields
+      confidence: 80,
+    };
+  }
+
+  async healthCheck(): Promise<boolean> {
+    try {
+      const result = await this.fetchPage({ limit: 1 });
+      return result.items.length >= 0; // Just check if API responds
+    } catch {
+      return false;
+    }
+  }
+}
+```
+
+2. **Register in registry** (`src/lib/providers/ingestion/registry.ts`):
+
+```typescript
+import { MyProvider } from "./myProvider";
+
+constructor() {
+  this.register(new StubProvider());
+  this.register(new MyProvider()); // Add this
+}
+```
+
+3. **Add environment variables** (`.env.local`):
+
+```env
+MY_PROVIDER_API_KEY=your-api-key
+MY_PROVIDER_BASE_URL=https://api.example.com
+```
+
+4. **Add feature flag** (via `/admin/flags`):
+   - Flag name: `PROVIDER_MY` (auto-created, defaults to enabled)
+
+5. **Test**:
+   - Use `/admin/providers` to see your provider
+   - Click "Run Dry" to test without writing to DB
+   - Click "Run Now" to actually ingest data
+
+### Stub Provider
+
+The `provider_stub` reads from a local JSON file for dev/test:
+
+```env
+PROVIDER_STUB_FILE=./data/providers/stub-companies.json
+```
+
+JSON format:
+```json
+[
+  {
+    "cui": "RO12345678",
+    "name": "Test Company SRL",
+    "domain": "test.com",
+    "employees": 50,
+    "revenue": 1000000,
+    "profit": 100000
+  }
+]
+```
+
+### Ingestion Flow
+
+1. **Cron triggers** `/api/cron/providers` (or manual via admin UI)
+2. **Provider fetches page** via `fetchPage()`
+3. **Each item normalized** via `normalize()`
+4. **Validated** with Zod schema
+5. **Upserted** with merge policy (never overwrites high-confidence data)
+6. **Provenance stored** in `CompanyProvenance`
+7. **Raw snapshot stored** in `ProviderRawSnapshot` (sanitized, 8KB cap)
+8. **Cursor updated** for next run
+
+### Merge Policy
+
+The ingestion engine **never overwrites**:
+- Manually approved data (claims/submissions)
+- High-confidence data (unless provider confidence is higher)
+
+It **always updates**:
+- Missing fields
+- Low-confidence data (if provider confidence is higher)
+
+### Safety Features
+
+1. **Sanitization**: Raw snapshots whitelist keys, cap at 8KB
+2. **Rate Limiting**: Per-provider rate limits enforced
+3. **Distributed Locks**: Prevents concurrent runs
+4. **Feature Flags**: Can disable instantly
+5. **Dry Run**: Test without writing to DB
+6. **Error Handling**: Errors logged, don't crash system
+
 ## Future Providers
 
 Potential real providers to integrate:

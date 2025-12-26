@@ -461,6 +461,28 @@ All rate-limited responses include `RateLimit-Limit`, `RateLimit-Remaining`, `Ra
 - `/admin/billing`: Shows billing-related audit events and reconciliation status
 - Displays last reconcile run, stats, and recent webhook/reconcile events
 
+## Cron Schedule (Vercel)
+
+Recommended cron jobs:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/orchestrate",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/ingest-national-v2",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
+```
+
+- **Orchestrator**: Every 15 minutes (runs all cron jobs)
+- **National Ingestion**: Every 60 minutes (ingests from SEAP/EU Funds)
+
 ## Manual QA checklist (Prompt 18 launch)
 
 - `/admin/launch` shows all required env checks green in production.

@@ -122,9 +122,88 @@ export async function GET() {
     readOnlyMode: await isReadOnlyMode(),
     demoMode: getEffectiveDemoMode(),
     launchMode: isLaunchMode(),
+    ingestion: await getIngestionHealth(),
   });
   res.headers.set("Cache-Control", "no-store");
   return res;
+}
+
+/**
+ * PROMPT 55: Get ingestion health stats
+ */
+async function getIngestionHealth() {
+  try {
+    const { prisma } = await import("@/src/lib/db");
+    const { kv } = await import("@vercel/kv");
+
+    // Last ingest run
+    const lastRun = await prisma.unifiedIngestRun.findFirst({
+      orderBy: { startedAt: "desc" },
+      select: { startedAt: true, status: true },
+    });
+
+    // Companies with source seen in last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const companiesWithSourceSeen = await prisma.company.count({
+      where: {
+        lastSeenAtFromSources: {
+          gte: thirtyDaysAgo,
+        },
+      },
+    });
+
+    // Manual-only companies (no source seen)
+    const manualOnly = await prisma.company.count({
+      where: {
+        lastSeenAtFromSources: null,
+      },
+    });
+
+    // Top error codes in last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentErrors = await prisma.ingestItemError.groupBy({
+      by: ["errorCode"],
+      where: {
+        createdAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+      _count: true,
+      orderBy: {
+        _count: {
+          errorCode: "desc",
+        },
+      },
+      take: 5,
+    });
+
+    // Get KV stats
+    const lastIngestTime = await kv.get<string>("cron:last:ingest").catch(() => null);
+    const ingestStats = await kv.get<string>("cron:stats:ingest").catch(() => null);
+
+    return {
+      lastRun: lastRun
+        ? {
+            startedAt: lastRun.startedAt.toISOString(),
+            status: lastRun.status,
+          }
+        : null,
+      lastIngestTime,
+      companiesWithSourceSeen,
+      manualOnly,
+      topErrors: recentErrors.map((e) => ({
+        code: e.errorCode,
+        count: e._count,
+      })),
+      stats: ingestStats ? JSON.parse(ingestStats) : null,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 }
 
 

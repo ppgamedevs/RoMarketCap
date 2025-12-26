@@ -1,6 +1,12 @@
 # National Data Ingestion v1
 
-**Status:** Implemented ✅
+**Status:** Fully Implemented ✅ (Prompt 51 Complete)
+
+All features from Prompt 51 have been implemented, including:
+- ✅ Activity signal creation (CONTRACT_WIN, EU_GRANT)
+- ✅ Post-ingestion hooks (ROMC scoring, confidence boost, enrichment scheduling)
+- ✅ Orchestrator integration
+- ✅ Comprehensive tests
 
 ## Overview
 
@@ -39,6 +45,16 @@ The `CompanyProvenance` model tracks:
 - `totalValue`: Aggregated total value (computed)
 - `rawJson`: Full raw record for audit/debugging
 
+### CompanyIngestSignal (Activity Signals)
+
+The `CompanyIngestSignal` model tracks individual contract/grant events:
+- `type`: `CONTRACT_WIN` (for SEAP) or `EU_GRANT` (for EU Funds)
+- `valueNumeric`: Contract/grant amount
+- `observedAt`: Date of the contract/grant (uses year from data)
+- Links to company via `companyId`
+
+**Note**: Activity signals are automatically created during ingestion for each contract/grant record.
+
 ## Usage
 
 ### Manual Ingestion
@@ -58,8 +74,8 @@ npm run ingest:eu-funds <path-to-eu-funds.csv> [--dry-run]
 The cron route `/api/cron/ingest-national` processes data from configured CSV URLs:
 
 **Environment Variables:**
-- `SEAP_CSV_URL`: URL to SEAP CSV file
-- `EU_FUNDS_CSV_URL`: URL to EU Funds CSV file
+- `SEAP_DATA_URL` or `SEAP_CSV_URL`: URL to SEAP CSV file (both names supported)
+- `EU_FUNDS_DATA_URL` or `EU_FUNDS_CSV_URL`: URL to EU Funds CSV file (both names supported)
 
 **Feature Flag:**
 - `CRON_INGEST_NATIONAL`: Enable/disable automated ingestion
@@ -131,6 +147,29 @@ Access at `/admin/national-ingestion` to view:
 - Deduplication by `(sourceName, externalId)` or `(companyId, sourceName, rowHash)`
 - Safe to run multiple times
 
+## Post-Ingestion Hooks
+
+After each company is ingested, the following hooks are automatically triggered:
+
+1. **ROMC Score Calculation**
+   - Updates ROMC v1 score
+   - Updates ROMC AI score
+   - Updates score-v0
+
+2. **Data Confidence Boost**
+   - Recalculates `dataConfidence` including SEAP/EU_FUNDS provenance
+   - National ingestion sources add 1.2x weight to confidence calculation
+
+3. **Enrichment Scheduling**
+   - Company marked as public and active
+   - Existing enrichment cron will pick it up automatically
+
+4. **Integrity Update**
+   - Updates company integrity score
+   - Updates risk flags
+
+**Note**: Hooks only run for new companies or when new provenance is created (not on updates).
+
 ## Testing
 
 Run tests:
@@ -141,6 +180,7 @@ npm test
 Test files:
 - `src/lib/ingestion/cuiValidation.test.ts`: CUI validation tests
 - `src/lib/ingestion/provenance.test.ts`: Provenance utility tests
+- `src/lib/ingestion/ingestion.test.ts`: CSV parsing, cursor resume, idempotency tests
 
 ## Migration
 
@@ -154,15 +194,28 @@ Or in production:
 npm run db:migrate:deploy
 ```
 
+## Orchestrator Integration
+
+National ingestion is integrated into the cron orchestrator (`/api/cron/orchestrate`):
+- Runs after enrichment step
+- Processes both SEAP and EU_FUNDS sources
+- Feature-flag controlled (`CRON_INGEST_NATIONAL`)
+- Budget-aware (processes 500 rows per source per run)
+
 ## Next Steps
 
-1. **Configure Data Sources**: Set `SEAP_CSV_URL` and `EU_FUNDS_CSV_URL` environment variables
+1. **Configure Data Sources**: Set `SEAP_DATA_URL` (or `SEAP_CSV_URL`) and `EU_FUNDS_DATA_URL` (or `EU_FUNDS_CSV_URL`) environment variables
 2. **Enable Feature Flag**: Set `CRON_INGEST_NATIONAL=1` in feature flags
-3. **Set Up Cron**: Add to Vercel Cron or similar:
-   ```
-   POST /api/cron/ingest-national?source=SEAP&limit=500
-   POST /api/cron/ingest-national?source=EU_FUNDS&limit=500
-   ```
+3. **Set Up Cron**: 
+   - Option A: Use orchestrator (recommended):
+     ```
+     POST /api/cron/orchestrate
+     ```
+   - Option B: Direct ingestion:
+     ```
+     POST /api/cron/ingest-national?source=SEAP&limit=500
+     POST /api/cron/ingest-national?source=EU_FUNDS&limit=500
+     ```
 4. **Monitor**: Check `/admin/national-ingestion` for stats and errors
 
 ## Example Output

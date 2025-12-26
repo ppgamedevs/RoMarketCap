@@ -449,6 +449,8 @@ export default async function CompanyPage({ params }: PageProps) {
           lastScoredAt={company.lastScoredAt}
           dataConfidence={company.dataConfidence}
           integrityScore={company.companyIntegrityScore}
+          lastSeenAtFromSources={company.lastSeenAtFromSources}
+          fieldProvenance={company.fieldProvenance as Record<string, { sourceId: string; sourceRef: string; seenAt: Date; confidence: number }> | null}
         />
 
         <ScoreExplanation

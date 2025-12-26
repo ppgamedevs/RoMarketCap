@@ -2,6 +2,8 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { createHash } from "crypto";
 import { normalizeCUI, isValidCUI } from "./cuiValidation";
 import { slugifyCompanyName, makeCompanySlug } from "../slug";
+import { applyPostIngestionHooks } from "./postHooks";
+import type { SourceId } from "./types";
 
 // Export prisma instance for testing
 export const prisma = new PrismaClient();
@@ -190,6 +192,53 @@ export async function aggregateProvenanceTotal(companyId: string): Promise<void>
 }
 
 /**
+ * Create activity signal for a company (CONTRACT_WIN or EU_GRANT).
+ * This creates a CompanyIngestSignal record to track individual contract/grant events.
+ */
+export async function createActivitySignal(
+  companyId: string,
+  sourceName: string,
+  row: NationalIngestionRow,
+): Promise<void> {
+  // Map source to signal type
+  const signalType = sourceName === "SEAP" ? "CONTRACT_WIN" : "EU_GRANT";
+  
+  // Parse amount
+  let amount: number | null = null;
+  if (row.contractValue != null) {
+    const num = typeof row.contractValue === "string" ? parseFloat(row.contractValue) : row.contractValue;
+    if (!isNaN(num) && num > 0) {
+      amount = num;
+    }
+  }
+
+  // Parse year for observedAt date
+  let observedAt: Date = new Date();
+  if (row.contractYear != null) {
+    const year = typeof row.contractYear === "string" ? parseInt(row.contractYear, 10) : row.contractYear;
+    if (!isNaN(year) && year >= 2000 && year <= new Date().getFullYear() + 1) {
+      observedAt = new Date(year, 0, 1); // Use January 1st of the year
+    }
+  }
+
+  // Only create signal if we have meaningful data (amount or valid year)
+  if (amount === null && observedAt.getFullYear() === new Date().getFullYear()) {
+    return;
+  }
+
+  // Create activity signal
+  await prisma.companyIngestSignal.create({
+    data: {
+      companyId,
+      type: signalType as "CONTRACT_WIN" | "EU_GRANT",
+      valueNumeric: amount,
+      valueText: null,
+      observedAt,
+    },
+  });
+}
+
+/**
  * Process a single national ingestion row.
  */
 export async function processNationalIngestionRow(
@@ -208,8 +257,23 @@ export async function processNationalIngestionRow(
   // Upsert provenance
   const { created: provCreated, updated: provUpdated } = await upsertProvenance(companyId, row, sourceName, rawJson);
 
+  // Create activity signal (CONTRACT_WIN or EU_GRANT)
+  await createActivitySignal(companyId, sourceName, row).catch((error) => {
+    // Log but don't fail ingestion if signal creation fails
+    console.error(`[ingestion] Failed to create activity signal for ${companyId}:`, error);
+  });
+
   // Aggregate total value
   await aggregateProvenanceTotal(companyId);
+
+  // Apply post-ingestion hooks (scoring, confidence, enrichment scheduling)
+  // Only run hooks if this is a new company or if we created new provenance
+  if (created || provCreated) {
+    await applyPostIngestionHooks(companyId).catch((error) => {
+      // Log but don't fail ingestion if hooks fail
+      console.error(`[ingestion] Failed to apply post-hooks for ${companyId}:`, error);
+    });
+  }
 
   return {
     companyId,
@@ -217,5 +281,68 @@ export async function processNationalIngestionRow(
     provenanceCreated: provCreated,
     provenanceUpdated: provUpdated,
   };
+}
+
+/**
+ * PROMPT 56: Write field provenance
+ * 
+ * Store provenance for a specific field
+ */
+export async function writeFieldProvenance(
+  companyId: string,
+  field: string,
+  sourceId: SourceId | "USER_APPROVED" | "ENRICHMENT",
+  sourceRef: string,
+  confidence: number,
+  runId?: string,
+): Promise<void> {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { fieldProvenance: true },
+  });
+
+  if (!company) {
+    return;
+  }
+
+  const existingProvenance = (company.fieldProvenance as Record<string, unknown>) || {};
+  const updatedProvenance = {
+    ...existingProvenance,
+    [field]: {
+      sourceId,
+      sourceRef,
+      seenAt: new Date(),
+      confidence,
+      runId,
+    },
+  };
+
+  // Cap at 50 fields
+  const fields = Object.keys(updatedProvenance);
+  if (fields.length > 50) {
+    // Keep most recent 50
+    const sorted = fields.sort((a, b) => {
+      const aSeen = (updatedProvenance[a] as { seenAt?: Date })?.seenAt?.getTime() || 0;
+      const bSeen = (updatedProvenance[b] as { seenAt?: Date })?.seenAt?.getTime() || 0;
+      return bSeen - aSeen;
+    });
+    const capped: Record<string, unknown> = {};
+    for (const field of sorted.slice(0, 50)) {
+      capped[field] = updatedProvenance[field];
+    }
+    await prisma.company.update({
+      where: { id: companyId },
+      data: {
+        fieldProvenance: capped as Prisma.InputJsonValue,
+      },
+    });
+  } else {
+    await prisma.company.update({
+      where: { id: companyId },
+      data: {
+        fieldProvenance: updatedProvenance as Prisma.InputJsonValue,
+      },
+    });
+  }
 }
 

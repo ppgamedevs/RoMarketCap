@@ -18,11 +18,17 @@ export async function listCompanies(filters: CompanyListFilters) {
 
   const q = (filters.q ?? "").trim();
   const { getEffectiveDemoMode } = await import("@/src/lib/launch/mode");
+  const { isLaunchMode } = await import("@/src/lib/launch/mode");
+  const { buildRankingGuard } = await import("@/src/lib/ranking/rankingGuard");
+  
   const isDemoMode = getEffectiveDemoMode();
+  const launchMode = isLaunchMode();
+  
+  // Use ranking guard for deterministic, fair rankings
+  const rankingGuard = buildRankingGuard(launchMode);
+  
   const where = {
-    isPublic: true,
-    visibilityStatus: "PUBLIC" as const,
-    ...(isDemoMode ? {} : { isDemo: false }),
+    ...rankingGuard.where,
     ...(filters.industry ? { industrySlug: filters.industry } : {}),
     ...(filters.county ? { countySlug: filters.county } : {}),
     ...(q
@@ -37,14 +43,15 @@ export async function listCompanies(filters: CompanyListFilters) {
       : {}),
   };
 
+  // Use ranking guard orderBy for deterministic tie-breakers, but allow custom sort
   const orderBy =
     filters.sort === "revenue_desc"
-      ? [{ revenueLatest: "desc" as const }, { romcScore: "desc" as const }]
+      ? [{ revenueLatest: "desc" as const }, ...rankingGuard.orderBy]
       : filters.sort === "employees_desc"
-        ? [{ employees: "desc" as const }, { romcScore: "desc" as const }]
+        ? [{ employees: "desc" as const }, ...rankingGuard.orderBy]
         : filters.sort === "newest"
-          ? [{ lastUpdatedAt: "desc" as const }]
-          : [{ romcScore: "desc" as const }, { romcConfidence: "desc" as const }];
+          ? [{ lastUpdatedAt: "desc" as const }, ...rankingGuard.orderBy]
+          : rankingGuard.orderBy;
 
   const [total, items] = await Promise.all([
     prisma.company.count({ where }),

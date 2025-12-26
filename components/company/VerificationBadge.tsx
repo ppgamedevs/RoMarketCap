@@ -55,7 +55,10 @@ export function VerificationBadge({ verification, lang }: VerificationBadgeProps
   }
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1.5 text-sm">
+    <div 
+      className="inline-flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1.5 text-sm"
+      title={lang === "ro" ? "Verificare fiscală publică (mod sigur)" : "Public fiscal verification (safe mode)"}
+    >
       <CheckCircle2 className="h-4 w-4 text-green-600" />
       <div className="flex flex-col">
         <span className="font-medium text-green-700">

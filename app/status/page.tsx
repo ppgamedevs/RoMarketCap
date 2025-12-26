@@ -86,6 +86,98 @@ export default async function StatusPage() {
           </CardBody>
         </Card>
 
+        {/* PROMPT 55: Ingestion Health */}
+        {health?.ingestion && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Ingestion Health" : "Ingestion Health"}</h2>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-2 text-sm">
+                {health.ingestion.lastRun && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{lang === "ro" ? "Ultima rulare" : "Last run"}:</span>
+                    <span className="text-xs">
+                      {new Date(health.ingestion.lastRun.startedAt).toLocaleString(lang === "ro" ? "ro-RO" : "en-GB")}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {lang === "ro" ? "Companii văzute în ultimele 30 zile" : "Companies seen in last 30 days"}
+                  </span>
+                  <span className="font-medium">{health.ingestion.companiesWithSourceSeen ?? 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {lang === "ro" ? "Companii doar manuale" : "Manual-only companies"}
+                  </span>
+                  <span className="font-medium">{health.ingestion.manualOnly ?? 0}</span>
+                </div>
+                {health.ingestion.topErrors && health.ingestion.topErrors.length > 0 && (
+                  <div className="mt-3 border-t pt-2">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      {lang === "ro" ? "Top erori (ultimele 7 zile)" : "Top errors (last 7 days)"}:
+                    </div>
+                    {health.ingestion.topErrors.map((err: { code: string; count: number }) => (
+                      <div key={err.code} className="flex items-center justify-between text-xs">
+                        <span>{err.code}</span>
+                        <span>{err.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* PROMPT 56: Coverage Block */}
+        {health?.ingestion && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Coverage" : "Coverage"}</h2>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {lang === "ro" ? "Companii indexate" : "Companies indexed"}
+                  </span>
+                  <span className="font-medium">{freshness.totalCompanies}</span>
+                </div>
+                {health.ingestion.lastIngestTime && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      {lang === "ro" ? "Ultima ingestion" : "Last ingestion"}
+                    </span>
+                    <span className="text-xs">
+                      {new Date(health.ingestion.lastIngestTime).toLocaleString(lang === "ro" ? "ro-RO" : "en-GB")}
+                    </span>
+                  </div>
+                )}
+                {health.ingestion.companiesWithSourceSeen != null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      {lang === "ro" ? "Văzute din surse (30 zile)" : "Seen from sources (30 days)"}
+                    </span>
+                    <span className="font-medium">{health.ingestion.companiesWithSourceSeen}</span>
+                  </div>
+                )}
+                {health.ingestion.stats && (
+                  <div className="mt-3 border-t pt-2 text-xs text-muted-foreground">
+                    {lang === "ro" ? "Procesate" : "Processed"}: {(health.ingestion.stats as { processed?: number })?.processed || 0}
+                    {" | "}
+                    {lang === "ro" ? "Create" : "Created"}: {(health.ingestion.stats as { created?: number })?.created || 0}
+                    {" | "}
+                    {lang === "ro" ? "Actualizate" : "Updated"}: {(health.ingestion.stats as { updated?: number })?.updated || 0}
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
         <Placements placements={placements} location="status" showEmptyState />
       </div>
     </main>

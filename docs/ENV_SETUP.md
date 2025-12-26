@@ -57,6 +57,21 @@ GOOGLE_SITE_VERIFICATION=""
 SLACK_WEBHOOK_URL=""
 ```
 
+### Company Discovery (PROMPT 54)
+
+```env
+# SEAP (Sistemul Electronic de Achiziții Publice) CSV URL
+SEAP_CSV_URL="https://example.com/seap-export.csv"
+
+# EU Funds CSV or JSON URL
+EU_FUNDS_CSV_URL="https://example.com/eu-funds.csv"
+# OR
+EU_FUNDS_JSON_URL="https://example.com/eu-funds.json"
+
+# Enable/disable ingestion (or use feature flag INGEST_ENABLED in KV)
+INGEST_ENABLED=1
+```
+
 ## Domain Setup
 
 - **Primary domain:** `romarketcap.com`

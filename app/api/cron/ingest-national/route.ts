@@ -187,16 +187,15 @@ async function executeIngest(req: Request) {
   const cursorKey = `cron:ingest-national:cursor:${source}`;
   const cursor = parsed.data.cursor || ((await kv.get<string>(cursorKey).catch(() => null)) ?? null);
 
-  // For now, we expect CSV URLs in environment variables
-  // In production, these would be configured data source URLs
-  const seapUrl = process.env.SEAP_CSV_URL;
-  const euFundsUrl = process.env.EU_FUNDS_CSV_URL;
+  // Support both naming conventions (prompt uses SEAP_DATA_URL, current uses SEAP_CSV_URL)
+  const seapUrl = process.env.SEAP_DATA_URL || process.env.SEAP_CSV_URL;
+  const euFundsUrl = process.env.EU_FUNDS_DATA_URL || process.env.EU_FUNDS_CSV_URL;
 
   if (source === "SEAP" && !seapUrl) {
-    return NextResponse.json({ ok: false, error: "SEAP_CSV_URL not configured" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "SEAP_DATA_URL or SEAP_CSV_URL not configured" }, { status: 400 });
   }
   if (source === "EU_FUNDS" && !euFundsUrl) {
-    return NextResponse.json({ ok: false, error: "EU_FUNDS_CSV_URL not configured" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "EU_FUNDS_DATA_URL or EU_FUNDS_CSV_URL not configured" }, { status: 400 });
   }
 
   const csvUrl = source === "SEAP" ? seapUrl! : euFundsUrl!;

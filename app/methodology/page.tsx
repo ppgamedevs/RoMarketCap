@@ -54,7 +54,45 @@ export default async function MethodologyPage() {
           <li>{lang === "ro" ? "Public filings (unde sunt disponibile)" : "Public filings (where available)"}</li>
           <li>{lang === "ro" ? "Actualizări trimise de utilizatori, verificate prin moderare" : "User submissions, verified via moderation"}</li>
           <li>{lang === "ro" ? "Semnale automate (ex: metadata website, linkuri sociale)" : "Automated signals (e.g. website metadata, social links)"}</li>
+          <li>{lang === "ro" ? "Date agregate din surse publice (SEAP, Fonduri UE)" : "Data aggregated from public sources (SEAP, EU Funds)"}</li>
         </ul>
+        <p className="pt-2 text-xs italic">
+          {lang === "ro"
+            ? "⚠️ Datele sunt agregate din surse publice și pot fi incomplete. Nu constituie consultanță financiară sau recomandare de investiții."
+            : "⚠️ Data is aggregated from public sources and may be incomplete. Does not constitute financial advice or investment recommendation."}
+        </p>
+
+        <h2 className="pt-4 text-sm font-medium text-foreground">{lang === "ro" ? "Verificare ANAF" : "ANAF Verification"}</h2>
+        <p>
+          {lang === "ro"
+            ? "RoMarketCap verifică existența și statusul legal al companiilor prin ANAF (Agenția Națională de Administrare Fiscală) în mod sigur și conform."
+            : "RoMarketCap verifies company existence and legal status through ANAF (National Agency for Fiscal Administration) in a safe and compliant manner."}
+        </p>
+        <p>
+          {lang === "ro"
+            ? "Verificarea ANAF confirmă:"
+            : "ANAF verification confirms:"}
+        </p>
+        <ul className="list-disc pl-5">
+          <li>{lang === "ro" ? "Existența companiei în registrul fiscal" : "Company existence in the fiscal registry"}</li>
+          <li>{lang === "ro" ? "Statusul activ/inactiv" : "Active/inactive status"}</li>
+          <li>{lang === "ro" ? "Înregistrarea ca plătitor TVA (dacă este cazul)" : "VAT registration status (if applicable)"}</li>
+        </ul>
+        <p className="pt-2">
+          {lang === "ro"
+            ? "Verificarea ANAF NU înseamnă:"
+            : "ANAF verification does NOT mean:"}
+        </p>
+        <ul className="list-disc pl-5">
+          <li>{lang === "ro" ? "Validare financiară sau solvabilitate" : "Financial validation or solvency"}</li>
+          <li>{lang === "ro" ? "Aprobare sau recomandare pentru investiții" : "Approval or recommendation for investments"}</li>
+          <li>{lang === "ro" ? "Garantie a calității serviciilor sau produselor" : "Guarantee of service or product quality"}</li>
+        </ul>
+        <p className="pt-2 text-xs italic">
+          {lang === "ro"
+            ? "Verificarea ANAF este o confirmare a existenței legale și a statusului fiscal. Aceasta crește încrederea în date, dar nu înlocuiește analiza financiară sau consultanța profesională."
+            : "ANAF verification is a confirmation of legal existence and fiscal status. This increases trust in data, but does not replace financial analysis or professional advice."}
+        </p>
         </CardBody>
       </Card>
     </main>

@@ -17,8 +17,8 @@ export type ANAFVerificationResult = {
   verificationStatus: "SUCCESS" | "ERROR" | "PENDING";
 };
 
-// Conservative rate limiting: 1 request per 2 seconds
-const RATE_LIMIT_MS = 2000;
+// PROMPT 52: Rate limiting: 1 request per second
+const RATE_LIMIT_MS = 1000;
 // Aggressive caching: 90 days default
 const DEFAULT_CACHE_TTL_DAYS = 90;
 const CACHE_TTL_SECONDS = DEFAULT_CACHE_TTL_DAYS * 24 * 60 * 60;

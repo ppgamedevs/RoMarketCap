@@ -8,6 +8,12 @@ This document describes the data flow from import to display.
 Import → Scoring → AI Scoring → Forecast → Changelog → Sitemap
 ```
 
+**PROMPT 56: National Ingestion Framework**
+
+```
+SEAP/EU Funds/ANAF/Third-Party → Merge Engine → Company (with provenance) → Scoring → Sitemap
+```
+
 ## Stages
 
 ### 1. Import
@@ -16,6 +22,7 @@ Import → Scoring → AI Scoring → Forecast → Changelog → Sitemap
 - CSV import via `/admin/import`
 - Company submissions via `/api/company/[cui]/submit`
 - Manual admin creation
+- **PROMPT 56: National Ingestion** (SEAP, EU Funds, ANAF, third-party)
 
 **Data:**
 - Company basic info (name, CUI, location, industry)
@@ -26,6 +33,14 @@ Import → Scoring → AI Scoring → Forecast → Changelog → Sitemap
 - `Company` table
 - `CompanyFinancialSnapshot` (if historical)
 - `CompanySubmission` (pending submissions)
+- `CompanyProvenance` (source tracking)
+- `Company.fieldProvenance` (per-field provenance)
+
+**PROMPT 56: Merge Engine**
+- Deterministic merge rules per field
+- Source priority: ANAF_VERIFY > USER_APPROVED > EU_FUNDS > SEAP > THIRD_PARTY > ENRICHMENT
+- Never overwrites user-approved data
+- Records all changes in `CompanyChangeLog`
 
 ### 2. Scoring (ROMC v1)
 
@@ -159,12 +174,21 @@ Import → Scoring → AI Scoring → Forecast → Changelog → Sitemap
 ## Cron Schedule
 
 **Recommended Vercel Cron:**
+- Orchestrator: Every 15 minutes (`/api/cron/orchestrate`)
+- National Ingestion: Every 60 minutes (`/api/cron/ingest-national-v2`)
 - Recalculate: Daily at 02:15 Europe/Bucharest
 - Enrich: Every 6 hours
 - Weekly Digest: Monday 08:00 Europe/Bucharest
 - Watchlist Alerts: Hourly
 - Billing Reconcile: Daily at 03:00 Europe/Bucharest
 - Snapshot: Daily at 04:00 Europe/Bucharest
+
+**PROMPT 56: National Ingestion**
+- Route: `/api/cron/ingest-national-v2`
+- Feature flag: `FLAG_INGEST_NATIONAL` (default: disabled, fail-closed)
+- Budget: 500 companies, 45s time limit
+- Sources: SEAP, EU_FUNDS, ANAF_VERIFY, THIRD_PARTY
+- Dead-letter: Errors recorded for retry
 
 ## Data Retention
 

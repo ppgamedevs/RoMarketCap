@@ -99,7 +99,95 @@ async function handleOrchestrate(req: Request) {
         stats.enrich = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 3. Watchlist Alerts (if enabled)
+      // 3. Unified Ingestion v2 (PROMPT 55) - if enabled, use this instead of old ingestion
+      if (await isFlagEnabled("INGEST_ENABLED", false)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/ingest-v2?limit=200&budgetMs=25000`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.unifiedIngest = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:ingest-v2", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.unifiedIngest = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.unifiedIngest = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 3b. National Ingestion (SEAP + EU Funds, if enabled - legacy, use v2 above if available)
+      if (await isFlagEnabled("CRON_INGEST_NATIONAL", true) && !(await isFlagEnabled("INGEST_ENABLED", false))) {
+        // Process SEAP
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/ingest-national?source=SEAP&limit=500`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.ingestSeap = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:ingest-national:SEAP", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.ingestSeap = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+
+        // Process EU Funds
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/ingest-national?source=EU_FUNDS&limit=500`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.ingestEuFunds = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:ingest-national:EU_FUNDS", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.ingestEuFunds = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.ingestSeap = { ok: true, duration: 0 }; // Skipped
+        stats.ingestEuFunds = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 4. Watchlist Alerts (if enabled)
       if (await isFlagEnabled("ALERTS", true)) {
         try {
           const stepStart = Date.now();
@@ -129,7 +217,7 @@ async function handleOrchestrate(req: Request) {
         stats.watchlistAlerts = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 4. Billing Reconcile (if enabled)
+      // 5. Billing Reconcile (if enabled)
       if (await isFlagEnabled("CRON_BILLING_RECONCILE", true)) {
         try {
           const stepStart = Date.now();
@@ -159,7 +247,7 @@ async function handleOrchestrate(req: Request) {
         stats.billingReconcile = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 5. Snapshot (once per day only, if enabled)
+      // 6. Snapshot (once per day only, if enabled)
       if (await isFlagEnabled("CRON_SNAPSHOT", true)) {
         const today = new Date().toISOString().split("T")[0];
         const lastSnapshotDate = await kv.get<string>("cron:last:snapshot:date");
@@ -196,7 +284,7 @@ async function handleOrchestrate(req: Request) {
         stats.snapshot = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 6. Weekly Digest (once per week only, if enabled)
+      // 7. Weekly Digest (once per week only, if enabled)
       if (await isFlagEnabled("NEWSLETTER_SENDS", true)) {
         const weekStart = getWeekStart(new Date()).toISOString();
         const lastDigestWeek = await kv.get<string>("cron:last:weekly-digest:week");

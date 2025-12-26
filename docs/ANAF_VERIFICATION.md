@@ -45,7 +45,9 @@ The ANAF Verification Connector verifies the existence and legal status of compa
 
 ### D) Cron Route
 
-**Endpoint:** `/api/cron/verify-anaf`
+**Endpoint:** `/api/cron/anaf-verify` (PROMPT 52)
+
+**Note:** The old endpoint `/api/cron/verify-anaf` is still available for backward compatibility, but the new endpoint follows PROMPT 52 specifications.
 
 **Features:**
 - Processes only companies:
@@ -57,7 +59,7 @@ The ANAF Verification Connector verifies the existence and legal status of compa
 
 **Usage:**
 ```bash
-POST /api/cron/verify-anaf?limit=10&dry=true&ttlDays=90
+POST /api/cron/anaf-verify?limit=10&dry=true&ttlDays=90
 Headers: x-cron-secret: <CRON_SECRET>
 ```
 
@@ -140,7 +142,7 @@ const result = await verifyCompanyANAF("RO12345678");
 
 Set up in Vercel Cron or similar:
 ```
-POST /api/cron/verify-anaf?limit=10
+POST /api/cron/anaf-verify?limit=10
 Headers: x-cron-secret: <CRON_SECRET>
 ```
 
@@ -189,7 +191,7 @@ Check verification status:
 2. **Enable Feature Flag**: Set `CRON_VERIFY_ANAF=1` in feature flags
 3. **Set Up Cron**: Add to Vercel Cron:
    ```
-   POST /api/cron/verify-anaf?limit=10
+   POST /api/cron/anaf-verify?limit=10
    ```
 4. **Monitor**: Check company pages for verification badges
 
