@@ -234,7 +234,7 @@ export class EUFundsAdapter implements DiscoveryAdapter {
           Papa.parse<EUFundsRow>(text, {
             header: true,
             skipEmptyLines: true,
-            step: (result, parser) => {
+            step: (result: Papa.ParseStepResult<EUFundsRow>, parser: Papa.Parser) => {
               currentLine++;
 
               // Skip until we reach the cursor position
