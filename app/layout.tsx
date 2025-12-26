@@ -5,6 +5,7 @@ import { getDefaultMetadata } from "@/lib/seo/metadata";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { getLangFromRequest } from "@/src/lib/i18n";
 import { PlausibleScript } from "@/components/analytics/PlausibleScript";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { getSiteUrl } from "@/lib/seo/site";
 import { cookies } from "next/headers";
@@ -54,7 +55,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReferralCapture />
-        {allowAnalytics ? <PlausibleScript /> : null}
+        {allowAnalytics ? (
+          <>
+            <PlausibleScript />
+            <GoogleAnalytics />
+          </>
+        ) : null}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
         <SiteHeader lang={lang} />
         <ReadOnlyBanner />
