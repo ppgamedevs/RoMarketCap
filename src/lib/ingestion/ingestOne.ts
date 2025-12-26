@@ -212,8 +212,8 @@ export async function ingestOne(record: SourceCompanyRecord): Promise<IngestOneR
       updateData.fieldProvenance = capFieldProvenance(mergedProvenance) as Prisma.InputJsonValue;
 
       // Check for material changes
-      const materialFields = ["name", "domain", "industrySlug", "countySlug", "employees", "revenueLatest", "profitLatest"];
-      const materialChange = materialFields.some((field) => updateData[field] !== undefined);
+      const materialFields: Array<keyof Prisma.CompanyUpdateInput> = ["name", "domain", "industrySlug", "countySlug", "employees", "revenueLatest", "profitLatest"];
+      const materialChange = materialFields.some((field) => (updateData as Record<string, unknown>)[field] !== undefined);
 
       // Update company
       await prisma.company.update({
