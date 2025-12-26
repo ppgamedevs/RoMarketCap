@@ -321,6 +321,36 @@ async function handleOrchestrate(req: Request) {
         stats.weeklyDigest = { ok: true, duration: 0 }; // Skipped
       }
 
+      // 8. Universe Ingestion (PROMPT 57: Skeleton companies)
+      if (await isFlagEnabled("FLAG_UNIVERSE_INGEST", false)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/universe-ingest?limit=1000`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.universeIngest = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:universe-ingest", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.universeIngest = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.universeIngest = { ok: true, duration: 0 }; // Skipped
+      }
+
       // Store stats
       const totalDuration = Date.now() - startTime;
       await kv.set("cron:last:orchestrate", new Date().toISOString());

@@ -95,6 +95,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable national ingestion orchestrator (SEAP, EU Funds, ANAF, third-party)",
     risky: true,
   },
+  FLAG_UNIVERSE_INGEST: {
+    label: "Flag: Universe Ingest",
+    description: "Enable/disable universe ingestion (skeleton companies from SEAP, EU Funds, ANAF)",
+    risky: true,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",

@@ -51,6 +51,7 @@ export async function GET(_req: Request, ctx: Ctx) {
             visibilityStatus: "PUBLIC",
             industrySlug: { not: null },
             ...(isDemoMode ? {} : { isDemo: false }),
+            // PROMPT 57: Include skeleton companies in sitemaps
           },
           _count: { _all: true },
         }),
@@ -61,6 +62,7 @@ export async function GET(_req: Request, ctx: Ctx) {
             visibilityStatus: "PUBLIC",
             countySlug: { not: null },
             ...(isDemoMode ? {} : { isDemo: false }),
+            // PROMPT 57: Include skeleton companies in sitemaps
           },
           _count: { _all: true },
         }),
@@ -131,6 +133,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         isPublic: true,
         visibilityStatus: "PUBLIC",
         ...(isDemoMode ? {} : { isDemo: false }),
+        // PROMPT 57: Include skeleton companies in sitemaps (they may have noindex meta tag)
       },
       select: { slug: true, canonicalSlug: true, lastUpdatedAt: true },
       orderBy: { slug: "asc" },

@@ -34,4 +34,12 @@ export async function getCompanyBySlugOrThrow(slug: string) {
   return company;
 }
 
+/**
+ * PROMPT 57: Check and promote skeleton company if criteria met
+ */
+export async function checkAndPromoteSkeleton(companyId: string): Promise<boolean> {
+  const { checkSkeletonPromotion } = await import("@/src/lib/universe/skeleton");
+  return checkSkeletonPromotion(companyId);
+}
+
 

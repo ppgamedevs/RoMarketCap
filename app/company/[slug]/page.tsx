@@ -87,6 +87,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonical = `${base}/company/${encodeURIComponent(canonicalSlug)}`;
   const ogImage = `${canonical}/opengraph-image`;
 
+  // PROMPT 57: Set noindex for skeleton companies with low confidence
+  const isSkeleton = company.isSkeleton === true;
+  const confidence = company.universeConfidence ?? company.dataConfidence ?? 0;
+  const shouldNoIndex = isSkeleton && confidence < 50; // Threshold: 50
+
   return {
     title,
     description,
@@ -98,6 +103,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         "x-default": canonical,
       },
     },
+    robots: shouldNoIndex ? { index: false, follow: true } : undefined,
     openGraph: { type: "website", title, description, url: canonical, images: [{ url: ogImage }] },
     twitter: { card: "summary_large_image", title, description, images: [ogImage] },
   };

@@ -377,6 +377,13 @@ model Company {
   // PROMPT 55: Last seen from sources
   lastSeenAtFromSources DateTime? @map("last_seen_at_from_sources") // Last time seen by any source
 
+  // PROMPT 57: Universe source tracking
+  universeSource      String? @map("universe_source") // SEAP | EU_FUNDS | ANAF | USER | THIRD_PARTY
+  universeConfidence Int?    @map("universe_confidence") // 0..100
+  universeVerified   Boolean @default(false) @map("universe_verified")
+  isSkeleton          Boolean @default(false) @map("is_skeleton") // True if minimal data only (no financials/scoring)
+  foundedAt           DateTime? @map("founded_at") // Registration/founding date
+
   createdAt     DateTime @default(now()) @map("created_at")
   // Named explicitly for SEO/content pipelines.
   lastUpdatedAt DateTime @updatedAt @map("updated_at")

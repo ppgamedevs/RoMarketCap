@@ -25,6 +25,7 @@ export type FeatureFlag =
   | "CRON_INGEST_NATIONAL"
   | "CRON_VERIFY_ANAF"
   | "FLAG_INGEST_NATIONAL"
+  | "FLAG_UNIVERSE_INGEST"
   | "READ_ONLY_MODE";
 
 /**
@@ -37,6 +38,7 @@ const RISKY_FLAGS: Set<FeatureFlag> = new Set([
   "CRON_BILLING_RECONCILE",
   "NEWSLETTER_SENDS",
   "FLAG_INGEST_NATIONAL", // PROMPT 56: Fail-closed for safety
+  "FLAG_UNIVERSE_INGEST", // PROMPT 57: Fail-closed for safety
 ]);
 
 /**
@@ -104,6 +106,7 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
     "CRON_INGEST_NATIONAL",
     "CRON_VERIFY_ANAF",
     "FLAG_INGEST_NATIONAL",
+    "FLAG_UNIVERSE_INGEST",
     "READ_ONLY_MODE",
   ];
 

@@ -50,6 +50,8 @@ export function buildRankingGuard(launchMode: boolean = false): RankingGuardFilt
     dataConfidence: {
       gte: MIN_DATA_CONFIDENCE,
     },
+    // PROMPT 57: Exclude skeleton companies from rankings
+    isSkeleton: false,
   };
 
   // Exclude DEMO companies in launch mode
@@ -87,9 +89,15 @@ export function shouldIncludeInRanking(company: {
   companyRiskFlags: string[];
   isPublic: boolean;
   visibilityStatus: string;
+  isSkeleton?: boolean;
 }, launchMode: boolean = false): boolean {
   // Must be public
   if (!company.isPublic || company.visibilityStatus !== "PUBLIC") {
+    return false;
+  }
+
+  // PROMPT 57: Exclude skeleton companies
+  if (company.isSkeleton === true) {
     return false;
   }
 

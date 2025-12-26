@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { prisma } from "@/src/lib/db";
-import { DiscoverySource } from "@prisma/client";
+import { DiscoverySource, Prisma } from "@prisma/client";
 import { SEAPAdapter } from "@/src/lib/ingest/adapters/seap";
 import { EUFundsAdapter } from "@/src/lib/ingest/adapters/euFunds";
 import { verifyAndUpsert } from "@/src/lib/ingest/verifyAndUpsert";
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
                 cui: record.cui,
                 source: source as DiscoverySource,
                 status: "NEW",
-                evidenceJson: record.evidence as Record<string, unknown>,
+                evidenceJson: record.evidence as Prisma.InputJsonValue,
                 discoveredAt: record.discoveredAt || new Date(),
               },
               update: {},

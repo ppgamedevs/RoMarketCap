@@ -86,13 +86,13 @@ export default async function MoversPage() {
     // Fallbacks if history is sparse.
     const [fallbackAi, newlyScored] = await Promise.all([
       prisma.company.findMany({
-        where: { isPublic: true, visibilityStatus: "PUBLIC", romcAiScore: { not: null } },
+        where: { isPublic: true, visibilityStatus: "PUBLIC", romcAiScore: { not: null }, isSkeleton: false },
         orderBy: [{ romcAiScore: "desc" }],
         take: 10,
         select: { slug: true, name: true, romcAiScore: true },
       }),
       prisma.company.findMany({
-        where: { isPublic: true, visibilityStatus: "PUBLIC", lastScoredAt: { gte: since } },
+        where: { isPublic: true, visibilityStatus: "PUBLIC", lastScoredAt: { gte: since }, isSkeleton: false },
         orderBy: [{ lastScoredAt: "desc" }],
         take: 10,
         select: { slug: true, name: true, romcScore: true },
