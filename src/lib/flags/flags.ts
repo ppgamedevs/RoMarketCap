@@ -26,6 +26,7 @@ export type FeatureFlag =
   | "CRON_VERIFY_ANAF"
   | "FLAG_INGEST_NATIONAL"
   | "FLAG_UNIVERSE_INGEST"
+  | "INGEST_ENABLED"
   | "READ_ONLY_MODE";
 
 /**
@@ -107,6 +108,7 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
     "CRON_VERIFY_ANAF",
     "FLAG_INGEST_NATIONAL",
     "FLAG_UNIVERSE_INGEST",
+    "INGEST_ENABLED",
     "READ_ONLY_MODE",
   ];
 
