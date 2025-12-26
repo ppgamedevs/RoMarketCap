@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { providerRegistry } from "@/src/lib/providers/registry";
-import { isFlagEnabled } from "@/src/lib/flags/flags";
+import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,8 +17,9 @@ export async function GET() {
     const providersWithStats = await Promise.all(
       providers.map(async (provider) => {
         const metadata = provider.getMetadata();
-        const flagKey = `PROVIDER_${metadata.id.toUpperCase().replace(/-/g, "_")}`;
-        const enabled = await isFlagEnabled(flagKey, false);
+        // Use KV directly since flag names are dynamic
+        const flagKey = `flag:PROVIDER_${metadata.id.toUpperCase().replace(/-/g, "_")}`;
+        const enabled = await kv.get<boolean>(flagKey).catch(() => true); // Default to enabled if not set
         const stats = await providerRegistry.getProviderStats(metadata.id).catch(() => ({
           requestsToday: 0,
           errorsToday: 0,
