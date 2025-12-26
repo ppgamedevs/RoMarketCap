@@ -104,12 +104,13 @@ export async function updateIntegrityWithVerification(companyId: string): Promis
   
   // Remove old verification-related flags
   // Note: These flags need to be added to the CompanyRiskFlag enum in the schema
+  // For now, we filter by casting the string to enum type for comparison
   const filteredFlags = existingFlags.filter(
-    (flag) => flag !== "VERIFICATION_FAILED" && flag !== "INACTIVE_IN_ANAF",
-  ) as CompanyRiskFlag[];
+    (flag) => flag !== ("VERIFICATION_FAILED" as CompanyRiskFlag) && flag !== ("INACTIVE_IN_ANAF" as CompanyRiskFlag),
+  );
   
   // Add new flags (cast to enum type - these should be added to the enum)
-  const newFlags = [...new Set([...filteredFlags, ...verificationFlags as CompanyRiskFlag[]])] as CompanyRiskFlag[];
+  const newFlags = [...new Set([...filteredFlags, ...(verificationFlags as CompanyRiskFlag[])])] as CompanyRiskFlag[];
 
   // Update company (only confidence and risk flags, never core fields)
   await prisma.company.update({
