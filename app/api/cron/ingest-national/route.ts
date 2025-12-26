@@ -9,7 +9,6 @@ import * as Sentry from "@sentry/nextjs";
 import { processNationalIngestionRow, type NationalIngestionRow } from "@/src/lib/ingestion/provenance";
 import { isValidCUI, normalizeCUI } from "@/src/lib/ingestion/cuiValidation";
 import Papa from "papaparse";
-import { Readable } from "stream";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,7 +36,7 @@ async function streamCSVFromURL(url: string): Promise<NodeJS.ReadableStream> {
 }
 
 async function processCSVStream(
-  stream: Readable,
+  stream: NodeJS.ReadableStream,
   sourceName: "SEAP" | "EU_FUNDS",
   limit: number,
   cursor: string | null,
@@ -61,7 +60,8 @@ async function processCSVStream(
   let processedCount = 0;
 
   return new Promise((resolve, reject) => {
-    Papa.parse(stream, {
+    // Papa.parse accepts NodeJS.ReadableStream, but types may need casting
+    Papa.parse(stream as any, {
       header: true,
       skipEmptyLines: true,
       step: async (result, parser) => {
