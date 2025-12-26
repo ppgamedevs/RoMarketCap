@@ -31,6 +31,7 @@ import { getOrSetPageCache, getLangForCache, isAdminForCache, PAGE_CACHE_TTLS } 
 import { generateBreadcrumbJsonLd } from "@/src/lib/seo/breadcrumbs";
 import { Metric } from "@/components/ui/Metric";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import type { SourceId } from "@/src/lib/ingestion/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -456,7 +457,7 @@ export default async function CompanyPage({ params }: PageProps) {
           dataConfidence={company.dataConfidence}
           integrityScore={company.companyIntegrityScore}
           lastSeenAtFromSources={company.lastSeenAtFromSources}
-          fieldProvenance={company.fieldProvenance as Record<string, { sourceId: string; sourceRef: string; seenAt: Date; confidence: number }> | null}
+          fieldProvenance={company.fieldProvenance ? (company.fieldProvenance as Record<string, { sourceId: SourceId; sourceRef: string; seenAt: Date; confidence: number }>) : null}
         />
 
         <ScoreExplanation
