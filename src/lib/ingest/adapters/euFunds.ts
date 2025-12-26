@@ -183,92 +183,111 @@ export class EUFundsAdapter implements DiscoveryAdapter {
 
       clearTimeout(timeoutId);
 
-    if (isJson) {
-      // Parse JSON
-      const data = await response.json();
-      const items = Array.isArray(data) ? data : data.items || data.data || [];
+      if (isJson) {
+        // Parse JSON
+        const data = await response.json();
+        const items = Array.isArray(data) ? data : data.items || data.data || [];
 
-      for (const item of items) {
-        if (yielded >= limit) {
-          break;
+        // Check actual size for JSON
+        const jsonSize = Buffer.byteLength(JSON.stringify(data), "utf8");
+        if (jsonSize > 100 * 1024 * 1024) {
+          throw new Error("JSON content too large (max 100MB)");
         }
 
-        const row = item as EUFundsRow;
-        const rowHash = hashRow(row);
-        const cui = extractCui(row);
+        for (const item of items) {
+          if (yielded >= limit) {
+            break;
+          }
 
-        if (!cui) {
-          continue; // Skip rows without valid CUI
+          const row = item as EUFundsRow;
+          const rowHash = hashRow(row);
+          const cui = extractCui(row);
+
+          if (!cui) {
+            continue; // Skip rows without valid CUI
+          }
+
+          const evidence = buildEvidence(row, rowHash);
+          const beneficiaryName = extractBeneficiaryName(row);
+
+          yield {
+            cui,
+            companyName: beneficiaryName,
+            evidence,
+            discoveredAt: new Date(),
+          };
+
+          yielded++;
+        }
+      } else {
+        // Parse CSV
+        const text = await response.text();
+
+        // Check actual size
+        if (Buffer.byteLength(text, "utf8") > 100 * 1024 * 1024) {
+          throw new Error("CSV content too large (max 100MB)");
         }
 
-        const evidence = buildEvidence(row, rowHash);
-        const beneficiaryName = extractBeneficiaryName(row);
+        const records: DiscoveredRecord[] = [];
 
-        yield {
-          cui,
-          companyName: beneficiaryName,
-          evidence,
-          discoveredAt: new Date(),
-        };
+        await new Promise<void>((resolve, reject) => {
+          Papa.parse<EUFundsRow>(text, {
+            header: true,
+            skipEmptyLines: true,
+            step: (result, parser) => {
+              currentLine++;
 
-        yielded++;
+              // Skip until we reach the cursor position
+              if (currentLine <= startLine) {
+                return;
+              }
+
+              // Stop if we've reached the limit
+              if (yielded >= limit) {
+                parser.abort();
+                return;
+              }
+
+              const row = result.data;
+              const rowHash = hashRow(row);
+              const cui = extractCui(row);
+
+              if (!cui) {
+                return; // Skip rows without valid CUI
+              }
+
+              const evidence = buildEvidence(row, rowHash);
+              const beneficiaryName = extractBeneficiaryName(row);
+
+              records.push({
+                cui,
+                companyName: beneficiaryName,
+                evidence,
+                discoveredAt: new Date(),
+              });
+
+              yielded++;
+            },
+            complete: () => {
+              resolve();
+            },
+            error: (error) => {
+              reject(error);
+            },
+          } as any);
+        });
+
+        // Yield all records
+        for (const record of records) {
+          yield record;
+        }
       }
-    } else {
-      // Parse CSV
-      const text = await response.text();
-      const records: DiscoveredRecord[] = [];
-
-      await new Promise<void>((resolve, reject) => {
-        Papa.parse<EUFundsRow>(text, {
-          header: true,
-          skipEmptyLines: true,
-          step: (result, parser) => {
-            currentLine++;
-
-            // Skip until we reach the cursor position
-            if (currentLine <= startLine) {
-              return;
-            }
-
-            // Stop if we've reached the limit
-            if (yielded >= limit) {
-              parser.abort();
-              return;
-            }
-
-            const row = result.data;
-            const rowHash = hashRow(row);
-            const cui = extractCui(row);
-
-            if (!cui) {
-              return; // Skip rows without valid CUI
-            }
-
-            const evidence = buildEvidence(row, rowHash);
-            const beneficiaryName = extractBeneficiaryName(row);
-
-            records.push({
-              cui,
-              companyName: beneficiaryName,
-              evidence,
-              discoveredAt: new Date(),
-            });
-
-            yielded++;
-          },
-          complete: () => {
-            resolve();
-          },
-          error: (error) => {
-            reject(error);
-          },
-        } as any);
-      });
-
-      // Yield all records
-      for (const record of records) {
-        yield record;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("Request timeout (30s)");
       }
+      throw error;
     }
   }
 

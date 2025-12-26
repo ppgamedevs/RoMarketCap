@@ -7,7 +7,7 @@
 
 import { PrismaClient, Prisma } from "@prisma/client";
 import type { CompanyEnrichmentResult, CompanyMetricsResult } from "./types";
-import { normalizeCUI } from "../ingestion/cuiValidation";
+import { normalizeCUI } from "@/src/lib/ingestion/cuiValidation";
 
 const prisma = new PrismaClient();
 

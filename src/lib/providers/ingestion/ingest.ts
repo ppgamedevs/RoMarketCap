@@ -9,7 +9,7 @@ import { z } from "zod";
 import { prisma } from "@/src/lib/db";
 import type { IngestionProvider, NormalizedCompanyRecord, ProviderCompanyItem } from "./types";
 import { sanitizePayload, sha256StableJson } from "./sanitize";
-import { normalizeCUI, isValidCUI } from "../ingestion/cuiValidation";
+import { normalizeCUI, isValidCUI } from "@/src/lib/ingestion/cuiValidation";
 import { makeCompanySlug } from "@/src/lib/slug";
 import { logChange } from "@/src/lib/changelog/logChange";
 
