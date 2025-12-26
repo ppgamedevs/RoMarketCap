@@ -197,7 +197,7 @@ export class SEAPAdapter implements DiscoveryAdapter {
       Papa.parse<SEAPRow>(text, {
         header: true,
         skipEmptyLines: true,
-        step: (result, parser) => {
+        step: (result: any, parser: any) => {
           currentLine++;
 
           // Skip until we reach the cursor position
@@ -234,7 +234,7 @@ export class SEAPAdapter implements DiscoveryAdapter {
         complete: () => {
           resolve();
         },
-        error: (error) => {
+        error: (error: Error) => {
           reject(error);
         },
       } as any);
