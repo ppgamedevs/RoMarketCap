@@ -90,9 +90,9 @@ async function ingestSEAPFromFile(filePath: string, dryRun = false): Promise<{
           }
 
           if (!dryRun) {
-            const result = await processNationalIngestionRow(normalized, "SEAP", result.data as Record<string, unknown>);
-            if (result.created) stats.created++;
-            if (result.provenanceUpdated) stats.updated++;
+            const upsertResult = await processNationalIngestionRow(normalized, "SEAP", result.data as Record<string, unknown>);
+            if (upsertResult.created) stats.created++;
+            if (upsertResult.provenanceUpdated) stats.updated++;
           } else {
             // Dry run - just validate
             stats.created++; // Count as would-be created
