@@ -32,7 +32,7 @@ const NormalizedRecordSchema = z.object({
   confidence: z.number().int().min(0).max(100).optional(),
   tags: z.array(z.string()).optional(),
   descriptionShort: z.string().max(240).optional(),
-  socials: z.record(z.string()).optional(),
+  socials: z.record(z.string(), z.string()).optional(),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
 });
