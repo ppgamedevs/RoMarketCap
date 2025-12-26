@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import GitHubProvider from "next-auth/providers/github";
 import { prisma } from "@/src/lib/db";
 
 // Vercel OAuth2 provider (generic OAuth2 since NextAuth doesn't have built-in Vercel provider)
@@ -47,10 +48,24 @@ function getAdminEmails(): Set<string> {
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    VercelProvider({
-      clientId: process.env.VERCEL_CLIENT_ID ?? "",
-      clientSecret: process.env.VERCEL_CLIENT_SECRET ?? "",
-    }) as any,
+    // GitHub OAuth - Easy to set up, widely used
+    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+      ? [
+          GitHubProvider({
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          }),
+        ]
+      : []),
+    // Vercel OAuth - For admin/internal use
+    ...(process.env.VERCEL_CLIENT_ID && process.env.VERCEL_CLIENT_SECRET
+      ? [
+          VercelProvider({
+            clientId: process.env.VERCEL_CLIENT_ID,
+            clientSecret: process.env.VERCEL_CLIENT_SECRET,
+          }) as any,
+        ]
+      : []),
   ],
   session: { strategy: "database" },
   callbacks: {
