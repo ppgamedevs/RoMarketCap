@@ -271,7 +271,7 @@ export class EUFundsAdapter implements DiscoveryAdapter {
             complete: () => {
               resolve();
             },
-            error: (error) => {
+            error: (error: Error) => {
               reject(error);
             },
           } as any);
