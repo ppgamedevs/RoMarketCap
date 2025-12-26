@@ -79,12 +79,27 @@ export async function updateIntegrityWithVerification(companyId: string): Promis
   const verification = company.verification;
 
   // Calculate confidence boost
-  const confidenceBoost = getVerificationConfidenceBoost(verification);
+  const confidenceBoost = getVerificationConfidenceBoost(
+    verification
+      ? {
+          isActive: verification.isActive,
+          isVatRegistered: verification.isVatRegistered,
+          verificationStatus: verification.verificationStatus as "SUCCESS" | "ERROR" | "PENDING",
+        }
+      : null,
+  );
   const baseConfidence = company.dataConfidence ?? 50;
   const newConfidence = Math.max(0, Math.min(100, baseConfidence + confidenceBoost));
 
   // Get risk flags
-  const verificationFlags = getVerificationRiskFlags(verification);
+  const verificationFlags = getVerificationRiskFlags(
+    verification
+      ? {
+          isActive: verification.isActive,
+          verificationStatus: verification.verificationStatus as "SUCCESS" | "ERROR" | "PENDING",
+        }
+      : null,
+  );
   const existingFlags = (company.companyRiskFlags || []) as string[];
   
   // Remove old verification-related flags
