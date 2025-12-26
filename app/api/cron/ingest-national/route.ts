@@ -65,7 +65,7 @@ async function processCSVStream(
     Papa.parse(stream as any, {
       header: true,
       skipEmptyLines: true,
-      step: async (result, parser) => {
+      step: async (result: any, parser: any) => {
         rowNumber++;
 
         // Skip until cursor
@@ -131,7 +131,7 @@ async function processCSVStream(
       error: (error) => {
         reject(error);
       },
-    });
+    } as any);
   });
 }
 
