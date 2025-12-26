@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/nextjs";
 import { processNationalIngestionRow, type NationalIngestionRow } from "@/src/lib/ingestion/provenance";
 import { isValidCUI, normalizeCUI } from "@/src/lib/ingestion/cuiValidation";
 import Papa from "papaparse";
+import { Readable } from "stream";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
