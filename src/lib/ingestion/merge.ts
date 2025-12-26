@@ -4,7 +4,7 @@
  * Implements conservative matching and merging logic
  */
 
-import type { SourceCompanyRecord, CompanyPatch, CompanyIdentityCandidate } from "./types";
+import type { SourceCompanyRecord, CompanyPatch, CompanyIdentityCandidate, SourceId } from "./types";
 import { normalizeCui } from "@/src/lib/cui/normalize";
 import { prisma } from "@/src/lib/db";
 import { MERGE_PRIORITY, CONFIDENCE_THRESHOLDS } from "./types";
