@@ -2,10 +2,9 @@
 
 ## ✅ Changes Made
 
-### 1. Switched from GitHub OAuth to Vercel OAuth
-- Updated `src/lib/auth.ts` to use Vercel OAuth2 provider
-- Updated `components/auth/SignInButton.tsx` to show "Sign in with Vercel"
-- **Note:** You'll need to create a Vercel OAuth app and get Client ID/Secret
+### 1. Authentication
+- Uses GitHub OAuth for user and admin authentication
+- Updated `components/auth/SignInButton.tsx` to show "Sign in with GitHub"
 
 ### 2. Updated Domain to romarketcap.com
 - Updated `src/lib/siteUrl.ts` - production fallback now uses `romarketcap.com`
@@ -25,21 +24,21 @@ REDIS_URL="rediss://default:ASPyAAImcDFlYzVjNDdjNTYwMDY0MjU5OWYzZWJkOTE4MWZjMmFi
 
 ## 🔧 Next Steps
 
-### 1. Set Up Vercel OAuth
+### 1. Set Up GitHub OAuth
 
-**Option A: Use Vercel's "Sign in with Vercel" (Recommended)**
-1. Go to [Vercel Integrations](https://vercel.com/integrations)
-2. Click "Create Integration"
-3. Choose "Sign in with Vercel"
-4. Set redirect URI: `https://romarketcap.com/api/auth/callback/vercel`
+1. Go to [GitHub Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)
+2. Click "New OAuth App" (or edit existing)
+3. Fill in:
+   - Application name: `RoMarketCap`
+   - Homepage URL: `https://romarketcap.com` (or your domain)
+   - Authorization callback URL: `https://romarketcap.com/api/auth/callback/github`
+     - For local dev: `http://localhost:3000/api/auth/callback/github`
+4. Click "Register application"
 5. Copy Client ID and Client Secret to `.env`:
    ```env
-   VERCEL_CLIENT_ID="your-client-id"
-   VERCEL_CLIENT_SECRET="your-client-secret"
+   GITHUB_CLIENT_ID="your-github-client-id"
+   GITHUB_CLIENT_SECRET="your-github-client-secret"
    ```
-
-**Option B: Use Generic OAuth2 (if Vercel doesn't have Sign in with Vercel)**
-You may need to adjust the OAuth endpoints in `src/lib/auth.ts` based on Vercel's actual OAuth API.
 
 ### 2. Add All Environment Variables
 
@@ -56,9 +55,9 @@ NEXT_PUBLIC_SITE_URL="https://romarketcap.com"
 NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 NEXTAUTH_URL="https://romarketcap.com"
 
-# Vercel OAuth
-VERCEL_CLIENT_ID="your-vercel-client-id"
-VERCEL_CLIENT_SECRET="your-vercel-client-secret"
+# GitHub OAuth
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
 
 # Admin
 ADMIN_EMAILS="your-email@example.com"

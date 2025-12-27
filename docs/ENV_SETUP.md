@@ -18,15 +18,19 @@ NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
 NEXTAUTH_URL="https://romarketcap.com"
 ```
 
-### Vercel OAuth (Sign in with Vercel)
-1. Go to [Vercel Integrations](https://vercel.com/integrations)
-2. Create a new integration
-3. Set redirect URI to: `https://romarketcap.com/api/auth/callback/vercel`
-4. Copy Client ID and Client Secret:
+### GitHub OAuth (Sign in with GitHub)
+1. Go to [GitHub Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)
+2. Click "New OAuth App" (or edit existing)
+3. Fill in:
+   - Application name: `RoMarketCap`
+   - Homepage URL: `https://romarketcap.com` (or your domain)
+   - Authorization callback URL: `https://romarketcap.com/api/auth/callback/github`
+4. Click "Register application"
+5. Copy Client ID and Client Secret:
 
 ```env
-VERCEL_CLIENT_ID="your-vercel-client-id"
-VERCEL_CLIENT_SECRET="your-vercel-client-secret"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
 ```
 
 ### Admin
