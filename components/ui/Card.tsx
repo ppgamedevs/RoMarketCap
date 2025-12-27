@@ -20,4 +20,7 @@ export function CardFooter({ className, children }: PropsWithChildren<{ classNam
   return <div className={clsx("border-t px-4 py-3", className)}>{children}</div>;
 }
 
+export function CardTitle({ className, children }: PropsWithChildren<{ className?: string }>) {
+  return <h3 className={clsx("text-lg font-semibold", className)}>{children}</h3>;
+}
 

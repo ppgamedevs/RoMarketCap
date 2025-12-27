@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { prisma } from "@/src/lib/db";
 import { Prisma } from "@prisma/client";
-import { getEffectiveLaunchMode } from "@/src/lib/launch/mode";
+import { isLaunchMode } from "@/src/lib/launch/mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function GET() {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const launchMode = getEffectiveLaunchMode();
+    const launchMode = isLaunchMode();
     const where: Prisma.CompanyWhereInput = {
       isPublic: true,
       visibilityStatus: "PUBLIC",
