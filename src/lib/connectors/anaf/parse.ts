@@ -138,7 +138,7 @@ export function parseANAFResponse(rawResponse: unknown): ANAFFinancialData[] {
 
   // If response contains multiple years (array or nested structure)
   if (Array.isArray(response.situatii_financiare) || Array.isArray(response.years)) {
-    const yearsArray = response.situatii_financiare || response.years;
+    const yearsArray = (response.situatii_financiare || response.years) as unknown[];
     for (const yearData of yearsArray) {
       if (typeof yearData === "object" && yearData !== null) {
         const yearYear = extractYear(yearData.an || yearData.year || yearData.anul) || year;
