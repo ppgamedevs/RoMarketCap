@@ -141,10 +141,11 @@ export function parseANAFResponse(rawResponse: unknown): ANAFFinancialData[] {
     const yearsArray = (response.situatii_financiare || response.years) as unknown[];
     for (const yearData of yearsArray) {
       if (typeof yearData === "object" && yearData !== null) {
-        const yearYear = extractYear(yearData.an || yearData.year || yearData.anul) || year;
-        const yearRevenue = parseNumeric(yearData.cifra_afaceri || yearData.venituri || yearData.CA);
-        const yearProfit = parseNumeric(yearData.profit || yearData.pierdere || yearData.profitNet);
-        const yearEmployees = parseNumeric(yearData.angajati || yearData.numar_angajati || yearData.employees);
+        const yearDataObj = yearData as Record<string, unknown>;
+        const yearYear = extractYear(yearDataObj.an || yearDataObj.year || yearDataObj.anul) || year;
+        const yearRevenue = parseNumeric(yearDataObj.cifra_afaceri || yearDataObj.venituri || yearDataObj.CA);
+        const yearProfit = parseNumeric(yearDataObj.profit || yearDataObj.pierdere || yearDataObj.profitNet);
+        const yearEmployees = parseNumeric(yearDataObj.angajati || yearDataObj.numar_angajati || yearDataObj.employees);
 
         const clampedYearRevenue = yearRevenue !== null ? clampValue(yearRevenue, 0, 1e12) : null;
         const clampedYearProfit = yearProfit !== null ? clampValue(yearProfit, -1e12, 1e12) : null;
