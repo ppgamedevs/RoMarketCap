@@ -74,13 +74,16 @@ export async function upsertCompaniesFromCuis(
             select: { id: true, dataConfidence: true },
           });
 
+          // Use name if available, otherwise use CUI as fallback (name is required in schema)
+          const companyName = item.name || `Company ${normalizedCui}`;
+
           // Upsert company
           const company = await tx.company.upsert({
             where: { cui: normalizedCui },
             create: {
               cui: normalizedCui,
-              name: item.name || null,
-              legalName: item.name || null,
+              name: companyName,
+              legalName: companyName,
               slug,
               canonicalSlug: slug,
               isPublic: true,
