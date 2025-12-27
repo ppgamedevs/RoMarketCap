@@ -101,7 +101,7 @@ export async function executeNationalIngestRun(
                 sourceType: cuiData?.sourceType || "UNKNOWN",
                 sourceRef: cuiData?.sourceRef || null,
                 reason: error.error,
-                rawPayload: cuiData?.raw as Prisma.InputJsonValue || null,
+                rawPayload: cuiData?.raw ? (cuiData.raw as Prisma.InputJsonValue) : Prisma.JsonNull,
               },
             });
           } catch (err) {
