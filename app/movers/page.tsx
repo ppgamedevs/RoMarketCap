@@ -84,8 +84,8 @@ export default async function MoversPage() {
     const topDown = movers.slice().reverse().slice(0, 10);
 
     // Fallbacks if history is sparse.
-    const { getEffectiveLaunchMode } = await import("@/src/lib/launch/mode");
-    const launchMode = getEffectiveLaunchMode();
+    const { isLaunchMode } = await import("@/src/lib/launch/mode");
+    const launchMode = isLaunchMode();
     
     const [fallbackAi, newlyScored] = await Promise.all([
       prisma.company.findMany({
