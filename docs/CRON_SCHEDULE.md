@@ -40,29 +40,41 @@ The orchestrator (`/api/cron/orchestrate`) runs jobs in this order:
    - Updates ROMC scores and forecasts
    - Runs if `CRON_RECALCULATE` flag is enabled
 
-2. **Enrich** (limit: 50 companies)
+2. **Merge Candidates** (limit: 50 companies) - PROMPT 60
+   - Generates merge candidates for duplicate companies
+   - Runs if `MERGE_CANDIDATES_CRON_ENABLED` flag is enabled
+
+3. **National Ingestion** (limit: 500 CUIs) - PROMPT 61
+   - Ingests companies from SEAP, EU funds, and other sources
+   - Runs if `NATIONAL_INGESTION_CRON_ENABLED` flag is enabled
+
+4. **Financial Sync** (limit: 10 companies) - PROMPT 58
+   - Syncs financial data from ANAF
+   - Runs if `FINANCIAL_SYNC_CRON_ENABLED` flag is enabled
+
+5. **Enrich** (limit: 50 companies)
    - Fetches external data (LinkedIn, SimilarWeb, etc.)
    - Runs if `CRON_ENRICH` flag is enabled
 
-3. **Watchlist Alerts** (limit: 200 alerts)
+6. **Watchlist Alerts** (limit: 200 alerts)
    - Sends email alerts for watchlist items
    - Runs if `ALERTS` flag is enabled
 
-4. **Billing Reconcile** (limit: 500 subscriptions)
+7. **Billing Reconcile** (limit: 500 subscriptions)
    - Syncs Stripe subscriptions with DB
    - Runs if `CRON_BILLING_RECONCILE` flag is enabled
 
-5. **Snapshot** (once per day only)
+8. **Snapshot** (once per day only)
    - Creates daily system snapshot
    - Runs if `CRON_SNAPSHOT` flag is enabled
    - Only runs once per UTC day (tracked in KV)
 
-6. **Weekly Digest** (once per week only)
+9. **Weekly Digest** (once per week only)
    - Generates and sends weekly newsletter
    - Runs if `NEWSLETTER_SENDS` flag is enabled
    - Only runs once per week (tracked in KV)
 
-7. **Claim Drip** (daily)
+10. **Claim Drip** (daily)
    - Sends claim drip emails (day 2 and day 5 after claim submission)
    - Runs daily to check for claims that need follow-up emails
    - No feature flag (always enabled)
@@ -86,6 +98,9 @@ curl -X POST https://your-domain.com/api/cron/orchestrate \
 Check KV keys for last execution timestamps:
 - `cron:last:orchestrate` - Last orchestrator run
 - `cron:last:recalculate` - Last recalculate run
+- `cron:last:merge-candidates` - Last merge candidates run (PROMPT 60)
+- `cron:last:national-ingest` - Last national ingestion run (PROMPT 61)
+- `cron:last:financial-sync` - Last financial sync run (PROMPT 58)
 - `cron:last:enrich` - Last enrich run
 - `cron:last:watchlist-alerts` - Last alerts run
 - `cron:last:billing-reconcile` - Last billing run
@@ -100,6 +115,9 @@ Stats are stored in:
 
 The orchestrator enforces batch limits to prevent quota exhaustion:
 - Recalculate: max 200 companies per run
+- Merge Candidates: max 50 companies per run (PROMPT 60)
+- National Ingestion: max 500 CUIs per run (PROMPT 61)
+- Financial Sync: max 10 companies per run (PROMPT 58)
 - Enrich: max 50 companies per run
 - Watchlist Alerts: max 200 alerts per run
 - Billing Reconcile: max 500 subscriptions per run

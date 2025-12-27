@@ -84,15 +84,32 @@ export default async function MoversPage() {
     const topDown = movers.slice().reverse().slice(0, 10);
 
     // Fallbacks if history is sparse.
+    const { getEffectiveLaunchMode } = await import("@/src/lib/launch/mode");
+    const launchMode = getEffectiveLaunchMode();
+    
     const [fallbackAi, newlyScored] = await Promise.all([
       prisma.company.findMany({
-        where: { isPublic: true, visibilityStatus: "PUBLIC", romcAiScore: { not: null }, isSkeleton: false },
+        where: { 
+          isPublic: true, 
+          visibilityStatus: "PUBLIC", 
+          romcAiScore: { not: null }, 
+          isSkeleton: false,
+          mergedIntoCompanyId: null, // PROMPT 60: Exclude merged companies
+          ...(launchMode ? { isDemo: false } : {}), // PROMPT 60: Exclude demo in launch mode
+        },
         orderBy: [{ romcAiScore: "desc" }],
         take: 10,
         select: { slug: true, name: true, romcAiScore: true },
       }),
       prisma.company.findMany({
-        where: { isPublic: true, visibilityStatus: "PUBLIC", lastScoredAt: { gte: since }, isSkeleton: false },
+        where: { 
+          isPublic: true, 
+          visibilityStatus: "PUBLIC", 
+          lastScoredAt: { gte: since }, 
+          isSkeleton: false,
+          mergedIntoCompanyId: null, // PROMPT 60: Exclude merged companies
+          ...(launchMode ? { isDemo: false } : {}), // PROMPT 60: Exclude demo in launch mode
+        },
         orderBy: [{ lastScoredAt: "desc" }],
         take: 10,
         select: { slug: true, name: true, romcScore: true },

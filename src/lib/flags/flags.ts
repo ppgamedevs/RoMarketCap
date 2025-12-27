@@ -27,7 +27,16 @@ export type FeatureFlag =
   | "FLAG_INGEST_NATIONAL"
   | "FLAG_UNIVERSE_INGEST"
   | "INGEST_ENABLED"
-  | "READ_ONLY_MODE";
+  | "READ_ONLY_MODE"
+  | "FINANCIAL_SYNC_ENABLED" // PROMPT 58: Financial sync feature
+  | "FINANCIAL_SYNC_CRON_ENABLED" // PROMPT 58: Financial sync cron
+  | "FINANCIAL_SYNC_ADMIN_ENABLED" // PROMPT 58: Financial sync admin endpoints
+  | "MERGE_CANDIDATES_ENABLED" // PROMPT 60: Merge candidates feature
+  | "MERGE_CANDIDATES_CRON_ENABLED" // PROMPT 60: Merge candidates cron
+  | "MERGE_ADMIN_ENABLED" // PROMPT 60: Merge admin UI
+  | "NATIONAL_INGESTION_ENABLED" // PROMPT 61: National ingestion feature
+  | "NATIONAL_INGESTION_CRON_ENABLED" // PROMPT 61: National ingestion cron
+  | "NATIONAL_INGESTION_ADMIN_ENABLED"; // PROMPT 61: National ingestion admin UI
 
 /**
  * Flags that default to DISABLED (fail-closed) for safety.
@@ -40,6 +49,12 @@ const RISKY_FLAGS: Set<FeatureFlag> = new Set([
   "NEWSLETTER_SENDS",
   "FLAG_INGEST_NATIONAL", // PROMPT 56: Fail-closed for safety
   "FLAG_UNIVERSE_INGEST", // PROMPT 57: Fail-closed for safety
+  "FINANCIAL_SYNC_ENABLED", // PROMPT 58: Fail-closed for safety
+  "FINANCIAL_SYNC_CRON_ENABLED", // PROMPT 58: Fail-closed for safety
+  "MERGE_CANDIDATES_ENABLED", // PROMPT 60: Fail-closed for safety
+  "MERGE_CANDIDATES_CRON_ENABLED", // PROMPT 60: Fail-closed for safety
+  "NATIONAL_INGESTION_ENABLED", // PROMPT 61: Fail-closed for safety
+  "NATIONAL_INGESTION_CRON_ENABLED", // PROMPT 61: Fail-closed for safety
 ]);
 
 /**
@@ -110,6 +125,15 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
     "FLAG_UNIVERSE_INGEST",
     "INGEST_ENABLED",
     "READ_ONLY_MODE",
+    "FINANCIAL_SYNC_ENABLED",
+    "FINANCIAL_SYNC_CRON_ENABLED",
+    "FINANCIAL_SYNC_ADMIN_ENABLED",
+    "MERGE_CANDIDATES_ENABLED",
+    "MERGE_CANDIDATES_CRON_ENABLED",
+    "MERGE_ADMIN_ENABLED",
+    "NATIONAL_INGESTION_ENABLED",
+    "NATIONAL_INGESTION_CRON_ENABLED",
+    "NATIONAL_INGESTION_ADMIN_ENABLED",
   ];
 
   const results = await Promise.all(flags.map(async (flag) => [flag, await getFlag(flag)] as const));

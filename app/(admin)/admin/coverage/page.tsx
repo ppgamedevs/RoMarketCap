@@ -1,13 +1,25 @@
-import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
+/**
+ * PROMPT 60: Coverage Dashboard
+ */
+
 import { redirect } from "next/navigation";
-import { CoverageClient } from "./CoverageClient";
+import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
+import { CoverageDashboardClient } from "./CoverageDashboardClient";
 
-export default async function CoveragePage() {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export default async function AdminCoveragePage() {
   const session = await requireAdminSession();
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/");
 
-  return <CoverageClient />;
+  return (
+    <main className="mx-auto max-w-7xl px-6 py-16">
+      <h1 className="text-2xl font-semibold tracking-tight">National Coverage Dashboard</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Monitor coverage, duplicates, and data completeness (PROMPT 60)
+      </p>
+      <CoverageDashboardClient />
+    </main>
+  );
 }
-

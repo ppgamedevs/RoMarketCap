@@ -69,6 +69,15 @@ EU_FUNDS_CSV_URL="https://example.com/eu-funds.csv"
 EU_FUNDS_JSON_URL="https://example.com/eu-funds.json"
 
 # Enable/disable ingestion (or use feature flag INGEST_ENABLED in KV)
+
+### ANAF Financial Sync (PROMPT 58)
+
+```env
+# ANAF Web Service URL for financial statements (optional, has default)
+ANAF_WS_BILANT_URL=https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva
+
+# Note: The actual financial statements endpoint may differ. Update when official endpoint is available.
+```
 INGEST_ENABLED=1
 ```
 

@@ -50,6 +50,8 @@ export function buildRankingGuard(launchMode: boolean = false): RankingGuardFilt
     },
     // PROMPT 57: Exclude skeleton companies from rankings
     isSkeleton: false,
+    // PROMPT 60: Exclude merged companies (only show canonical)
+    mergedIntoCompanyId: null,
   };
 
   // Exclude DEMO companies in launch mode
@@ -88,6 +90,7 @@ export function shouldIncludeInRanking(company: {
   isPublic: boolean;
   visibilityStatus: string;
   isSkeleton?: boolean;
+  mergedIntoCompanyId?: string | null;
 }, launchMode: boolean = false): boolean {
   // Must be public
   if (!company.isPublic || company.visibilityStatus !== "PUBLIC") {
@@ -96,6 +99,11 @@ export function shouldIncludeInRanking(company: {
 
   // PROMPT 57: Exclude skeleton companies
   if (company.isSkeleton === true) {
+    return false;
+  }
+
+  // PROMPT 60: Exclude merged companies
+  if (company.mergedIntoCompanyId) {
     return false;
   }
 

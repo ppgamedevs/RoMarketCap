@@ -63,6 +63,7 @@ model User {
   referralEventsAsReferred ReferralEvent[]     @relation("ReferralReferred")
   alertRules               UserAlertRule[]
   savedComparisons         SavedComparison[]
+  reviewedMergeCandidates  MergeCandidate[]
 
   @@index([email])
   @@index([stripeCustomerId])
@@ -226,10 +227,12 @@ enum CompanyChangeType {
   ENRICHMENT
   CLAIM_APPROVED
   SUBMISSION_APPROVED
+  FINANCIAL_SYNC // PROMPT 58: Financial data sync from ANAF
 }
 
 enum CompanyFinancialDataSource {
   ANAF
+  ANAF_WS // PROMPT 58: ANAF Web Service (public financial statements)
   ESTIMATE
   USER_SUBMITTED
 }
@@ -384,6 +387,11 @@ model Company {
   isSkeleton          Boolean @default(false) @map("is_skeleton") // True if minimal data only (no financials/scoring)
   foundedAt           DateTime? @map("founded_at") // Registration/founding date
 
+  // PROMPT 58: ANAF Financial Sync
+  lastFinancialSyncAt DateTime? @map("last_financial_sync_at") // Last time financials were synced from ANAF
+  financialSyncVersion Int @default(1) @map("financial_sync_version") // Version of sync logic used
+  financialSource Json? @map("financial_source") // Metadata: {year, source, fetchedAt, confidence}
+
   createdAt     DateTime @default(now()) @map("created_at")
   // Named explicitly for SEO/content pipelines.
   lastUpdatedAt DateTime @updatedAt @map("updated_at")
@@ -408,6 +416,12 @@ model Company {
   provenance         CompanyProvenance[]
   verification       CompanyVerification?
   discoveredCompanies DiscoveredCompany[]
+  aliases            CompanyAlias[]        @relation("CompanyAliases")
+  mergedInto         Company?             @relation("MergedCompanies", fields: [mergedIntoCompanyId], references: [id], onDelete: SetNull)
+  mergedIntoCompanyId String?             @map("merged_into_company_id") @db.Uuid
+  mergedCompanies    Company[]            @relation("MergedCompanies")
+  mergeCandidatesAsSource MergeCandidate[] @relation("SourceCompany")
+  mergeCandidatesAsTarget MergeCandidate[] @relation("TargetCompany")
 
   // CRM-lite tagging for outreach
   outreachStatus      String?   @map("outreach_status")
@@ -438,6 +452,7 @@ model Company {
   @@index([countySlug, romcAiScore])
   @@index([isDemo])
   @@index([outreachStatus])
+  @@index([mergedIntoCompanyId])
   @@map("companies")
 }
 
@@ -1257,10 +1272,16 @@ model CompanyFinancialSnapshot {
   assets      Decimal? @map("assets") @db.Decimal(18, 2)
   liabilities Decimal? @map("liabilities") @db.Decimal(18, 2)
   equity      Decimal? @map("equity") @db.Decimal(18, 2)
+  employees   Int?     @map("employees") // PROMPT 58: Employee count from financial statements
 
   dataSource      CompanyFinancialDataSource @map("data_source")
   // 0–100, confidence in the snapshot values (source reliability + completeness).
   confidenceScore Int                        @map("confidence_score")
+
+  // PROMPT 58: Idempotency checksum (stable hash of normalized payload)
+  checksum String? @map("checksum") // SHA256 hash of normalized financial data
+
+  fetchedAt DateTime @default(now()) @map("fetched_at") // When data was fetched from source
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -1270,7 +1291,27 @@ model CompanyFinancialSnapshot {
   @@unique([companyId, fiscalYear, dataSource])
   @@index([companyId, fiscalYear])
   @@index([fiscalYear])
+  @@index([checksum])
   @@map("company_financial_snapshots")
+}
+
+// PROMPT 58: Financial Sync Job tracking
+model FinancialSyncJob {
+  id        String   @id @default(cuid()) @map("id")
+  startedAt DateTime @default(now()) @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  mode      String   @map("mode") // "DRY_RUN" | "LIVE"
+  limit     Int      @map("limit")
+  cursor    String?  @map("cursor")
+  okCount   Int      @default(0) @map("ok_count")
+  failCount Int      @default(0) @map("fail_count")
+  lastError String?  @map("last_error") @db.Text
+  status    String   @default("STARTED") @map("status") // "STARTED" | "COMPLETED" | "FAILED"
+  stats     Json?    @map("stats") // Additional stats as JSON
+
+  @@index([startedAt])
+  @@index([status])
+  @@map("financial_sync_jobs")
 }
 
 model CompanySignal {
@@ -1331,4 +1372,103 @@ model CompanyValuationEstimate {
   @@unique([companyId, calculatedAt, modelVersion])
   @@index([companyId, calculatedAt])
   @@map("company_valuation_estimates")
+}
+
+// PROMPT 60: National Coverage - Merge Candidates
+enum MergeCandidateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AUTO_APPROVED
+}
+
+model MergeCandidate {
+  id        String                @id @default(uuid()) @map("id") @db.Uuid
+  sourceCompanyId String          @map("source_company_id") @db.Uuid
+  targetCompanyId String          @map("target_company_id") @db.Uuid
+  status    MergeCandidateStatus  @default(PENDING) @map("status")
+  confidence Int                  @map("confidence") // 0-100
+  matchReasons Json               @map("match_reasons") // Array of match reasons (CUI, name, domain, etc.)
+  diffJson  Json?                 @map("diff_json") // Side-by-side diff for admin UI
+  reviewedByUserId String?        @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt DateTime?            @map("reviewed_at")
+  reviewNote String?              @map("review_note") @db.Text
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+
+  sourceCompany Company @relation("SourceCompany", fields: [sourceCompanyId], references: [id], onDelete: Cascade)
+  targetCompany Company @relation("TargetCompany", fields: [targetCompanyId], references: [id], onDelete: Cascade)
+  reviewedBy    User?   @relation(fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceCompanyId, targetCompanyId])
+  @@index([status, createdAt])
+  @@index([confidence])
+  @@index([sourceCompanyId])
+  @@index([targetCompanyId])
+  @@map("merge_candidates")
+}
+
+// PROMPT 60: Company Aliases (for merged companies)
+model CompanyAlias {
+  id        String   @id @default(uuid()) @map("id") @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  aliasType String   @map("alias_type") // "name" | "domain" | "slug" | "cui"
+  aliasValue String  @map("alias_value")
+  source    String?  @map("source") // Where this alias came from (source name)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation("CompanyAliases", fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, aliasType, aliasValue])
+  @@index([companyId])
+  @@index([aliasType, aliasValue])
+  @@map("company_aliases")
+}
+
+// PROMPT 61: National Ingestion Job tracking
+enum NationalIngestJobStatus {
+  STARTED
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+model NationalIngestJob {
+  id          String                 @id @default(cuid()) @map("id")
+  startedAt   DateTime               @default(now()) @map("started_at")
+  finishedAt DateTime?               @map("finished_at")
+  status     NationalIngestJobStatus @default(STARTED) @map("status")
+  mode       String                  @map("mode") // "DRY_RUN" | "LIVE"
+  limit      Int                     @map("limit")
+  cursorIn   String?                 @map("cursor_in") // Cursor at start of run
+  cursorOut  String?                 @map("cursor_out") // Cursor at end of run
+  discovered Int                     @default(0) @map("discovered") // Total CUIs discovered
+  upserted   Int                     @default(0) @map("upserted") // Companies created/updated
+  errors     Int                     @default(0) @map("errors") // Error count
+  stats      Json?                   @map("stats") // Per-source stats
+  notes      String?                 @map("notes") @db.Text
+
+  errorRecords NationalIngestError[]
+
+  @@index([startedAt])
+  @@index([status])
+  @@map("national_ingest_jobs")
+}
+
+model NationalIngestError {
+  id          String   @id @default(cuid()) @map("id")
+  jobId       String   @map("job_id")
+  cui         String?  @map("cui") // CUI that failed (if available)
+  sourceType  String   @map("source_type") // SEAP, EU_FUNDS, PROVIDER, ANAF
+  sourceRef   String?  @map("source_ref") // External reference
+  reason      String   @map("reason") @db.Text
+  rawPayload  Json?    @map("raw_payload") // Capped raw payload for debugging
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  job NationalIngestJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([sourceType])
+  @@index([createdAt])
+  @@map("national_ingest_errors")
 }

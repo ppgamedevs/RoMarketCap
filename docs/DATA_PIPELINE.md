@@ -32,6 +32,7 @@ SEAP/EU Funds/ANAF/Third-Party → Merge Engine → Company (with provenance) �
 **Storage:**
 - `Company` table
 - `CompanyFinancialSnapshot` (if historical)
+- **ANAF Financial Sync (PROMPT 58)**: Automated sync of financial statements from ANAF web service
 - `CompanySubmission` (pending submissions)
 - `CompanyProvenance` (source tracking)
 - `Company.fieldProvenance` (per-field provenance)

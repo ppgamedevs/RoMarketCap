@@ -32,6 +32,8 @@ import { generateBreadcrumbJsonLd } from "@/src/lib/seo/breadcrumbs";
 import { Metric } from "@/components/ui/Metric";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import type { SourceId } from "@/src/lib/ingestion/types";
+import { FinancialsCard } from "@/components/company/FinancialsCard";
+import { CompanyFinancialDataSource } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -259,6 +261,16 @@ export default async function CompanyPage({ params }: PageProps) {
 
   const fin = company.financials[0] ?? null;
 
+  // Fetch financial snapshots for FinancialsCard (PROMPT 58)
+  const financialSnapshots = await prisma.companyFinancialSnapshot.findMany({
+    where: {
+      companyId: company.id,
+      dataSource: CompanyFinancialDataSource.ANAF_WS,
+    },
+    orderBy: { fiscalYear: "desc" },
+    take: 3, // Last 3 years
+  });
+
   const riskFlags = riskFlagsForCompany(company);
   const confidence = latestDaily?.confidence ?? fin?.confidenceScore ?? 50;
 
@@ -458,6 +470,25 @@ export default async function CompanyPage({ params }: PageProps) {
           integrityScore={company.companyIntegrityScore}
           lastSeenAtFromSources={company.lastSeenAtFromSources}
           fieldProvenance={company.fieldProvenance ? (company.fieldProvenance as unknown as Record<string, { sourceId: SourceId; sourceRef: string; seenAt: Date; confidence: number }>) : null}
+        />
+
+        <FinancialsCard
+          lang={lang}
+          revenueLatest={company.revenueLatest ? Number(String(company.revenueLatest)) : null}
+          profitLatest={company.profitLatest ? Number(String(company.profitLatest)) : null}
+          employees={company.employees}
+          currency={company.currency}
+          lastFinancialSyncAt={company.lastFinancialSyncAt}
+          financialSource={company.financialSource}
+          financialSnapshots={financialSnapshots.map((s) => ({
+            fiscalYear: s.fiscalYear,
+            revenue: s.revenue ? Number(String(s.revenue)) : null,
+            profit: s.profit ? Number(String(s.profit)) : null,
+            employees: s.employees,
+            currency: s.currency,
+            dataSource: s.dataSource,
+            fetchedAt: s.fetchedAt,
+          }))}
         />
 
         <ScoreExplanation

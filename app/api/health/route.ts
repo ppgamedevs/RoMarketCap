@@ -123,6 +123,7 @@ export async function GET() {
     demoMode: getEffectiveDemoMode(),
     launchMode: isLaunchMode(),
     ingestion: await getIngestionHealth(),
+    nationalIngest: await getNationalIngestHealth(),
   });
   res.headers.set("Cache-Control", "no-store");
   return res;
@@ -198,6 +199,58 @@ async function getIngestionHealth() {
         count: e._count,
       })),
       stats: ingestStats ? JSON.parse(ingestStats) : null,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * PROMPT 61: Get national ingestion health stats
+ */
+async function getNationalIngestHealth() {
+  try {
+    const { prisma } = await import("@/src/lib/db");
+    const { kv } = await import("@vercel/kv");
+    const { readLastRunStats } = await import("@/src/lib/ingestion/national/checkpoint");
+
+    // Last run time
+    const lastRunTime = await kv.get<string>("national-ingest:last-run").catch(() => null);
+    
+    // Last run stats
+    const lastRunStats = await readLastRunStats();
+    
+    // Last job
+    const lastJob = await prisma.nationalIngestJob.findFirst({
+      orderBy: { startedAt: "desc" },
+      select: {
+        startedAt: true,
+        finishedAt: true,
+        status: true,
+        discovered: true,
+        upserted: true,
+        errors: true,
+      },
+    });
+
+    // Error count in last run
+    const errorCountLastRun = lastJob?.errors || 0;
+    
+    // Check if degraded (no run in 24h or high error rate)
+    const hoursSinceLastRun = lastRunTime
+      ? (Date.now() - new Date(lastRunTime).getTime()) / (1000 * 60 * 60)
+      : null;
+    const degraded = hoursSinceLastRun != null && hoursSinceLastRun > 24;
+
+    return {
+      nationalIngestLastRun: lastRunTime,
+      nationalIngestDegraded: degraded,
+      discoveredLastRun: lastJob?.discovered || 0,
+      upsertedLastRun: lastJob?.upserted || 0,
+      errorCountLastRun,
+      lastJobStatus: lastJob?.status || null,
     };
   } catch (error) {
     return {

@@ -132,6 +132,16 @@ Flags are cached for 30 seconds. To force immediate refresh:
 
 ## Audit Logging
 
+## Financial Sync Flags (PROMPT 58)
+
+- `FINANCIAL_SYNC_ENABLED`: Enable/disable ANAF financial sync feature (default: disabled, fail-closed)
+- `FINANCIAL_SYNC_CRON_ENABLED`: Enable/disable automated financial sync cron job (default: disabled, fail-closed)
+- `FINANCIAL_SYNC_ADMIN_ENABLED`: Enable/disable admin endpoints for financial sync (default: enabled)
+
+See [FINANCIAL_SYNC.md](./FINANCIAL_SYNC.md) for details.
+
+---
+
 All flag toggles are logged to `AdminAuditLog` with:
 - Action: `FLAG_TOGGLE`
 - EntityType: `FEATURE_FLAG`

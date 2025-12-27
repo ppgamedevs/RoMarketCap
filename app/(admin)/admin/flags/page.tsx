@@ -105,6 +105,51 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable unified ingestion v2 (PROMPT 55)",
     risky: true,
   },
+  FINANCIAL_SYNC_ENABLED: {
+    label: "Financial Sync: Enabled",
+    description: "Enable/disable ANAF financial sync feature (PROMPT 58)",
+    risky: true,
+  },
+  FINANCIAL_SYNC_CRON_ENABLED: {
+    label: "Financial Sync: Cron",
+    description: "Enable/disable automated financial sync cron job (PROMPT 58)",
+    risky: true,
+  },
+  FINANCIAL_SYNC_ADMIN_ENABLED: {
+    label: "Financial Sync: Admin",
+    description: "Enable/disable admin endpoints for financial sync (PROMPT 58)",
+    risky: false,
+  },
+  MERGE_CANDIDATES_ENABLED: {
+    label: "Merge Candidates: Enabled",
+    description: "Enable/disable merge candidates feature (PROMPT 60)",
+    risky: true,
+  },
+  MERGE_CANDIDATES_CRON_ENABLED: {
+    label: "Merge Candidates: Cron",
+    description: "Enable/disable automated merge candidates cron job (PROMPT 60)",
+    risky: true,
+  },
+  MERGE_ADMIN_ENABLED: {
+    label: "Merge: Admin",
+    description: "Enable/disable admin endpoints for merge management (PROMPT 60)",
+    risky: false,
+  },
+  NATIONAL_INGESTION_ENABLED: {
+    label: "National Ingestion: Enabled",
+    description: "Enable/disable national ingestion feature (PROMPT 61)",
+    risky: true,
+  },
+  NATIONAL_INGESTION_CRON_ENABLED: {
+    label: "National Ingestion: Cron",
+    description: "Enable/disable automated national ingestion cron job (PROMPT 61)",
+    risky: true,
+  },
+  NATIONAL_INGESTION_ADMIN_ENABLED: {
+    label: "National Ingestion: Admin",
+    description: "Enable/disable admin endpoints for national ingestion (PROMPT 61)",
+    risky: false,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",

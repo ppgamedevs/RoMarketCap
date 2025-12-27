@@ -69,7 +69,97 @@ async function handleOrchestrate(req: Request) {
         stats.recalculate = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 2. Enrich (if enabled)
+      // 2. Merge Candidates (if enabled) - PROMPT 60
+      if (await isFlagEnabled("MERGE_CANDIDATES_CRON_ENABLED", false)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/merge-candidates?limit=50`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.mergeCandidates = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:merge-candidates", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.mergeCandidates = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.mergeCandidates = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 3. National Ingestion (if enabled) - PROMPT 61
+      if (await isFlagEnabled("NATIONAL_INGESTION_CRON_ENABLED", false)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/national-ingest?limit=500`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.nationalIngest = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:national-ingest", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.nationalIngest = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.nationalIngest = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 4. Financial Sync (if enabled) - PROMPT 58
+      if (await isFlagEnabled("FINANCIAL_SYNC_CRON_ENABLED", false)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/financial-sync?limit=10`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.financialSync = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:financial-sync", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.financialSync = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.financialSync = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 3. Enrich (if enabled)
       if (await isFlagEnabled("CRON_ENRICH", true)) {
         try {
           const stepStart = Date.now();
