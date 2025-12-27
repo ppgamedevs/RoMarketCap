@@ -1,7 +1,9 @@
 import type { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GitHubProvider from "next-auth/providers/github";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/src/lib/db";
+import { verifyPassword } from "./auth/password";
 
 type UserFlags = { role?: string | null; isPremium?: boolean | null };
 
@@ -18,7 +20,57 @@ function getAdminEmails(): Set<string> {
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    // GitHub OAuth - For user and admin authentication
+    // Email/Password - For regular users
+    CredentialsProvider({
+      name: "Email",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const email = credentials.email.toLowerCase().trim();
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            emailVerified: true,
+            role: true,
+            isPremium: true,
+          },
+        }).catch(() => null);
+
+        if (!user || !user.password) {
+          return null; // User doesn't exist or uses OAuth
+        }
+
+        // Check if email is verified
+        if (!user.emailVerified) {
+          throw new Error("Email not verified");
+        }
+
+        // Verify password
+        const isValid = await verifyPassword(credentials.password, user.password);
+        if (!isValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isPremium: user.isPremium,
+        };
+      },
+    }),
+    // GitHub OAuth - Available for all (primarily for admins)
     ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
       ? [
           GitHubProvider({

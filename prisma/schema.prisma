@@ -23,6 +23,7 @@ model User {
   email         String?   @unique @map("email")
   emailVerified DateTime? @map("email_verified")
   image         String?   @map("image")
+  password      String?   @map("password") // Hashed password (null for OAuth users)
 
   // Minimal role model for now: "user" or "admin" via allowlist.
   role String @default("user") @map("role")
