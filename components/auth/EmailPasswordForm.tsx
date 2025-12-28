@@ -116,6 +116,7 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
         placeholder="your@email.com"
         required
         disabled={loading}
+        autoComplete="email"
       />
 
       <Input
@@ -127,6 +128,7 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
         required
         disabled={loading}
         minLength={mode === "register" ? 8 : undefined}
+        autoComplete={mode === "register" ? "new-password" : "current-password"}
       />
 
       {mode === "register" && (
@@ -138,6 +140,7 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
           placeholder="Confirm your password"
           required
           disabled={loading}
+          autoComplete="new-password"
         />
       )}
 

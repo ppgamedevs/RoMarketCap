@@ -15,22 +15,31 @@ export function LoginForm() {
   const [githubAvailable, setGitHubAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     // Check GitHub availability from server (has access to actual env vars)
     // This is the authoritative source
     fetch("/api/auth/providers")
-      .then((res) => res.json())
+      .then((res) => {
+        if (cancelled) return;
+        return res.json();
+      })
       .then((data) => {
-        if (data.ok) {
+        if (cancelled) return;
+        if (data?.ok) {
           setGitHubAvailable(data.hasGitHub === true);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Error checking providers from server:", err);
         // If server check fails, fall back to client-side check
       });
 
     // Get providers from client-side (for UI) - this has the correct type
     getProviders()
       .then((clientProviders) => {
+        if (cancelled) return;
         setProviders(clientProviders);
         // Only use client-side result if server check hasn't set a value yet
         setGitHubAvailable((prev) => {
@@ -41,10 +50,15 @@ export function LoginForm() {
         });
       })
       .catch((err) => {
+        if (cancelled) return;
         console.error("Error getting providers:", err);
-        // Default to true if server confirmed it's available, otherwise false
+        // Default to false if we can't determine availability
         setGitHubAvailable((prev) => prev ?? false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleGitHubSignIn = async () => {
