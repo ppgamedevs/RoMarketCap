@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 
 export const runtime = "nodejs";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * This is a temporary endpoint to add the password column to the users table
  * Protected by a simple secret token to prevent unauthorized access
  */
-async function runMigration(req: Request) {
+async function runMigration(req: NextRequest) {
   try {
     // Simple secret protection (you can set MIGRATION_SECRET in env vars)
     // For now, we'll allow it without auth since you can't log in anyway
@@ -57,11 +57,11 @@ async function runMigration(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   return runMigration(req);
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   return runMigration(req);
 }
 
