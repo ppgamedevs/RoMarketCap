@@ -18,7 +18,8 @@ export default withAuth({
       // Allow migration endpoints without auth (they have their own secret protection)
       if (pathname === "/api/admin/migrate-password" || 
           pathname === "/api/admin/check-db" || 
-          pathname === "/api/admin/run-initial-migration") {
+          pathname === "/api/admin/run-initial-migration" ||
+          pathname === "/api/admin/check-auth-tables") {
         return true;
       }
       
