@@ -1,6 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import GitHubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/src/lib/db";
 import { verifyPassword } from "./auth/password";
@@ -75,15 +74,6 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
-    // GitHub OAuth - Available for all (primarily for admins)
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-      ? [
-          GitHubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-          }),
-        ]
-      : []),
   ],
   session: { 
     strategy: "jwt", // JWT required for CredentialsProvider, but we can still use database for OAuth sessions
@@ -116,8 +106,9 @@ export const authOptions: NextAuthOptions = {
           token.isPremium = (flags.isPremium as boolean) ?? false;
 
           // Update admin role in background (non-blocking, don't await)
-          if (account?.provider === "github" && email && admins.has(email)) {
-            // Wait a bit for PrismaAdapter to finish creating the user
+          // Works for credentials provider - ensures admin role is set in DB
+          if (email && admins.has(email)) {
+            // Wait a bit to ensure user exists in DB
             setTimeout(() => {
               prisma.user.update({ 
                 where: { id: user.id }, 

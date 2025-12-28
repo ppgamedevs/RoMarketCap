@@ -1,16 +1,15 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export function SignInButton() {
   return (
-    <button
+    <Link
+      href="/login"
       className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-      onClick={() => signIn("github", { callbackUrl: "/billing" })}
-      type="button"
     >
-      Sign in with GitHub
-    </button>
+      Sign In
+    </Link>
   );
 }
 

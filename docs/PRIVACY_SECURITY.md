@@ -133,7 +133,7 @@ All responses include:
 ## Authentication
 
 **Provider:**
-- NextAuth.js with GitHub OAuth
+- NextAuth.js with email/password authentication
 - Database sessions (Prisma adapter)
 
 **Admin Access:**

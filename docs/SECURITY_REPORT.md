@@ -108,9 +108,10 @@ frame-ancestors 'none';
 - ✅ `signOut()` deletes session from database
 - ✅ Session invalidated immediately
 
-**Provider:** GitHub OAuth only
-- ✅ OAuth flow properly configured
-- ✅ Client ID and secret from environment variables
+**Provider:** Email/Password authentication
+- ✅ Credentials provider properly configured
+- ✅ Password hashing with bcryptjs (12 rounds)
+- ✅ Email verification required before login
 
 ### ✅ Admin Access Protection
 

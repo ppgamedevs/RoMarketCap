@@ -3,8 +3,9 @@
 ## ✅ Changes Made
 
 ### 1. Authentication
-- Uses GitHub OAuth for user and admin authentication
-- Updated `components/auth/SignInButton.tsx` to show "Sign in with GitHub"
+- Uses email/password authentication for all users
+- Admin role is automatically assigned to `ppgamedevs@gmail.com` on registration
+- Admins are redirected to `/admin` after login
 
 ### 2. Updated Domain to romarketcap.com
 - Updated `src/lib/siteUrl.ts` - production fallback now uses `romarketcap.com`
@@ -24,23 +25,7 @@ REDIS_URL="rediss://default:ASPyAAImcDFlYzVjNDdjNTYwMDY0MjU5OWYzZWJkOTE4MWZjMmFi
 
 ## 🔧 Next Steps
 
-### 1. Set Up GitHub OAuth
-
-1. Go to [GitHub Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)
-2. Click "New OAuth App" (or edit existing)
-3. Fill in:
-   - Application name: `RoMarketCap`
-   - Homepage URL: `https://romarketcap.com` (or your domain)
-   - Authorization callback URL: `https://romarketcap.com/api/auth/callback/github`
-     - For local dev: `http://localhost:3000/api/auth/callback/github`
-4. Click "Register application"
-5. Copy Client ID and Client Secret to `.env`:
-   ```env
-   GITHUB_CLIENT_ID="your-github-client-id"
-   GITHUB_CLIENT_SECRET="your-github-client-secret"
-   ```
-
-### 2. Add All Environment Variables
+### 1. Add All Environment Variables
 
 Create a `.env` file with:
 
@@ -55,12 +40,8 @@ NEXT_PUBLIC_SITE_URL="https://romarketcap.com"
 NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 NEXTAUTH_URL="https://romarketcap.com"
 
-# GitHub OAuth
-GITHUB_CLIENT_ID="your-github-client-id"
-GITHUB_CLIENT_SECRET="your-github-client-secret"
-
 # Admin
-ADMIN_EMAILS="your-email@example.com"
+ADMIN_EMAILS="ppgamedevs@gmail.com"  # Comma-separated list of admin emails
 
 # Upstash KV (already provided above)
 KV_REST_API_URL="https://fond-stinkbug-9202.upstash.io"

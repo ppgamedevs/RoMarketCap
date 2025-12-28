@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
         data: {
           userId: testUser.id,
           type: "oauth",
-          provider: "github",
+          provider: "credentials",
           providerAccountId: `test-${Date.now()}`,
         },
         select: {

@@ -66,6 +66,10 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await hashPassword(parsed.data.password);
 
+    // Check if this is an admin email
+    const adminEmails = new Set(["ppgamedevs@gmail.com"]);
+    const isAdmin = adminEmails.has(email.toLowerCase());
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -73,6 +77,7 @@ export async function POST(req: Request) {
         name: parsed.data.name?.trim() || null,
         password: hashedPassword,
         emailVerified: null, // Not verified yet
+        role: isAdmin ? "admin" : "user", // Set admin role on registration
       },
       select: { id: true, email: true, name: true },
     });

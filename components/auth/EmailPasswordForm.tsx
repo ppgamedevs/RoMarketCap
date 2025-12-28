@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/Alert";
@@ -79,10 +79,16 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
 
         if (result?.ok) {
           setSuccess("Login successful!");
-          if (onSuccess) {
-            setTimeout(() => onSuccess(), 500);
+          // Get session to check if user is admin
+          const session = await getSession();
+          if (session?.user?.role === "admin") {
+            window.location.href = "/admin";
           } else {
-            window.location.href = "/billing";
+            if (onSuccess) {
+              setTimeout(() => onSuccess(), 500);
+            } else {
+              window.location.href = "/billing";
+            }
           }
         }
       }

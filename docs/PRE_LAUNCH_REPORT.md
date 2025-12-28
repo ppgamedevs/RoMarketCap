@@ -364,8 +364,7 @@ DATABASE_URL=
 # Auth
 NEXTAUTH_URL=
 NEXTAUTH_SECRET=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
+# GitHub OAuth removed - using email/password authentication only
 
 # Stripe
 STRIPE_SECRET_KEY=

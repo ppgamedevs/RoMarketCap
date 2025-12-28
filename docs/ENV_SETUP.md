@@ -18,25 +18,12 @@ NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
 NEXTAUTH_URL="https://romarketcap.com"
 ```
 
-### GitHub OAuth (Sign in with GitHub)
-1. Go to [GitHub Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)
-2. Click "New OAuth App" (or edit existing)
-3. Fill in:
-   - Application name: `RoMarketCap`
-   - Homepage URL: `https://romarketcap.com` (or your domain)
-   - Authorization callback URL: `https://romarketcap.com/api/auth/callback/github`
-4. Click "Register application"
-5. Copy Client ID and Client Secret:
-
-```env
-GITHUB_CLIENT_ID="your-github-client-id"
-GITHUB_CLIENT_SECRET="your-github-client-secret"
-```
-
 ### Admin
 ```env
-ADMIN_EMAILS="admin@example.com,another@example.com"  # Comma-separated
+ADMIN_EMAILS="ppgamedevs@gmail.com"  # Comma-separated list of admin emails
 ```
+
+**Note:** The email `ppgamedevs@gmail.com` will automatically receive admin role on registration. Other emails in `ADMIN_EMAILS` will also be granted admin access on login.
 
 ### Upstash KV (Redis)
 ```env

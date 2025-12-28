@@ -21,20 +21,17 @@ export async function GET(req: NextRequest) {
     const results = {
       ok: true,
       config: {
-        hasGitHubClientId: Boolean(process.env.GITHUB_CLIENT_ID),
-        hasGitHubClientSecret: Boolean(process.env.GITHUB_CLIENT_SECRET),
         hasNextAuthSecret: Boolean(process.env.NEXTAUTH_SECRET),
         hasNextAuthUrl: Boolean(process.env.NEXTAUTH_URL),
-        sessionStrategy: "jwt", // We're using JWT now
-        githubProviderEnabled: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
-        credentialsProviderEnabled: true, // Always enabled
+        sessionStrategy: "jwt",
+        credentialsProviderEnabled: true,
+        hasAdminEmails: Boolean(process.env.ADMIN_EMAILS),
       },
       // Don't expose actual secrets, just whether they exist
       env: {
-        GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID ? "***SET***" : "NOT SET",
-        GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET ? "***SET***" : "NOT SET",
         NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? "***SET***" : "NOT SET",
         NEXTAUTH_URL: process.env.NEXTAUTH_URL || "NOT SET",
+        ADMIN_EMAILS: process.env.ADMIN_EMAILS ? "***SET***" : "NOT SET",
       },
     };
 

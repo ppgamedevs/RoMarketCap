@@ -6,9 +6,7 @@ type SearchParams = Promise<{ error?: string }>;
 
 export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
-  const errorMessage = sp.error === "Callback" 
-    ? "Authentication failed. Please check your GitHub OAuth configuration."
-    : sp.error === "CredentialsSignin"
+  const errorMessage = sp.error === "CredentialsSignin"
     ? "Invalid email or password."
     : sp.error
     ? `Authentication error: ${sp.error}`
