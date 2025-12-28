@@ -2,15 +2,16 @@ import Link from "next/link";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Alert } from "@/components/ui/Alert";
 
-type SearchParams = { error?: string };
+type SearchParams = Promise<{ error?: string }>;
 
-export default function LoginPage({ searchParams }: { searchParams: SearchParams }) {
-  const errorMessage = searchParams.error === "Callback" 
+export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+  const sp = await searchParams;
+  const errorMessage = sp.error === "Callback" 
     ? "Authentication failed. Please check your GitHub OAuth configuration."
-    : searchParams.error === "CredentialsSignin"
+    : sp.error === "CredentialsSignin"
     ? "Invalid email or password."
-    : searchParams.error
-    ? `Authentication error: ${searchParams.error}`
+    : sp.error
+    ? `Authentication error: ${sp.error}`
     : null;
 
   return (
