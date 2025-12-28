@@ -20,7 +20,8 @@ export default withAuth({
           pathname === "/api/admin/check-db" || 
           pathname === "/api/admin/run-initial-migration" ||
           pathname === "/api/admin/check-auth-tables" ||
-          pathname === "/api/admin/test-auth") {
+          pathname === "/api/admin/test-auth" ||
+          pathname === "/api/admin/check-auth-config") {
         return true;
       }
       
