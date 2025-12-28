@@ -113,46 +113,27 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // When user signs in, add user data to token
       if (user) {
-        // Fetch full user data from database to ensure we have all fields
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              isPremium: true,
-            },
+        const email = (user.email ?? "").toLowerCase();
+        const admins = getAdminEmails();
+        const flags = user as unknown as UserFlags;
+        
+        // Determine role: admin if in allowlist, otherwise use user's role or default to "user"
+        const role = email && admins.has(email) ? "admin" : (flags.role as "user" | "admin" | undefined) ?? "user";
+        
+        token.id = user.id;
+        token.email = user.email;
+        token.role = role;
+        token.isPremium = (flags.isPremium as boolean) ?? false;
+        
+        // For OAuth users, update admin role in background (non-blocking)
+        if (account?.provider !== "credentials" && email && admins.has(email)) {
+          // Update admin role asynchronously without blocking
+          prisma.user.update({ 
+            where: { id: user.id }, 
+            data: { role: "admin" } 
+          }).catch((err) => {
+            console.error("[auth] Error updating admin role:", err);
           });
-
-          if (dbUser) {
-            const email = (dbUser.email ?? "").toLowerCase();
-            const admins = getAdminEmails();
-            const role = email && admins.has(email) ? "admin" : dbUser.role ?? "user";
-            
-            token.id = dbUser.id;
-            token.email = dbUser.email;
-            token.role = role;
-            token.isPremium = dbUser.isPremium ?? false;
-          } else {
-            // Fallback to user object if DB lookup fails
-            const email = (user.email ?? "").toLowerCase();
-            const admins = getAdminEmails();
-            const flags = user as unknown as UserFlags;
-            const role = email && admins.has(email) ? "admin" : flags.role ?? "user";
-            
-            token.id = user.id;
-            token.email = user.email;
-            token.role = role;
-            token.isPremium = flags.isPremium ?? false;
-          }
-        } catch (error) {
-          console.error("[auth] Error in jwt callback:", error);
-          // Fallback to basic user data
-          token.id = user.id;
-          token.email = user.email;
-          token.role = "user";
-          token.isPremium = false;
         }
       }
       return token;
