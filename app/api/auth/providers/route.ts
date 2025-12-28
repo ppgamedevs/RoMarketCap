@@ -15,13 +15,27 @@ export async function GET() {
       type: p.type,
     }));
 
+    const hasGitHub = providers.some((p) => p.id === "github");
+    const hasCredentials = providers.some((p) => p.id === "credentials");
+    const githubClientId = process.env.GITHUB_CLIENT_ID;
+    const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+
     return NextResponse.json({
       ok: true,
       providers,
-      hasGitHub: providers.some((p) => p.id === "github"),
-      hasCredentials: providers.some((p) => p.id === "credentials"),
-      githubClientId: process.env.GITHUB_CLIENT_ID ? "***SET***" : "NOT SET",
-      githubClientSecret: process.env.GITHUB_CLIENT_SECRET ? "***SET***" : "NOT SET",
+      hasGitHub,
+      hasCredentials,
+      githubClientId: githubClientId ? "***SET***" : "NOT SET",
+      githubClientSecret: githubClientSecret ? "***SET***" : "NOT SET",
+      // Debug info
+      debug: {
+        providerCount: providers.length,
+        providerIds: providers.map((p) => p.id),
+        envVarsPresent: {
+          GITHUB_CLIENT_ID: !!githubClientId,
+          GITHUB_CLIENT_SECRET: !!githubClientSecret,
+        },
+      },
     });
   } catch (error) {
     return NextResponse.json({
