@@ -90,54 +90,63 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      const email = (user.email ?? "").toLowerCase();
-      if (!email) return true;
-
-      // Don't update user in signIn callback - PrismaAdapter handles user creation
-      // We'll update admin role in a non-blocking way after sign-in completes
-      // The password field will be null by default for OAuth users (PrismaAdapter handles this)
-      
-      // Only update admin role if needed (non-blocking, fire and forget)
-      const admins = getAdminEmails();
-      if (admins.has(email)) {
-        // Update admin role asynchronously (don't block sign-in)
-        prisma.user.update({ 
-          where: { id: user.id }, 
-          data: { role: "admin" } 
-        }).catch((err) => {
-          console.error("[auth] Error updating admin role:", err);
-        });
+      try {
+        // Always allow sign-in - PrismaAdapter handles user creation
+        // We'll update admin role in jwt callback after user is created
+        return true;
+      } catch (error) {
+        console.error("[auth] Error in signIn callback:", error);
+        return true; // Don't block sign-in on errors
       }
-      
-      return true;
     },
-    async jwt({ token, user, account }) {
-      // When user signs in, add user data to token
-      if (user) {
-        const email = (user.email ?? "").toLowerCase();
-        const admins = getAdminEmails();
-        const flags = user as unknown as UserFlags;
-        
-        // Determine role: admin if in allowlist, otherwise use user's role or default to "user"
-        const role = email && admins.has(email) ? "admin" : (flags.role as "user" | "admin" | undefined) ?? "user";
-        
-        token.id = user.id;
-        token.email = user.email;
-        token.role = role;
-        token.isPremium = (flags.isPremium as boolean) ?? false;
-        
-        // For OAuth users, update admin role in background (non-blocking)
-        if (account?.provider !== "credentials" && email && admins.has(email)) {
-          // Update admin role asynchronously without blocking
-          prisma.user.update({ 
-            where: { id: user.id }, 
-            data: { role: "admin" } 
-          }).catch((err) => {
-            console.error("[auth] Error updating admin role:", err);
-          });
+    async jwt({ token, user, account, trigger }) {
+      try {
+        // When user signs in, add user data to token
+        if (user && user.id) {
+          // Fetch user from database to ensure we have all fields
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { id: true, email: true, role: true, isPremium: true },
+          }).catch(() => null);
+
+          if (dbUser) {
+            const email = (dbUser.email ?? "").toLowerCase();
+            const admins = getAdminEmails();
+            const role = email && admins.has(email) ? "admin" : (dbUser.role ?? "user");
+            
+            token.id = dbUser.id;
+            token.email = dbUser.email;
+            token.role = role;
+            token.isPremium = dbUser.isPremium ?? false;
+
+            // Update admin role if needed (non-blocking)
+            if (email && admins.has(email) && dbUser.role !== "admin") {
+              prisma.user.update({ 
+                where: { id: dbUser.id }, 
+                data: { role: "admin" } 
+              }).catch((err) => {
+                console.error("[auth] Error updating admin role:", err);
+              });
+            }
+          } else {
+            // Fallback to user object if DB lookup fails
+            const email = (user.email ?? "").toLowerCase();
+            const admins = getAdminEmails();
+            const flags = user as unknown as UserFlags;
+            const role = email && admins.has(email) ? "admin" : (flags.role as "user" | "admin" | undefined) ?? "user";
+            
+            token.id = user.id;
+            token.email = user.email;
+            token.role = role;
+            token.isPremium = (flags.isPremium as boolean) ?? false;
+          }
         }
+        return token;
+      } catch (error) {
+        console.error("[auth] Error in jwt callback:", error);
+        // Return token even on error to not break the flow
+        return token;
       }
-      return token;
     },
     async session({ session, token }) {
       // Add token data to session
