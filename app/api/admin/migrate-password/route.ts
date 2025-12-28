@@ -23,31 +23,52 @@ async function runMigration(req: NextRequest) {
       }, { status: 401 });
     }
 
+    // First, check if users table exists
+    const tableCheck = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      ) as exists;
+    `;
+    
+    if (!tableCheck[0]?.exists) {
+      return NextResponse.json({ 
+        ok: false, 
+        error: "Users table does not exist. Please run initial migrations first.",
+        tableExists: false
+      }, { status: 400 });
+    }
+
     // Check if column already exists
-    try {
-      await prisma.$queryRaw`SELECT password FROM users LIMIT 1`;
+    const columnCheck = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users' 
+        AND column_name = 'password'
+      ) as exists;
+    `;
+
+    if (columnCheck[0]?.exists) {
       return NextResponse.json({ 
         ok: true, 
         message: "Password column already exists",
         alreadyExists: true 
       });
-    } catch (error: any) {
-      // Column doesn't exist, add it
-      if (error?.code === "42703" || error?.message?.includes("column") || error?.message?.includes("password")) {
-        await prisma.$executeRawUnsafe(`
-          ALTER TABLE "users" 
-          ADD COLUMN IF NOT EXISTS "password" TEXT;
-        `);
-        
-        return NextResponse.json({ 
-          ok: true, 
-          message: "Password column added successfully",
-          alreadyExists: false 
-        });
-      } else {
-        throw error;
-      }
     }
+
+    // Column doesn't exist, add it
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "users" 
+      ADD COLUMN IF NOT EXISTS "password" TEXT;
+    `);
+    
+    return NextResponse.json({ 
+      ok: true, 
+      message: "Password column added successfully",
+      alreadyExists: false 
+    });
   } catch (error) {
     console.error("[migrate-password] Error:", error);
     return NextResponse.json({ 
