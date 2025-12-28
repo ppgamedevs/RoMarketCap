@@ -19,6 +19,10 @@ function getAdminEmails(): Set<string> {
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   providers: [
     // Email/Password - For regular users
     CredentialsProvider({
@@ -109,14 +113,47 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // When user signs in, add user data to token
       if (user) {
-        const email = (user.email ?? "").toLowerCase();
-        const admins = getAdminEmails();
-        const flags = user as unknown as UserFlags;
-        const role = email && admins.has(email) ? "admin" : flags.role ?? "user";
-        
-        token.id = user.id;
-        token.role = role;
-        token.isPremium = flags.isPremium ?? false;
+        // Fetch full user data from database to ensure we have all fields
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              isPremium: true,
+            },
+          });
+
+          if (dbUser) {
+            const email = (dbUser.email ?? "").toLowerCase();
+            const admins = getAdminEmails();
+            const role = email && admins.has(email) ? "admin" : dbUser.role ?? "user";
+            
+            token.id = dbUser.id;
+            token.email = dbUser.email;
+            token.role = role;
+            token.isPremium = dbUser.isPremium ?? false;
+          } else {
+            // Fallback to user object if DB lookup fails
+            const email = (user.email ?? "").toLowerCase();
+            const admins = getAdminEmails();
+            const flags = user as unknown as UserFlags;
+            const role = email && admins.has(email) ? "admin" : flags.role ?? "user";
+            
+            token.id = user.id;
+            token.email = user.email;
+            token.role = role;
+            token.isPremium = flags.isPremium ?? false;
+          }
+        } catch (error) {
+          console.error("[auth] Error in jwt callback:", error);
+          // Fallback to basic user data
+          token.id = user.id;
+          token.email = user.email;
+          token.role = "user";
+          token.isPremium = false;
+        }
       }
       return token;
     },
