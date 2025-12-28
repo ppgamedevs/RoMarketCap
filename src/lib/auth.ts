@@ -124,7 +124,7 @@ export const authOptions: NextAuthOptions = {
       // Add token data to session
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = (token.role as "user" | "admin") ?? "user";
         session.user.isPremium = (token.isPremium as boolean) ?? false;
       }
       return session;
