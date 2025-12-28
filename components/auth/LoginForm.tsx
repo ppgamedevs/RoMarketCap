@@ -61,29 +61,7 @@ export function LoginForm() {
     };
   }, []);
 
-  const handleGitHubSignIn = async () => {
-    if (isGitHubAvailable === false) {
-      setError("GitHub authentication is not available");
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    try {
-      // signIn with redirect: true will redirect immediately, so we won't get a result
-      // If it fails, NextAuth will redirect to /login?error=...
-      await signIn("github", { 
-        callbackUrl: "/billing",
-        redirect: true,
-      });
-      // If we reach here, something went wrong (should have redirected)
-      setLoading(false);
-    } catch (error) {
-      console.error("GitHub sign-in exception:", error);
-      setError(error instanceof Error ? error.message : "Unknown error");
-      setLoading(false);
-    }
-  };
+  // Removed handleGitHubSignIn - using direct link instead (more reliable)
 
   // Use state value if set, otherwise fallback to providers check
   const isGitHubAvailable = githubAvailable !== null ? githubAvailable : (providers && "github" in providers);
@@ -116,22 +94,17 @@ export function LoginForm() {
             </Alert>
           )}
           <p className="text-sm text-muted-foreground">Sign in with your GitHub account.</p>
-          <Button 
-            onClick={handleGitHubSignIn} 
-            disabled={loading} 
-            className="w-full"
+          <a 
+            href="/api/auth/signin/github?callbackUrl=/billing"
+            className="block w-full"
           >
-            {loading ? "Redirecting..." : "Sign in with GitHub"}
-          </Button>
-          <p className="text-xs text-muted-foreground text-center">
-            Or{" "}
-            <a 
-              href="/api/auth/signin/github?callbackUrl=/billing" 
-              className="underline hover:text-primary"
+            <Button 
+              type="button"
+              className="w-full"
             >
-              click here to sign in directly
-            </a>
-          </p>
+              Sign in with GitHub
+            </Button>
+          </a>
           {isGitHubAvailable === null && (
             <p className="text-xs text-muted-foreground">
               Checking GitHub authentication availability...
