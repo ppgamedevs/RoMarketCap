@@ -20,7 +20,22 @@ export async function GET(req: NextRequest) {
       }, { status: 401 });
     }
 
-    const results: Record<string, unknown> = {
+    const results: {
+      ok: boolean;
+      checks: {
+        usersTableExists?: boolean;
+        usersTableError?: string;
+        columns?: Array<{ column_name: string; data_type: string }>;
+        columnNames?: string[];
+        hasPasswordColumn?: boolean;
+        columnsError?: string;
+        canQueryPassword?: boolean;
+        testUserHasPassword?: boolean;
+        queryError?: string;
+        queryErrorCode?: string;
+        expectedColumns?: string[];
+      };
+    } = {
       ok: true,
       checks: {},
     };
