@@ -71,36 +71,53 @@ export async function POST(req: Request) {
     const isAdmin = adminEmails.has(email.toLowerCase());
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name: parsed.data.name?.trim() || null,
-        password: hashedPassword,
-        emailVerified: null, // Not verified yet
-        role: isAdmin ? "admin" : "user", // Set admin role on registration
-      },
-      select: { id: true, email: true, name: true },
-    });
+    try {
+      const user = await prisma.user.create({
+        data: {
+          email,
+          name: parsed.data.name?.trim() || null,
+          password: hashedPassword,
+          emailVerified: null, // Not verified yet
+          role: isAdmin ? "admin" : "user", // Set admin role on registration
+        },
+        select: { id: true, email: true, name: true },
+      });
 
-    // Generate verification token
-    const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      // Generate verification token
+      const token = crypto.randomBytes(32).toString("hex");
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    await prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
-        expires,
-      },
-    });
+      await prisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token,
+          expires,
+        },
+      });
 
-    // Send verification email
-    await sendVerificationEmail(email, token, user.name);
+      // Send verification email
+      await sendVerificationEmail(email, token, user.name);
 
-    return NextResponse.json({ ok: true, message: "Registration successful. Please check your email to verify your account." });
+      return NextResponse.json({ ok: true, message: "Registration successful. Please check your email to verify your account." });
+    } catch (createError) {
+      console.error("[register] Error creating user:", createError);
+      // If it's a Prisma error, provide more details
+      if (createError && typeof createError === "object" && "code" in createError) {
+        const prismaError = createError as { code: string; message: string };
+        if (prismaError.code === "P2002") {
+          return NextResponse.json({ ok: false, error: "An account with this email already exists" }, { status: 400 });
+        }
+        return NextResponse.json({ 
+          ok: false, 
+          error: `Database error: ${prismaError.message}` 
+        }, { status: 500 });
+      }
+      throw createError; // Re-throw to be caught by outer catch
+    }
   } catch (error) {
     console.error("[register] Error:", error);
-    return NextResponse.json({ ok: false, error: "Internal server error" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ ok: false, error: errorMessage }, { status: 500 });
   }
 }
 
