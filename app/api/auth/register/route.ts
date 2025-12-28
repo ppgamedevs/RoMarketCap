@@ -72,6 +72,8 @@ export async function POST(req: Request) {
 
     // Create user
     try {
+      // Only include fields that exist in the database
+      // export_credits and other fields have defaults, so we don't need to set them
       const user = await prisma.user.create({
         data: {
           email,
@@ -79,6 +81,7 @@ export async function POST(req: Request) {
           password: hashedPassword,
           emailVerified: null, // Not verified yet
           role: isAdmin ? "admin" : "user", // Set admin role on registration
+          // Don't set export_credits - it has a default value and may not exist in all DBs
         },
         select: { id: true, email: true, name: true },
       });
