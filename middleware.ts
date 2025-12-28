@@ -14,6 +14,12 @@ export default withAuth({
   callbacks: {
     authorized: ({ token, req }) => {
       const pathname = req.nextUrl.pathname;
+      
+      // Allow migration endpoints without auth (they have their own secret protection)
+      if (pathname === "/api/admin/migrate-password" || pathname === "/api/admin/check-db") {
+        return true;
+      }
+      
       const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
       if (!isAdminPath) return true;
       const email = (token?.email ?? "").toLowerCase();
