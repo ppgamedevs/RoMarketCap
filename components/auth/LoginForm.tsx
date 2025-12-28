@@ -15,41 +15,35 @@ export function LoginForm() {
   const [githubAvailable, setGitHubAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check what providers are available
-    // Prioritize server-side endpoint as it has access to actual env vars
+    // Check GitHub availability from server (has access to actual env vars)
+    // This is the authoritative source
     fetch("/api/auth/providers")
       .then((res) => res.json())
       .then((data) => {
-        if (data.ok && data.providers) {
-          // Convert server response to client-side provider format
-          const providerMap = Object.fromEntries(
-            data.providers.map((p: { id: string; name: string }) => [
-              p.id,
-              { id: p.id, name: p.name },
-            ])
-          );
-          setProviders(providerMap);
+        if (data.ok) {
           setGitHubAvailable(data.hasGitHub === true);
-        } else {
-          // Fallback to client-side check
-          return getProviders().then((clientProviders) => {
-            setProviders(clientProviders);
-            setGitHubAvailable(clientProviders ? "github" in clientProviders : false);
-          });
         }
       })
       .catch(() => {
-        // Fallback to client-side check if server fails
-        getProviders()
-          .then((clientProviders) => {
-            setProviders(clientProviders);
-            setGitHubAvailable(clientProviders ? "github" in clientProviders : false);
-          })
-          .catch((err) => {
-            console.error("Error getting providers:", err);
-            // Default to allowing GitHub (server confirmed it's available)
-            setGitHubAvailable(true);
-          });
+        // If server check fails, fall back to client-side check
+      });
+
+    // Get providers from client-side (for UI) - this has the correct type
+    getProviders()
+      .then((clientProviders) => {
+        setProviders(clientProviders);
+        // Only use client-side result if server check hasn't set a value yet
+        setGitHubAvailable((prev) => {
+          if (prev === null && clientProviders) {
+            return "github" in clientProviders;
+          }
+          return prev;
+        });
+      })
+      .catch((err) => {
+        console.error("Error getting providers:", err);
+        // Default to true if server confirmed it's available, otherwise false
+        setGitHubAvailable((prev) => prev ?? false);
       });
   }, []);
 
