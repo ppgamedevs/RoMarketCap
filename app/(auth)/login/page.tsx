@@ -1,11 +1,28 @@
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { Alert } from "@/components/ui/Alert";
 
-export default function LoginPage() {
+type SearchParams = { error?: string };
+
+export default function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+  const errorMessage = searchParams.error === "Callback" 
+    ? "Authentication failed. Please check your GitHub OAuth configuration."
+    : searchParams.error === "CredentialsSignin"
+    ? "Invalid email or password."
+    : searchParams.error
+    ? `Authentication error: ${searchParams.error}`
+    : null;
+
   return (
     <main className="mx-auto max-w-md px-6 py-16">
       <h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
       <p className="mt-2 text-sm text-muted-foreground">Sign in to access billing and admin.</p>
+
+      {errorMessage && (
+        <div className="mt-6">
+          <Alert variant="error">{errorMessage}</Alert>
+        </div>
+      )}
 
       <div className="mt-6">
         <LoginForm />
