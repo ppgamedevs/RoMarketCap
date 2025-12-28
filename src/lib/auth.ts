@@ -99,46 +99,33 @@ export const authOptions: NextAuthOptions = {
         return true; // Don't block sign-in on errors
       }
     },
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account }) {
       try {
         // When user signs in, add user data to token
-        if (user && user.id) {
-          // Fetch user from database to ensure we have all fields
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-            select: { id: true, email: true, role: true, isPremium: true },
-          }).catch(() => null);
+        if (user) {
+          const email = (user.email ?? "").toLowerCase();
+          const admins = getAdminEmails();
+          const flags = user as unknown as UserFlags;
+          
+          // Determine role: admin if in allowlist, otherwise use user's role or default to "user"
+          const role = email && admins.has(email) ? "admin" : (flags.role as "user" | "admin" | undefined) ?? "user";
+          
+          token.id = user.id;
+          token.email = user.email;
+          token.role = role;
+          token.isPremium = (flags.isPremium as boolean) ?? false;
 
-          if (dbUser) {
-            const email = (dbUser.email ?? "").toLowerCase();
-            const admins = getAdminEmails();
-            const role = email && admins.has(email) ? "admin" : (dbUser.role ?? "user");
-            
-            token.id = dbUser.id;
-            token.email = dbUser.email;
-            token.role = role;
-            token.isPremium = dbUser.isPremium ?? false;
-
-            // Update admin role if needed (non-blocking)
-            if (email && admins.has(email) && dbUser.role !== "admin") {
+          // Update admin role in background (non-blocking, don't await)
+          if (account?.provider === "github" && email && admins.has(email)) {
+            // Wait a bit for PrismaAdapter to finish creating the user
+            setTimeout(() => {
               prisma.user.update({ 
-                where: { id: dbUser.id }, 
+                where: { id: user.id }, 
                 data: { role: "admin" } 
               }).catch((err) => {
                 console.error("[auth] Error updating admin role:", err);
               });
-            }
-          } else {
-            // Fallback to user object if DB lookup fails
-            const email = (user.email ?? "").toLowerCase();
-            const admins = getAdminEmails();
-            const flags = user as unknown as UserFlags;
-            const role = email && admins.has(email) ? "admin" : (flags.role as "user" | "admin" | undefined) ?? "user";
-            
-            token.id = user.id;
-            token.email = user.email;
-            token.role = role;
-            token.isPremium = (flags.isPremium as boolean) ?? false;
+            }, 1000);
           }
         }
         return token;
