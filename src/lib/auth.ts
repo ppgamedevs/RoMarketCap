@@ -80,7 +80,9 @@ export const authOptions: NextAuthOptions = {
         ]
       : []),
   ],
-  session: { strategy: "database" },
+  session: { 
+    strategy: "jwt", // JWT required for CredentialsProvider, but we can still use database for OAuth sessions
+  },
   callbacks: {
     async signIn({ user, account }) {
       const email = (user.email ?? "").toLowerCase();
@@ -104,21 +106,28 @@ export const authOptions: NextAuthOptions = {
       
       return true;
     },
-    async session({ session, user }) {
-      const email = (session.user?.email ?? "").toLowerCase();
-      const admins = getAdminEmails();
-      const flags = user as unknown as UserFlags;
-      const role = email && admins.has(email) ? "admin" : flags.role ?? "user";
-
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: user.id,
-          role,
-          isPremium: flags.isPremium ?? false,
-        },
-      };
+    async jwt({ token, user, account }) {
+      // When user signs in, add user data to token
+      if (user) {
+        const email = (user.email ?? "").toLowerCase();
+        const admins = getAdminEmails();
+        const flags = user as unknown as UserFlags;
+        const role = email && admins.has(email) ? "admin" : flags.role ?? "user";
+        
+        token.id = user.id;
+        token.role = role;
+        token.isPremium = flags.isPremium ?? false;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Add token data to session
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.isPremium = (token.isPremium as boolean) ?? false;
+      }
+      return session;
     },
   },
 };

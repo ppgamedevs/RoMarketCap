@@ -19,7 +19,8 @@ export default withAuth({
       if (pathname === "/api/admin/migrate-password" || 
           pathname === "/api/admin/check-db" || 
           pathname === "/api/admin/run-initial-migration" ||
-          pathname === "/api/admin/check-auth-tables") {
+          pathname === "/api/admin/check-auth-tables" ||
+          pathname === "/api/admin/test-auth") {
         return true;
       }
       
