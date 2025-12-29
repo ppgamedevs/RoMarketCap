@@ -12,9 +12,9 @@ import { withRetry, isRetryableError } from "@/src/lib/retry/withRetry";
 import * as XLSX from "xlsx";
 
 /**
- * Maximum file size (100MB)
+ * Maximum file size (50MB) - reduced to prevent memory issues
  */
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 /**
  * Request timeout (60 seconds for large files)
@@ -198,14 +198,24 @@ async function fetchXlsx(url: string): Promise<Buffer> {
 }
 
 /**
- * Parse XLSX and extract CUIs
+ * Parse XLSX and extract CUIs (memory-optimized)
+ * Only extracts CUI and supplier name columns to minimize memory usage
  */
 function parseXlsxAndExtractCuis(buffer: Buffer, limit: number): {
   cuis: Set<string>;
   supplierNames: Map<string, string>;
   rawDataMap: Map<string, Record<string, unknown>>;
 } {
-  const workbook = XLSX.read(buffer, { type: "buffer", cellDates: false });
+  // Use memory-efficient options: only read what we need
+  // Note: XLSX library doesn't support streaming, but we can optimize by:
+  // 1. Not using dense mode (saves memory)
+  // 2. Only extracting columns we need
+  // 3. Limiting rows processed
+  const workbook = XLSX.read(buffer, { 
+    type: "buffer", 
+    cellDates: false,
+    dense: false, // Don't use dense mode (saves memory)
+  });
   
   // Get first worksheet
   const firstSheetName = workbook.SheetNames[0];
@@ -229,13 +239,17 @@ function parseXlsxAndExtractCuis(buffer: Buffer, limit: number): {
     );
   }
   
-  // Extract data rows
+  // Extract data rows - only store minimal data to save memory
   const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
   const cuis = new Set<string>();
   const supplierNames = new Map<string, string>();
+  // Only store minimal raw data (CUI and name) instead of entire row
   const rawDataMap = new Map<string, Record<string, unknown>>();
   
-  for (let row = headerRow + 1; row <= range.e.r && cuis.size < limit; row++) {
+  // Limit the range to process to save memory
+  const maxRow = Math.min(range.e.r, headerRow + limit + 100);
+  
+  for (let row = headerRow + 1; row <= maxRow && cuis.size < limit; row++) {
     const cuiCellAddress = XLSX.utils.encode_cell({ r: row, c: cuiColumnIndex });
     const cuiCell = worksheet[cuiCellAddress];
     
@@ -272,19 +286,17 @@ function parseXlsxAndExtractCuis(buffer: Buffer, limit: number): {
       }
     }
     
-    // Build raw data row
-    const rawRow: Record<string, unknown> = {};
-    for (let col = 0; col < headers.length; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-      const cell = worksheet[cellAddress];
-      if (cell && cell.v !== undefined) {
-        rawRow[headers[col] || `Column${col + 1}`] = cell.v;
-      }
-    }
-    rawDataMap.set(normalizedCui, rawRow);
+    // Store only minimal raw data (CUI and name) instead of entire row to save memory
+    rawDataMap.set(normalizedCui, {
+      CUI: cuiValue,
+      ...(supplierName ? { "Supplier Name": supplierName } : {}),
+    });
     
     cuis.add(normalizedCui);
   }
+  
+  // Clear worksheet reference to help GC
+  delete workbook.Sheets[firstSheetName];
   
   return { cuis, supplierNames, rawDataMap };
 }
