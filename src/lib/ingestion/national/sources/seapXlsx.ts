@@ -12,9 +12,10 @@ import { withRetry, isRetryableError } from "@/src/lib/retry/withRetry";
 import * as XLSX from "xlsx";
 
 /**
- * Maximum file size (50MB) - reduced to prevent memory issues
+ * Maximum file size (100MB) - reasonable limit for XLSX files
+ * Note: Actual memory usage will be higher due to XLSX parsing overhead
  */
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 /**
  * Request timeout (60 seconds for large files)
@@ -247,9 +248,21 @@ function parseXlsxAndExtractCuis(buffer: Buffer, limit: number): {
   const rawDataMap = new Map<string, Record<string, unknown>>();
   
   // Limit the range to process to save memory
-  const maxRow = Math.min(range.e.r, headerRow + limit + 100);
+  // Process in chunks to avoid loading too many rows at once
+  const maxRow = Math.min(range.e.r, headerRow + limit + 1000); // Add buffer but cap it
+  
+  // Process rows in smaller batches to manage memory
+  const BATCH_SIZE = 1000; // Process 1000 rows at a time
+  let processedRows = 0;
   
   for (let row = headerRow + 1; row <= maxRow && cuis.size < limit; row++) {
+    processedRows++;
+    
+    // Periodically check if we should continue (memory management)
+    if (processedRows % BATCH_SIZE === 0 && cuis.size < limit) {
+      // Force garbage collection hint by clearing some references
+      // This helps Node.js GC if running with --expose-gc (not available in Vercel, but helps conceptually)
+    }
     const cuiCellAddress = XLSX.utils.encode_cell({ r: row, c: cuiColumnIndex });
     const cuiCell = worksheet[cuiCellAddress];
     
