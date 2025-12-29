@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -22,8 +23,6 @@ export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
   const accept = () => {
     setCookie("romc_consent_analytics", "1", 60 * 60 * 24 * 180);
     setVisible(false);
-    // Reload so server-rendered layout can decide whether to inject Plausible script.
-    location.reload();
   };
 
   const decline = () => {
@@ -37,16 +36,32 @@ export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
     <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground leading-6">
-          {lang === "ro"
-            ? "Folosim analytics (Plausible) doar dacă accepți. Nu folosim cookies de tracking fără consimțământ."
-            : "We use analytics (Plausible) only if you accept. No tracking cookies without consent."}
+          {lang === "ro" ? (
+            <>
+              Folosim Google Analytics pentru a îmbunătăți site-ul nostru. Continuând să navigați, acceptați
+              utilizarea cookie-urilor conform{" "}
+              <Link href="/cookie-policy" className="text-primary underline underline-offset-4">
+                politicii noastre de cookie-uri
+              </Link>
+              .
+            </>
+          ) : (
+            <>
+              We use Google Analytics to improve our website. By continuing to browse, you accept the use of cookies
+              according to our{" "}
+              <Link href="/cookie-policy" className="text-primary underline underline-offset-4">
+                cookie policy
+              </Link>
+              .
+            </>
+          )}
         </div>
         <div className="flex gap-3">
           <button className="rounded-md border px-3 py-2 text-sm" onClick={decline} type="button">
-            {lang === "ro" ? "Decline" : "Decline"}
+            {lang === "ro" ? "Refuz" : "Decline"}
           </button>
           <button className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" onClick={accept} type="button">
-            {lang === "ro" ? "Accept analytics" : "Accept analytics"}
+            {lang === "ro" ? "Accept" : "Accept"}
           </button>
         </div>
       </div>

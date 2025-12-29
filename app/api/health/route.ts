@@ -62,7 +62,6 @@ export async function GET() {
 
   const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_PRICE_ID_MONTHLY);
   const resendConfigured = Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
-  const plausibleConfigured = Boolean(process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN);
 
   // Check cron health and stuck detection
   const cronHealth: Record<string, { lastRun: string | null; healthy: boolean; stuck: boolean }> = {};
@@ -105,7 +104,6 @@ export async function GET() {
       cronSecret: Boolean(process.env.CRON_SECRET),
       stripe: stripeConfigured,
       resend: resendConfigured,
-      plausible: plausibleConfigured,
     },
     cron,
     cronHealth,

@@ -48,18 +48,18 @@ All critical security vectors have been verified and hardened. The platform is e
 **CSP Value:**
 ```
 default-src 'self';
-script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io https://js.stripe.com;
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.stripe.com;
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 img-src 'self' data: https:;
 font-src 'self' data: https://fonts.gstatic.com;
-connect-src 'self' https://plausible.io https://api.stripe.com https://*.sentry.io;
+connect-src 'self' https://www.google-analytics.com https://api.stripe.com https://*.sentry.io;
 frame-src https://js.stripe.com https://hooks.stripe.com;
 frame-ancestors 'none';
 ```
 
 **Allowed Domains:**
 - ✅ Stripe: `js.stripe.com`, `api.stripe.com`, `hooks.stripe.com` (for checkout)
-- ✅ Plausible: `plausible.io` (analytics)
+- ✅ Google Analytics: `www.googletagmanager.com`, `www.google-analytics.com` (analytics)
 - ✅ Sentry: `*.sentry.io` (error tracking)
 - ✅ Google Fonts: `fonts.googleapis.com`, `fonts.gstatic.com`
 

@@ -26,7 +26,8 @@ export default withAuth({
           pathname === "/api/admin/check-verification-table" ||
           pathname === "/api/admin/add-premium-columns" ||
           pathname === "/api/admin/add-all-user-columns" ||
-          pathname === "/api/admin/setup-database") {
+          pathname === "/api/admin/setup-database" ||
+          pathname === "/api/admin/add-gdpr-columns") {
         return true;
       }
       

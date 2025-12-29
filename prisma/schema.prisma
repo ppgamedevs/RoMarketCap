@@ -45,6 +45,12 @@ model User {
   referredByCode       String?  @map("referred_by_code")
   referralLtv          Decimal? @map("referral_ltv") @db.Decimal(18, 2) // Lifetime value from referrals
 
+  // GDPR compliance - Cookie policy and Terms acceptance
+  cookiePolicyAcceptedAt DateTime? @map("cookie_policy_accepted_at")
+  termsAcceptedAt        DateTime? @map("terms_accepted_at")
+  cookiePolicyVersion    String?   @map("cookie_policy_version")
+  termsVersion           String?   @map("terms_version")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

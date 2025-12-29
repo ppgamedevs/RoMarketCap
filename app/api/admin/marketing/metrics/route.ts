@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { getMarketingMetrics } from "@/src/lib/marketing/metrics";
-import { fetchPlausibleStats } from "@/src/lib/marketing/plausible";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,17 +16,7 @@ export async function GET() {
   }
 
   try {
-    const [dbMetrics, plausibleStats] = await Promise.all([
-      getMarketingMetrics(),
-      fetchPlausibleStats(process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? ""),
-    ]);
-
-    // Merge Plausible stats if available
-    if (plausibleStats) {
-      dbMetrics.organicTraffic = plausibleStats.organicTraffic;
-      dbMetrics.brandSearchTraffic = plausibleStats.brandSearchTraffic;
-    }
-
+    const dbMetrics = await getMarketingMetrics();
     return NextResponse.json({ ok: true, metrics: dbMetrics });
   } catch (error) {
     console.error("[marketing] Error fetching metrics:", error);

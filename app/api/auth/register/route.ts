@@ -14,6 +14,12 @@ const BodySchema = z.object({
   email: z.string().email().max(200),
   password: z.string().min(8).max(100),
   name: z.string().max(100).optional(),
+  cookiePolicyAccepted: z.boolean().refine((val) => val === true, {
+    message: "Cookie policy must be accepted",
+  }),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "Terms & Conditions must be accepted",
+  }),
 });
 
 function ipFromRequest(req: Request): string {
@@ -70,6 +76,11 @@ export async function POST(req: Request) {
     const adminEmails = new Set(["ppgamedevs@gmail.com"]);
     const isAdmin = adminEmails.has(email.toLowerCase());
 
+    // Get policy versions from env or use defaults
+    const cookiePolicyVersion = process.env.COOKIE_POLICY_VERSION || "1.0";
+    const termsVersion = process.env.TERMS_VERSION || "1.0";
+    const now = new Date();
+
     // Create user
     try {
       // Only include fields that exist in the database
@@ -81,6 +92,10 @@ export async function POST(req: Request) {
           password: hashedPassword,
           emailVerified: null, // Not verified yet
           role: isAdmin ? "admin" : "user", // Set admin role on registration
+          cookiePolicyAcceptedAt: now,
+          termsAcceptedAt: now,
+          cookiePolicyVersion,
+          termsVersion,
           // Don't set export_credits - it has a default value and may not exist in all DBs
         },
         select: { id: true, email: true, name: true },

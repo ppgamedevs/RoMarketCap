@@ -34,15 +34,15 @@ export type AnalyticsEvent =
   | "FoundersLandingView"
   | "InvestorFilterUsed";
 
-type PlausibleFn = (event: string, options?: { props?: Record<string, unknown> }) => void;
+type GtagFn = (command: string, targetId: string, config?: Record<string, unknown>) => void;
 
 export function track(event: AnalyticsEvent, props?: Record<string, string | number | boolean | null>) {
   if (typeof window === "undefined") return;
-  const w = window as unknown as { plausible?: PlausibleFn };
-  const fn = w.plausible;
-  if (!fn) return;
+  const w = window as unknown as { gtag?: GtagFn };
+  const gtag = w.gtag;
+  if (!gtag) return;
   const clean: Record<string, unknown> | undefined = props ? Object.fromEntries(Object.entries(props).filter(([, v]) => v != null)) : undefined;
-  fn(event, clean ? { props: clean } : undefined);
+  gtag("event", event, clean);
 }
 
 

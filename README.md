@@ -141,7 +141,8 @@ Set all required environment variables in Vercel:
 - `CRON_SECRET` - Random secret for cron route protection
 
 **Optional:**
-- `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` - Analytics domain
+- `COOKIE_POLICY_VERSION` - Cookie policy version (default: "1.0")
+- `TERMS_VERSION` - Terms & Conditions version (default: "1.0")
 - `NEXT_PUBLIC_LAUNCH_OFFER_TEXT` - Launch offer banner text
 - `EMAIL_ADMIN` - Admin notification email
 - `NEXT_PUBLIC_PLACEMENTS_JSON` - Sponsor placements JSON
@@ -227,7 +228,8 @@ All cron routes require header: `x-cron-secret: <CRON_SECRET>`
 
 **Optional:**
 - `EMAIL_ADMIN` - Admin notification email
-- `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` (and `NEXT_PUBLIC_PLAUSIBLE_SRC`)
+- `COOKIE_POLICY_VERSION` - Cookie policy version (default: "1.0")
+- `TERMS_VERSION` - Terms & Conditions version (default: "1.0")
 - `NEXT_PUBLIC_LAUNCH_OFFER_TEXT`
 - `NEXT_PUBLIC_PLACEMENTS_JSON` - Sponsor placements JSON
 - `ROMC_SUPPORT_EMAIL` - Support email (defaults to EMAIL_FROM)

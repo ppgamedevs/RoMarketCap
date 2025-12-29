@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
+import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/Alert";
@@ -21,6 +22,8 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resending, setResending] = useState(false);
+  const [cookiePolicyAccepted, setCookiePolicyAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +44,28 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
           setLoading(false);
           return;
         }
+        if (!cookiePolicyAccepted) {
+          setError("You must accept the Cookie Policy to register");
+          setLoading(false);
+          return;
+        }
+        if (!termsAccepted) {
+          setError("You must accept the Terms & Conditions to register");
+          setLoading(false);
+          return;
+        }
 
         // Register
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name: name || undefined }),
+          body: JSON.stringify({
+            email,
+            password,
+            name: name || undefined,
+            cookiePolicyAccepted,
+            termsAccepted,
+          }),
         });
 
         const data = await res.json();
@@ -234,7 +253,48 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
         />
       )}
 
-      <Button type="submit" disabled={loading} className="w-full">
+      {mode === "register" && (
+        <div className="space-y-3">
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={cookiePolicyAccepted}
+              onChange={(e) => setCookiePolicyAccepted(e.target.checked)}
+              disabled={loading}
+              required
+              className="mt-0.5"
+            />
+            <span className="text-muted-foreground">
+              I accept the{" "}
+              <Link href="/cookie-policy" className="text-primary underline underline-offset-4" target="_blank">
+                Cookie Policy
+              </Link>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              disabled={loading}
+              required
+              className="mt-0.5"
+            />
+            <span className="text-muted-foreground">
+              I accept the{" "}
+              <Link href="/terms" className="text-primary underline underline-offset-4" target="_blank">
+                Terms & Conditions
+              </Link>
+            </span>
+          </label>
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        disabled={loading || (mode === "register" && (!cookiePolicyAccepted || !termsAccepted))}
+        className="w-full"
+      >
         {loading ? "Please wait..." : mode === "register" ? "Register" : "Sign In"}
       </Button>
     </form>

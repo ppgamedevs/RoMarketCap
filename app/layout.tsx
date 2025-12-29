@@ -4,7 +4,6 @@ import "./globals.css";
 import { getDefaultMetadata } from "@/lib/seo/metadata";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { getLangFromRequest } from "@/src/lib/i18n";
-import { PlausibleScript } from "@/components/analytics/PlausibleScript";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { getSiteUrl } from "@/lib/seo/site";
@@ -34,8 +33,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const lang = await getLangFromRequest();
-  const consent = (await cookies()).get("romc_consent_analytics")?.value ?? null;
-  const allowAnalytics = consent === "1" && Boolean(process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN);
   const siteUrl = getSiteUrl();
   const google = process.env.GOOGLE_SITE_VERIFICATION?.trim() || null;
   const bing = process.env.BING_SITE_VERIFICATION?.trim() || null;
@@ -55,12 +52,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReferralCapture />
-        {allowAnalytics ? (
-          <>
-            <PlausibleScript />
-            <GoogleAnalytics />
-          </>
-        ) : null}
+        <GoogleAnalytics />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
         <SiteHeader lang={lang} />
         <ReadOnlyBanner />

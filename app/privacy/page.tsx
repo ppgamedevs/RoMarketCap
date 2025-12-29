@@ -23,13 +23,21 @@ export default async function PrivacyPage() {
         <CardBody className="space-y-4 text-sm text-muted-foreground leading-6">
         <p>
           {lang === "ro"
-            ? "Folosim autentificare (GitHub), plăți (Stripe) și emailuri tranzacționale (Resend)."
-            : "We use authentication (GitHub), payments (Stripe), and transactional emails (Resend)."}
+            ? "Folosim autentificare (email/parolă), plăți (Stripe) și emailuri tranzacționale (Resend)."
+            : "We use authentication (email/password), payments (Stripe), and transactional emails (Resend)."}
         </p>
         <p>
           {lang === "ro"
-            ? "Colectăm date minime pentru cont și abonament. Evenimentele de analytics sunt cookie-less (Plausible), dacă este activat."
-            : "We collect minimal data for account and subscription. Analytics events are cookie-less (Plausible) when enabled."}
+            ? "Colectăm date minime pentru cont și abonament. Folosim Google Analytics pentru a înțelege cum este utilizat site-ul. Consultați{" "}
+            <a href="/cookie-policy" className="text-primary underline underline-offset-4">
+              politica noastră de cookie-uri
+            </a>{" "}
+            pentru mai multe detalii."
+            : "We collect minimal data for account and subscription. We use Google Analytics to understand how the website is used. See our{" "}
+            <a href="/cookie-policy" className="text-primary underline underline-offset-4">
+              cookie policy
+            </a>{" "}
+            for more details."}
         </p>
         <p>
           {lang === "ro"

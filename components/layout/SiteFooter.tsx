@@ -22,6 +22,9 @@ export async function SiteFooter() {
           <Link className="underline underline-offset-4" href="/privacy">
             {lang === "ro" ? "Confidențialitate" : "Privacy"}
           </Link>
+          <Link className="underline underline-offset-4" href="/cookie-policy">
+            {lang === "ro" ? "Cookie-uri" : "Cookies"}
+          </Link>
           <Link className="underline underline-offset-4" href="/disclaimer">
             {lang === "ro" ? "Disclaimer" : "Disclaimer"}
           </Link>

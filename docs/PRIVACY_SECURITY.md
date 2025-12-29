@@ -35,11 +35,11 @@ await fetchWithCsrf("/api/company/123/submit", { method: "POST", body: ... });
 
 **Policy:**
 - Default: `self` only
-- Scripts: `self`, `unsafe-inline`, `unsafe-eval` (for Next.js), `plausible.io`
+- Scripts: `self`, `unsafe-inline`, `unsafe-eval` (for Next.js), `www.googletagmanager.com`
 - Styles: `self`, `unsafe-inline`
 - Images: `self`, `data:`, `https:`
 - Fonts: `self`, `data:`
-- Connect: `self`, `plausible.io`
+- Connect: `self`, `www.google-analytics.com`
 - Frame ancestors: `none`
 
 ## Permissions Policy
@@ -98,7 +98,9 @@ await fetchWithCsrf("/api/company/123/submit", { method: "POST", body: ... });
 ### Consent
 - Analytics: Cookie consent banner (`CookieConsentBanner`)
 - Newsletter: Explicit opt-in required
-- Tracking: Plausible (privacy-friendly, no cookies)
+- Tracking: Google Analytics (with cookie consent)
+- Cookie Policy: Available at `/cookie-policy`
+- Terms & Conditions: Mandatory acceptance on registration
 
 ## Security Headers
 
