@@ -27,17 +27,23 @@ export default async function PrivacyPage() {
             : "We use authentication (email/password), payments (Stripe), and transactional emails (Resend)."}
         </p>
         <p>
-          {lang === "ro"
-            ? "Colectăm date minime pentru cont și abonament. Folosim Google Analytics pentru a înțelege cum este utilizat site-ul. Consultați{" "}
-            <a href="/cookie-policy" className="text-primary underline underline-offset-4">
-              politica noastră de cookie-uri
-            </a>{" "}
-            pentru mai multe detalii."
-            : "We collect minimal data for account and subscription. We use Google Analytics to understand how the website is used. See our{" "}
-            <a href="/cookie-policy" className="text-primary underline underline-offset-4">
-              cookie policy
-            </a>{" "}
-            for more details."}
+          {lang === "ro" ? (
+            <>
+              Colectăm date minime pentru cont și abonament. Folosim Google Analytics pentru a înțelege cum este utilizat site-ul. Consultați{" "}
+              <a href="/cookie-policy" className="text-primary underline underline-offset-4">
+                politica noastră de cookie-uri
+              </a>{" "}
+              pentru mai multe detalii.
+            </>
+          ) : (
+            <>
+              We collect minimal data for account and subscription. We use Google Analytics to understand how the website is used. See our{" "}
+              <a href="/cookie-policy" className="text-primary underline underline-offset-4">
+                cookie policy
+              </a>{" "}
+              for more details.
+            </>
+          )}
         </p>
         <p>
           {lang === "ro"
