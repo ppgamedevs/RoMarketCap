@@ -24,7 +24,8 @@ export default withAuth({
           pathname === "/api/admin/check-auth-config" ||
           pathname === "/api/admin/add-export-credits-column" ||
           pathname === "/api/admin/check-verification-table" ||
-          pathname === "/api/admin/add-premium-columns") {
+          pathname === "/api/admin/add-premium-columns" ||
+          pathname === "/api/admin/add-all-user-columns") {
         return true;
       }
       
