@@ -207,6 +207,11 @@ class SourceRegistry {
         continue;
       }
 
+      // ANAF_VERIFY is for verification only, not discovery - skip it
+      if (source.sourceId === "ANAF_VERIFY") {
+        continue;
+      }
+
       // Check if source has required environment variables
       let hasConfig = true;
       if (source.sourceId === "SEAP") {
@@ -214,7 +219,6 @@ class SourceRegistry {
       } else if (source.sourceId === "EU_FUNDS") {
         hasConfig = !!(process.env.EU_FUNDS_CSV_URL || process.env.EU_FUNDS_JSON_URL || process.env.EU_FUNDS_DATA_URL);
       }
-      // ANAF_VERIFY doesn't need env vars (uses existing ANAF connector)
 
       if (hasConfig) {
         enabled.push(source);
