@@ -43,35 +43,46 @@ export async function GET(_req: Request, ctx: Ctx) {
     let digests: Array<{ weekStart: Date }> = [];
     
     try {
-      [industries, counties, digests] = await Promise.all([
-        prisma.company.groupBy({
-          by: ["industrySlug"],
-          where: {
-            isPublic: true,
-            visibilityStatus: "PUBLIC",
-            industrySlug: { not: null },
-            ...(isDemoMode ? {} : { isDemo: false }),
-            // PROMPT 57: Include skeleton companies in sitemaps
-          },
-          _count: { _all: true },
-        }),
-        prisma.company.groupBy({
-          by: ["countySlug"],
-          where: {
-            isPublic: true,
-            visibilityStatus: "PUBLIC",
-            countySlug: { not: null },
-            ...(isDemoMode ? {} : { isDemo: false }),
-            // PROMPT 57: Include skeleton companies in sitemaps
-          },
-          _count: { _all: true },
-        }),
+      // Use raw SQL as workaround if Prisma Client doesn't know about is_demo yet
+      // This will work even if Prisma Client hasn't been regenerated
+      const isDemoFilter = isDemoMode ? "" : "AND is_demo = false";
+      
+      const [industriesRaw, countiesRaw, digestsResult] = await Promise.all([
+        prisma.$queryRawUnsafe<Array<{ industry_slug: string | null; _count: bigint }>>(`
+          SELECT industry_slug, COUNT(*) as _count
+          FROM companies
+          WHERE is_public = true
+            AND visibility_status = 'PUBLIC'
+            AND industry_slug IS NOT NULL
+            ${isDemoFilter}
+          GROUP BY industry_slug
+        `),
+        prisma.$queryRawUnsafe<Array<{ county_slug: string | null; _count: bigint }>>(`
+          SELECT county_slug, COUNT(*) as _count
+          FROM companies
+          WHERE is_public = true
+            AND visibility_status = 'PUBLIC'
+            AND county_slug IS NOT NULL
+            ${isDemoFilter}
+          GROUP BY county_slug
+        `),
         prisma.weeklyDigestIssue.findMany({
           orderBy: { weekStart: "desc" },
           take: 20,
           select: { weekStart: true },
         }),
       ]);
+
+      // Transform raw results to match expected format
+      industries = industriesRaw.map((r) => ({
+        industrySlug: r.industry_slug,
+        _count: { _all: Number(r._count) },
+      }));
+      counties = countiesRaw.map((r) => ({
+        countySlug: r.county_slug,
+        _count: { _all: Number(r._count) },
+      }));
+      digests = digestsResult;
     } catch (error) {
       // Database error - continue with empty arrays
       console.error("[sitemap:static] Database error:", error);
@@ -128,18 +139,28 @@ export async function GET(_req: Request, ctx: Ctx) {
   
   let companies: Array<{ slug: string; canonicalSlug: string | null; lastUpdatedAt: Date }> = [];
   try {
-    companies = await prisma.company.findMany({
-      where: {
-        isPublic: true,
-        visibilityStatus: "PUBLIC",
-        ...(isDemoMode ? {} : { isDemo: false }),
-        // PROMPT 57: Include skeleton companies in sitemaps (they may have noindex meta tag)
-      },
-      select: { slug: true, canonicalSlug: true, lastUpdatedAt: true },
-      orderBy: { slug: "asc" },
-      take: CHUNK_SIZE,
-      skip,
-    });
+    // Use raw SQL as workaround if Prisma Client doesn't know about is_demo/canonical_slug yet
+    const isDemoFilter = isDemoMode ? "" : "AND is_demo = false";
+    const companiesRaw = await prisma.$queryRawUnsafe<Array<{
+      slug: string;
+      canonical_slug: string | null;
+      last_updated_at: Date;
+    }>>(`
+      SELECT slug, canonical_slug, last_updated_at
+      FROM companies
+      WHERE is_public = true
+        AND visibility_status = 'PUBLIC'
+        ${isDemoFilter}
+      ORDER BY slug ASC
+      LIMIT ${CHUNK_SIZE}
+      OFFSET ${skip}
+    `);
+    
+    companies = companiesRaw.map((c) => ({
+      slug: c.slug,
+      canonicalSlug: c.canonical_slug,
+      lastUpdatedAt: c.last_updated_at,
+    }));
   } catch (error) {
     // Database error - return minimal valid sitemap with homepage
     console.error("[sitemap:companies] Database error:", error);

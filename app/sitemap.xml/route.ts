@@ -22,13 +22,16 @@ export async function GET() {
     
     let count = 0;
     try {
-      count = await prisma.company.count({
-        where: {
-          isPublic: true,
-          visibilityStatus: "PUBLIC",
-          ...(isDemoMode ? {} : { isDemo: false }),
-        },
-      });
+      // Use raw SQL as workaround if Prisma Client doesn't know about is_demo yet
+      const isDemoFilter = isDemoMode ? "" : "AND is_demo = false";
+      const result = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
+        SELECT COUNT(*) as count
+        FROM companies
+        WHERE is_public = true
+          AND visibility_status = 'PUBLIC'
+          ${isDemoFilter}
+      `);
+      count = Number(result[0]?.count || 0);
     } catch (error) {
       // Database error - return sitemap with just static pages
       console.error("[sitemap] Database error:", error);
