@@ -17,7 +17,7 @@ const MAX_EXECUTION_TIME_MS = 240 * 1000;
 
 const RequestSchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).optional().default(50), // Further reduced default for manual triggers
-  dry: z.boolean().optional().default(false),
+  dry: z.coerce.boolean().optional().default(false), // Coerce string "true"/"false" to boolean
 });
 
 export async function POST(req: Request) {
@@ -48,7 +48,12 @@ export async function POST(req: Request) {
     const parsed = RequestSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ ok: false, error: "Invalid request body", details: parsed.error }, { status: 400 });
+      // Format Zod errors as a readable string instead of sending the full error object
+      const errorMessages = parsed.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+      return NextResponse.json({ 
+        ok: false, 
+        error: `Invalid request body: ${errorMessages}`,
+      }, { status: 400 });
     }
 
     const { limit, dry } = parsed.data;
