@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       },
       {
         key: "Content-Security-Policy",
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.google-analytics.com https://api.stripe.com https://*.sentry.io; frame-src https://js.stripe.com https://hooks.stripe.com; frame-ancestors 'none';",
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://api.stripe.com https://*.sentry.io; frame-src https://js.stripe.com https://hooks.stripe.com; frame-ancestors 'none';",
       },
       {
         key: "Permissions-Policy",
