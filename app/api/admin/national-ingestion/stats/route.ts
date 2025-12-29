@@ -66,10 +66,12 @@ export async function GET() {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
         },
       },
-      _count: true,
+      _count: {
+        _all: true,
+      },
       orderBy: {
         _count: {
-          sourceType: "desc",
+          _all: "desc",
         },
       },
     });
@@ -77,13 +79,19 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       stats: {
-        lastJob,
+        lastJob: lastJob ? {
+          ...lastJob,
+          errorRecords: lastJob.errorRecords.map((e) => ({
+            ...e,
+            sourceType: String(e.sourceType || "UNKNOWN"), // Ensure sourceType is always a string
+          })),
+        } : null,
         recentJobs,
         checkpoint: checkpointStats,
         currentCursor,
         errorSummary: errorSummary.map((e) => ({
-          sourceType: e.sourceType,
-          count: e._count,
+          sourceType: String(e.sourceType || "UNKNOWN"), // Ensure it's always a string
+          count: e._count._all || 0,
         })),
       },
     });
