@@ -12,7 +12,7 @@ import { executeNationalIngestRun } from "@/src/lib/ingestion/national/run";
 export const dynamic = "force-dynamic";
 
 const RequestSchema = z.object({
-  limit: z.coerce.number().int().min(1).max(1000).optional().default(500),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(100), // Reduced default for manual triggers
   dry: z.boolean().optional().default(false),
 });
 

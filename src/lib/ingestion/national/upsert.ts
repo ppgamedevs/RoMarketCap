@@ -35,13 +35,27 @@ export async function upsertCompaniesFromCuis(
   };
 
   if (dryRun) {
-    // In dry run, just count what would be created/updated
+    // In dry run, batch check existence to avoid N+1 queries
+    const normalizedCuis = cuis.map(item => normalizeCUI(item.cui)).filter((c): c is string => !!c);
+    if (normalizedCuis.length === 0) {
+      return result;
+    }
+    
+    // Batch check which CUIs already exist
+    const existing = await prisma.company.findMany({
+      where: { cui: { in: normalizedCuis } },
+      select: { cui: true },
+    });
+    const existingCuis = new Set(existing.map(c => c.cui));
+    
+    // Count what would be created/updated
     for (const item of cuis) {
-      const existing = await prisma.company.findUnique({
-        where: { cui: item.cui },
-        select: { id: true },
-      });
-      if (existing) {
+      const normalizedCui = normalizeCUI(item.cui);
+      if (!normalizedCui) {
+        result.errors++;
+        continue;
+      }
+      if (existingCuis.has(normalizedCui)) {
         result.updated++;
       } else {
         result.created++;
