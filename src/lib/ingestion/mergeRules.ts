@@ -14,6 +14,7 @@ const SOURCE_PRIORITY: Record<SourceId | "USER_APPROVED" | "ENRICHMENT", number>
   ANAF_VERIFY: 100, // Highest - verified by ANAF
   EU_FUNDS: 70, // High - official EU data
   SEAP: 60, // Medium-high - official public procurement
+  SEAP_XLSX: 60, // Medium-high - official public procurement (XLSX format)
   USER_APPROVED: 90, // High - manually approved by users
   THIRD_PARTY: 40, // Lower - third-party sources
   ENRICHMENT: 30, // Lowest - enrichment/scraping
