@@ -72,12 +72,28 @@ export async function GET(req: Request) {
     // Find user by email
     let user;
     try {
+      // Ensure identifier is not null/empty
+      if (!verificationToken.identifier || !verificationToken.identifier.trim()) {
+        console.error("[verify-email] Invalid identifier in token:", verificationToken);
+        return NextResponse.json({ 
+          ok: false, 
+          error: "Invalid verification token",
+          email: null,
+        }, { status: 400 });
+      }
+
+      const email = verificationToken.identifier.trim().toLowerCase();
       user = await prisma.user.findUnique({
-        where: { email: verificationToken.identifier },
+        where: { email },
         select: { id: true, email: true, emailVerified: true },
       });
     } catch (dbError) {
       console.error("[verify-email] Database error finding user:", dbError);
+      if (dbError && typeof dbError === "object" && "code" in dbError) {
+        const prismaError = dbError as { code: string; message: string };
+        console.error("[verify-email] Prisma error code:", prismaError.code);
+        console.error("[verify-email] Prisma error message:", prismaError.message);
+      }
       return NextResponse.json({ 
         ok: false, 
         error: "Database error. Please try again or contact support.",
@@ -86,11 +102,27 @@ export async function GET(req: Request) {
     }
 
     if (!user) {
+      console.warn("[verify-email] User not found for email:", verificationToken.identifier);
       return NextResponse.json({ 
         ok: false, 
         error: "User not found",
         email: verificationToken.identifier, // Include email for resend
       }, { status: 400 });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      console.info("[verify-email] Email already verified for user:", user.id);
+      // Still delete the token
+      try {
+        await prisma.verificationToken.delete({ where: { token } });
+      } catch {
+        await prisma.verificationToken.deleteMany({ where: { token } }).catch(() => null);
+      }
+      return NextResponse.json({ 
+        ok: true, 
+        message: "Email already verified" 
+      });
     }
 
     // Update user email as verified
