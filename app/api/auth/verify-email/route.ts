@@ -126,11 +126,13 @@ export async function GET(req: Request) {
     }
 
     // Update user email as verified
+    // Use raw SQL to avoid Prisma schema mismatches with missing columns
     try {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerified: new Date() },
-      });
+      await prisma.$executeRawUnsafe(
+        `UPDATE "users" SET "email_verified" = $1, "updated_at" = $1 WHERE "id" = $2`,
+        new Date(),
+        user.id
+      );
     } catch (updateError) {
       console.error("[verify-email] Database error updating user:", updateError);
       // Log more details about the error
