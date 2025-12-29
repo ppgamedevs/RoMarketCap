@@ -55,8 +55,13 @@ export async function GET(req: Request) {
 
     // Check expiration
     if (verificationToken.expires < new Date()) {
-      // Clean up expired token
-      await prisma.verificationToken.delete({ where: { token } }).catch(() => null);
+      // Clean up expired token (non-critical)
+      try {
+        await prisma.verificationToken.delete({ where: { token } });
+      } catch {
+        // Fallback to deleteMany if delete fails
+        await prisma.verificationToken.deleteMany({ where: { token } }).catch(() => null);
+      }
       return NextResponse.json({ 
         ok: false, 
         error: "Token expired",
@@ -96,6 +101,12 @@ export async function GET(req: Request) {
       });
     } catch (updateError) {
       console.error("[verify-email] Database error updating user:", updateError);
+      // Log more details about the error
+      if (updateError && typeof updateError === "object" && "code" in updateError) {
+        const prismaError = updateError as { code: string; message: string };
+        console.error("[verify-email] Prisma error code:", prismaError.code);
+        console.error("[verify-email] Prisma error message:", prismaError.message);
+      }
       return NextResponse.json({ 
         ok: false, 
         error: "Failed to verify email. Please try again or contact support.",
