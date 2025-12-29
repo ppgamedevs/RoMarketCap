@@ -84,7 +84,14 @@ export function NationalIngestionClient() {
         body: JSON.stringify({ limit, dry }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        const text = await res.text();
+        throw new Error(`Server returned ${res.status} ${res.statusText}. Response: ${text.substring(0, 200)}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.error || "Trigger failed");
       }
