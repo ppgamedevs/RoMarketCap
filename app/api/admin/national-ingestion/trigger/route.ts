@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     if (!parsed.success) {
       // Format Zod errors as a readable string instead of sending the full error object
-      const errorMessages = parsed.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+      const errorMessages = parsed.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
       return NextResponse.json({ 
         ok: false, 
         error: `Invalid request body: ${errorMessages}`,
