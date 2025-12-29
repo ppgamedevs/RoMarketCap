@@ -55,7 +55,7 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
         }
 
         setSuccess(data.message || "Registration successful! Please check your email to verify your account.");
-        setEmail("");
+        // Don't clear email - user might want to resend
         setPassword("");
         setConfirmPassword("");
         setName("");
@@ -98,10 +98,69 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!email || resendCooldown > 0) return;
+
+    setResending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setSuccess(data.message || "Verification email sent. Please check your inbox.");
+        setResendCooldown(60); // Start 60 second cooldown
+        
+        // Countdown timer
+        const interval = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        setError(data.error || "Failed to resend verification email");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <Alert variant="error">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {success && (
+        <div className="space-y-2">
+          <Alert variant="success">{success}</Alert>
+          {mode === "register" && email && (
+            <div className="text-sm">
+              <p className="text-muted-foreground mb-2">Didn't receive the email?</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleResendVerification}
+                disabled={resending || resendCooldown > 0}
+                className="w-full"
+              >
+                {resending
+                  ? "Sending..."
+                  : resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : "Resend Verification Email"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {mode === "register" && (
         <Input

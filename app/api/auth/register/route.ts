@@ -101,7 +101,11 @@ export async function POST(req: Request) {
       // Send verification email
       await sendVerificationEmail(email, token, user.name);
 
-      return NextResponse.json({ ok: true, message: "Registration successful. Please check your email to verify your account." });
+      return NextResponse.json({ 
+        ok: true, 
+        message: "Registration successful. Please check your email to verify your account.",
+        email: email, // Include email so frontend can use it for resend
+      });
     } catch (createError) {
       console.error("[register] Error creating user:", createError);
       // If it's a Prisma error, provide more details

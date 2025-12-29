@@ -27,24 +27,36 @@ export async function GET(req: Request) {
     });
 
     if (!verificationToken) {
-      return NextResponse.json({ ok: false, error: "Invalid or expired token" }, { status: 400 });
+      return NextResponse.json({ 
+        ok: false, 
+        error: "Invalid or expired token",
+        email: null, // Can't determine email from invalid token
+      }, { status: 400 });
     }
 
     // Check expiration
     if (verificationToken.expires < new Date()) {
       // Clean up expired token
       await prisma.verificationToken.delete({ where: { token } }).catch(() => null);
-      return NextResponse.json({ ok: false, error: "Token expired" }, { status: 400 });
+      return NextResponse.json({ 
+        ok: false, 
+        error: "Token expired",
+        email: verificationToken.identifier, // Include email for resend
+      }, { status: 400 });
     }
 
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: verificationToken.identifier },
-      select: { id: true, emailVerified: true },
+      select: { id: true, email: true, emailVerified: true },
     });
 
     if (!user) {
-      return NextResponse.json({ ok: false, error: "User not found" }, { status: 400 });
+      return NextResponse.json({ 
+        ok: false, 
+        error: "User not found",
+        email: verificationToken.identifier, // Include email for resend
+      }, { status: 400 });
     }
 
     // Update user email as verified
