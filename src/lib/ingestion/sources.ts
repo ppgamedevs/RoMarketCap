@@ -192,18 +192,34 @@ class SourceRegistry {
   }
 
   /**
-   * Get enabled sources (check feature flags)
+   * Get enabled sources (check feature flags and environment variables)
    */
   async getEnabled(): Promise<IngestionSource[]> {
     const { kv } = await import("@vercel/kv");
     const enabled: IngestionSource[] = [];
 
     for (const source of this.getAll()) {
+      // Check feature flag
       const flagKey = `flag:INGEST_${source.sourceId}`;
       const enabledFlag = await kv.get<boolean>(flagKey).catch(() => null);
-      if (enabledFlag !== false) {
-        // Default to enabled if flag not set
+      if (enabledFlag === false) {
+        // Explicitly disabled via feature flag
+        continue;
+      }
+
+      // Check if source has required environment variables
+      let hasConfig = true;
+      if (source.sourceId === "SEAP") {
+        hasConfig = !!(process.env.SEAP_CSV_URL || process.env.SEAP_DATA_URL);
+      } else if (source.sourceId === "EU_FUNDS") {
+        hasConfig = !!(process.env.EU_FUNDS_CSV_URL || process.env.EU_FUNDS_JSON_URL || process.env.EU_FUNDS_DATA_URL);
+      }
+      // ANAF_VERIFY doesn't need env vars (uses existing ANAF connector)
+
+      if (hasConfig) {
         enabled.push(source);
+      } else {
+        console.warn(`[source-registry] Source ${source.sourceId} disabled: missing environment variables`);
       }
     }
 
