@@ -4,14 +4,14 @@
 
 ## Overview
 
-The National Ingestion Pipeline is an automated system that continuously ingests Romanian companies from multiple public sources (SEAP, EU funds, providers, ANAF verification) to build a comprehensive "All Companies in Romania" index, similar to CoinMarketCap's asset ingestion loop.
+The National Ingestion Pipeline is an automated system that continuously ingests Romanian companies from multiple public sources (SEAP, EU funds, SEAP XLSX, providers, ANAF verification) to build a comprehensive "All Companies in Romania" index, similar to CoinMarketCap's asset ingestion loop.
 
 ## Architecture
 
 ### Core Components
 
 1. **Sources** (`src/lib/ingestion/national/sources.ts`)
-   - Fetches CUIs from all enabled sources (SEAP, EU funds, providers)
+   - Fetches CUIs from all enabled sources (SEAP, SEAP XLSX, EU funds, providers)
    - Normalizes and deduplicates by CUI
    - Returns CUIs with provenance metadata
 
@@ -129,9 +129,51 @@ Recommended schedule in `vercel.json`:
 
 The orchestrator runs national ingestion hourly (limit: 500) if `NATIONAL_INGESTION_CRON_ENABLED` is enabled.
 
+## Data Sources
+
+### SEAP XLSX Source
+
+**Environment Variable:** `SEAP_XLSX_URL`
+
+**Description:** Downloads and parses XLSX files from data.gov.ro containing SEAP (Sistemul Electronic de Achiziții Publice) purchase data.
+
+**Example:**
+```env
+SEAP_XLSX_URL="https://data.gov.ro/dataset/e0cf7ffc-1fa0-4ffb-a82f-c83981d81f21/resource/4ea2f0d0-ad5d-440f-af9d-7101bc9e4969/download/datagov_raport-achizitii_directe_t1_2025.xlsx"
+```
+
+**File Size Considerations:**
+- Maximum file size: 100MB
+- Request timeout: 60 seconds
+- The source processes the entire file in one run (cursor-based pagination not applicable for single-file sources)
+- For very large files, consider splitting into multiple files or using the CSV source instead
+
+**Column Detection:**
+- Automatically detects CUI column using flexible header matching
+- Supports various header names: "CUI", "CIF", "Cod fiscal", "CUI Furnizor", "CUI_FURNIZOR", etc.
+- Extracts supplier names if available
+- Processes first worksheet only
+
+**Notes:**
+- Files from data.gov.ro are "upload resources" with stable URLs that can be downloaded directly
+- The source uses Node.js runtime (required for XLSX parsing)
+- Files are processed once per ingestion run (cursor marks file as processed)
+
+### SEAP CSV Source
+
+**Environment Variable:** `SEAP_CSV_URL`
+
+**Description:** Downloads and parses CSV files containing SEAP purchase data.
+
+### EU Funds Source
+
+**Environment Variable:** `EU_FUNDS_CSV_URL` or `EU_FUNDS_JSON_URL`
+
+**Description:** Downloads and parses CSV or JSON files containing EU funds data.
+
 ## Workflow
 
-1. **Fetch CUIs** from all enabled sources (SEAP, EU funds, providers)
+1. **Fetch CUIs** from all enabled sources (SEAP, SEAP XLSX, EU funds, providers)
 2. **Normalize** CUIs (remove RO prefix, validate format)
 3. **Deduplicate** by CUI (keep highest confidence)
 4. **Upsert companies** with minimal fields:

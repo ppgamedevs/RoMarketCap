@@ -7,7 +7,7 @@
 /**
  * Source IDs
  */
-export type SourceId = "SEAP" | "EU_FUNDS" | "ANAF_VERIFY" | "THIRD_PARTY";
+export type SourceId = "SEAP" | "EU_FUNDS" | "ANAF_VERIFY" | "THIRD_PARTY" | "SEAP_XLSX";
 
 /**
  * Contacts information
@@ -100,6 +100,7 @@ export const MERGE_PRIORITY: Record<SourceId, number> = {
   ANAF_VERIFY: 100, // Highest - verified by ANAF
   EU_FUNDS: 70, // High - official EU data
   SEAP: 60, // Medium-high - official public procurement
+  SEAP_XLSX: 60, // Medium-high - official public procurement (XLSX format)
   THIRD_PARTY: 40, // Lower - third-party sources
 };
 

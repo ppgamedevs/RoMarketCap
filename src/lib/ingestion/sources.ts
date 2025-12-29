@@ -7,6 +7,7 @@
 import type { SourceId, SourceCompanyRecord } from "./types";
 import { SEAPAdapter } from "@/src/lib/ingest/adapters/seap";
 import { EUFundsAdapter } from "@/src/lib/ingest/adapters/euFunds";
+import { SEAPXlsxSource } from "./national/sources/seapXlsx";
 import { DiscoverySource } from "@prisma/client";
 
 /**
@@ -168,6 +169,7 @@ class SourceRegistry {
     this.register(new SEAPSource());
     this.register(new EUFundsSource());
     this.register(new ANAFVerifySource());
+    this.register(new SEAPXlsxSource());
   }
 
   /**
@@ -218,6 +220,8 @@ class SourceRegistry {
         hasConfig = !!(process.env.SEAP_CSV_URL || process.env.SEAP_DATA_URL);
       } else if (source.sourceId === "EU_FUNDS") {
         hasConfig = !!(process.env.EU_FUNDS_CSV_URL || process.env.EU_FUNDS_JSON_URL || process.env.EU_FUNDS_DATA_URL);
+      } else if (source.sourceId === "SEAP_XLSX") {
+        hasConfig = !!process.env.SEAP_XLSX_URL;
       }
 
       if (hasConfig) {
