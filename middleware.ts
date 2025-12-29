@@ -22,7 +22,8 @@ export default withAuth({
           pathname === "/api/admin/check-auth-tables" ||
           pathname === "/api/admin/test-auth" ||
           pathname === "/api/admin/check-auth-config" ||
-          pathname === "/api/admin/add-export-credits-column") {
+          pathname === "/api/admin/add-export-credits-column" ||
+          pathname === "/api/admin/check-verification-table") {
         return true;
       }
       

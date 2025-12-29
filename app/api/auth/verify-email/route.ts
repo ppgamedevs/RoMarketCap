@@ -22,20 +22,13 @@ export async function GET(req: Request) {
     const { token } = parsed.data;
 
     // Find verification token
+    // Use findFirst instead of findUnique to avoid issues if unique constraint doesn't exist
+    // The token should still be unique, but this is more resilient
     let verificationToken;
     try {
-      // Try findUnique first (requires unique index on token)
-      try {
-        verificationToken = await prisma.verificationToken.findUnique({
-          where: { token },
-        });
-      } catch (uniqueError) {
-        // If findUnique fails (e.g., no unique constraint), fallback to findFirst
-        console.warn("[verify-email] findUnique failed, trying findFirst:", uniqueError);
-        verificationToken = await prisma.verificationToken.findFirst({
-          where: { token },
-        });
-      }
+      verificationToken = await prisma.verificationToken.findFirst({
+        where: { token },
+      });
     } catch (dbError) {
       console.error("[verify-email] Database error finding token:", dbError);
       // Check if it's a table doesn't exist error
@@ -111,10 +104,18 @@ export async function GET(req: Request) {
     }
 
     // Delete used token (non-critical, so we catch errors)
-    await prisma.verificationToken.delete({ where: { token } }).catch((deleteError) => {
-      console.error("[verify-email] Warning: Failed to delete token:", deleteError);
-      // Don't fail the request if token deletion fails
-    });
+    // Try deleteMany as fallback if delete fails (e.g., no unique constraint)
+    try {
+      await prisma.verificationToken.delete({ where: { token } });
+    } catch (deleteError) {
+      // Fallback to deleteMany if delete fails
+      try {
+        await prisma.verificationToken.deleteMany({ where: { token } });
+      } catch (deleteManyError) {
+        console.error("[verify-email] Warning: Failed to delete token:", deleteManyError);
+        // Don't fail the request if token deletion fails
+      }
+    }
 
     return NextResponse.json({ ok: true, message: "Email verified successfully" });
   } catch (error) {
