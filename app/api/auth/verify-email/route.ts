@@ -129,7 +129,7 @@ export async function GET(req: Request) {
     // Use raw SQL to avoid Prisma schema mismatches with missing columns
     try {
       await prisma.$executeRawUnsafe(
-        `UPDATE "users" SET "email_verified" = $1, "updated_at" = $1 WHERE "id" = $2`,
+        `UPDATE "users" SET "email_verified" = $1::timestamp, "updated_at" = $1::timestamp WHERE "id" = $2::uuid`,
         new Date(),
         user.id
       );
