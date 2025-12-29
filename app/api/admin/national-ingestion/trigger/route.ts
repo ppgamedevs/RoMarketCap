@@ -32,8 +32,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check read-only mode
-    const block = await shouldBlockMutation(req, false);
+    // Check read-only mode (admins bypass read-only mode)
+    const block = await shouldBlockMutation(req, true);
     if (block.blocked) {
       return NextResponse.json({ ok: false, error: block.reason }, { status: 503 });
     }
