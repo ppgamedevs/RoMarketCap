@@ -72,6 +72,7 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
         if (result?.error) {
           if (result.error === "Email not verified") {
             setError("Please verify your email before logging in. Check your inbox for the verification link.");
+            // Keep email populated for resend functionality
           } else {
             setError("Invalid email or password");
           }
@@ -139,7 +140,29 @@ export function EmailPasswordForm({ mode, onSuccess }: EmailPasswordFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <div className="space-y-2">
+          <Alert variant="error">{error}</Alert>
+          {error.includes("verify your email") && email && (
+            <div className="text-sm">
+              <p className="text-muted-foreground mb-2">Didn't receive the email?</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleResendVerification}
+                disabled={resending || resendCooldown > 0}
+                className="w-full"
+              >
+                {resending
+                  ? "Sending..."
+                  : resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : "Resend Verification Email"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       {success && (
         <div className="space-y-2">
           <Alert variant="success">{success}</Alert>
