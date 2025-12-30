@@ -19,6 +19,7 @@ export default async function RoHomePage() {
       isPublic: true,
       visibilityStatus: "PUBLIC",
       isSkeleton: false,
+      mergedIntoCompanyId: null, // Exclude merged companies
     };
 
     const latest = await prisma.scoreSnapshot.findMany({
