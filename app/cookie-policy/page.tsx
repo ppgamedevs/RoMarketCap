@@ -3,6 +3,7 @@ import { getLangFromRequest } from "@/src/lib/i18n";
 import { getSiteUrl } from "@/lib/seo/site";
 import { Card, CardBody } from "@/components/ui/Card";
 
+export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function generateMetadata(): Promise<Metadata> {

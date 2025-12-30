@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { Lang } from "@/src/lib/i18n";
 
-export function LangToggle({ lang }: { lang: Lang }) {
+function LangToggleInner({ lang }: { lang: Lang }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const next = `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`;
@@ -24,6 +24,10 @@ export function LangToggle({ lang }: { lang: Lang }) {
       </Link>
     </nav>
   );
+}
+
+export function LangToggle({ lang }: { lang: Lang }) {
+  return <LangToggleInner lang={lang} />;
 }
 
 

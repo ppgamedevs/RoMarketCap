@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LangToggle } from "@/components/layout/LangToggle";
 import type { Lang } from "@/src/lib/i18n";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useEffect, Suspense } from "react";
 import clsx from "clsx";
 
 const navItems: Array<{ href: string; key: string; label: { ro: string; en: string } }> = [
@@ -14,12 +14,49 @@ const navItems: Array<{ href: string; key: string; label: { ro: string; en: stri
   { href: "/billing", key: "billing", label: { ro: "Abonament", en: "Billing" } },
 ];
 
+function SearchForm({ lang }: { lang: Lang }) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setQuery(params.get("q") ?? "");
+    }
+  }, []);
+
+  return (
+    <form
+      className="hidden items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm shadow-sm md:flex"
+      onSubmit={(e) => {
+        e.preventDefault();
+        startTransition(() => {
+          router.push(`/companies?q=${encodeURIComponent(query)}`);
+        });
+      }}
+      role="search"
+    >
+      <input
+        aria-label={lang === "ro" ? "Caută companii" : "Search companies"}
+        className="w-44 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        placeholder={lang === "ro" ? "Caută nume sau CUI" : "Search name or CUI"}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <button type="submit" className="text-xs text-muted-foreground hover:text-foreground" disabled={isPending}>
+        {lang === "ro" ? "Caută" : "Search"}
+      </button>
+    </form>
+  );
+}
+
 export function SiteHeader({ lang }: { lang: Lang }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [query, setQuery] = useState(searchParams.get("q") ?? "");
-  const [isPending, startTransition] = useTransition();
+  const activeKey = useMemo(() => {
+    const match = navItems.find((n) => pathname?.startsWith(n.href));
+    return match?.key ?? "";
+  }, [pathname]);
 
   const activeKey = useMemo(() => {
     const match = navItems.find((n) => pathname?.startsWith(n.href));
@@ -50,29 +87,13 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           ))}
         </nav>
 
-        <form
-          className="hidden items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm shadow-sm md:flex"
-          onSubmit={(e) => {
-            e.preventDefault();
-            startTransition(() => {
-              router.push(`/companies?q=${encodeURIComponent(query)}`);
-            });
-          }}
-          role="search"
-        >
-          <input
-            aria-label={lang === "ro" ? "Caută companii" : "Search companies"}
-            className="w-44 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            placeholder={lang === "ro" ? "Caută nume sau CUI" : "Search name or CUI"}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <button type="submit" className="text-xs text-muted-foreground hover:text-foreground" disabled={isPending}>
-            {lang === "ro" ? "Caută" : "Search"}
-          </button>
-        </form>
+        <Suspense fallback={<div className="hidden md:block w-44 h-9" />}>
+          <SearchForm lang={lang} />
+        </Suspense>
 
-        <LangToggle lang={lang} />
+        <Suspense fallback={<div className="w-20 h-8" />}>
+          <LangToggle lang={lang} />
+        </Suspense>
       </div>
     </header>
   );
