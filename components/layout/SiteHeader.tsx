@@ -58,11 +58,6 @@ export function SiteHeader({ lang }: { lang: Lang }) {
     return match?.key ?? "";
   }, [pathname]);
 
-  const activeKey = useMemo(() => {
-    const match = navItems.find((n) => pathname?.startsWith(n.href));
-    return match?.key ?? "";
-  }, [pathname]);
-
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 md:px-6">
