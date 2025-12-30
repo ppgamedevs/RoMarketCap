@@ -47,6 +47,22 @@ type Stats = {
   errorSummary: Array<{ sourceType: string; count: number }>;
 };
 
+// Helper to safely stringify any value for display
+function safeStringify(value: any): string {
+  if (value == null) return "N/A";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object") {
+    // If it's an object with keys, extract the first key
+    const keys = Object.keys(value);
+    if (keys.length > 0) {
+      return keys[0];
+    }
+    return "UNKNOWN";
+  }
+  return String(value);
+}
+
 export function NationalIngestionClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,19 +85,64 @@ export function NationalIngestionClient() {
         throw new Error(errorMessage);
       }
       const data = await res.json();
-      // Ensure all sourceType values are strings
+      // Ensure all sourceType values are strings and sanitize all data
       if (data.stats) {
-        if (data.stats.errorSummary) {
-          data.stats.errorSummary = data.stats.errorSummary.map((item: any) => ({
-            sourceType: typeof item.sourceType === "string" ? item.sourceType : String(item.sourceType || "UNKNOWN"),
-            count: item.count || 0,
-          }));
+        // Deep sanitize errorSummary
+        if (data.stats.errorSummary && Array.isArray(data.stats.errorSummary)) {
+          data.stats.errorSummary = data.stats.errorSummary.map((item: any) => {
+            let sourceTypeStr = "UNKNOWN";
+            if (typeof item?.sourceType === "string") {
+              sourceTypeStr = item.sourceType;
+            } else if (item?.sourceType && typeof item.sourceType === "object") {
+              const keys = Object.keys(item.sourceType);
+              sourceTypeStr = keys.length > 0 ? keys[0] : "UNKNOWN";
+            } else if (item?.sourceType != null) {
+              sourceTypeStr = String(item.sourceType);
+            }
+            return {
+              sourceType: sourceTypeStr,
+              count: typeof item?.count === "number" ? item.count : 0,
+            };
+          });
         }
-        if (data.stats.lastJob?.errorRecords) {
-          data.stats.lastJob.errorRecords = data.stats.lastJob.errorRecords.map((e: any) => ({
-            ...e,
-            sourceType: typeof e.sourceType === "string" ? e.sourceType : String(e.sourceType || "UNKNOWN"),
-          }));
+        
+        // Deep sanitize lastJob errorRecords
+        if (data.stats.lastJob?.errorRecords && Array.isArray(data.stats.lastJob.errorRecords)) {
+          data.stats.lastJob.errorRecords = data.stats.lastJob.errorRecords.map((e: any) => {
+            let sourceTypeStr = "UNKNOWN";
+            if (typeof e?.sourceType === "string") {
+              sourceTypeStr = e.sourceType;
+            } else if (e?.sourceType && typeof e.sourceType === "object") {
+              const keys = Object.keys(e.sourceType);
+              sourceTypeStr = keys.length > 0 ? keys[0] : "UNKNOWN";
+            } else if (e?.sourceType != null) {
+              sourceTypeStr = String(e.sourceType);
+            }
+            return {
+              id: String(e?.id || ""),
+              cui: e?.cui ? String(e.cui) : null,
+              sourceType: sourceTypeStr,
+              reason: String(e?.reason || ""),
+              createdAt: e?.createdAt ? String(e.createdAt) : "",
+            };
+          });
+        }
+        
+        // Sanitize lastJob itself
+        if (data.stats.lastJob) {
+          data.stats.lastJob = {
+            ...data.stats.lastJob,
+            id: String(data.stats.lastJob.id || ""),
+            startedAt: String(data.stats.lastJob.startedAt || ""),
+            finishedAt: data.stats.lastJob.finishedAt ? String(data.stats.lastJob.finishedAt) : null,
+            status: String(data.stats.lastJob.status || ""),
+            mode: String(data.stats.lastJob.mode || ""),
+            limit: Number(data.stats.lastJob.limit || 0),
+            discovered: Number(data.stats.lastJob.discovered || 0),
+            upserted: Number(data.stats.lastJob.upserted || 0),
+            errors: Number(data.stats.lastJob.errors || 0),
+            errorRecords: data.stats.lastJob.errorRecords || [],
+          };
         }
       }
       setStats(data.stats);
@@ -123,14 +184,35 @@ export function NationalIngestionClient() {
         throw new Error(errorMsg);
       }
 
-      alert(`${dry ? "Dry run" : "Run"} completed: ${data.discovered} discovered, ${data.upserted} upserted, ${data.errors} errors`);
+      // Ensure all values are primitives before displaying
+      const discovered = typeof data.discovered === "number" ? data.discovered : 0;
+      const upserted = typeof data.upserted === "number" ? data.upserted : 0;
+      const errors = typeof data.errors === "number" ? data.errors : 0;
+      
+      alert(`${dry ? "Dry run" : "Run"} completed: ${discovered} discovered, ${upserted} upserted, ${errors} errors`);
       await fetchStats();
     } catch (error: any) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : (typeof error === "string" 
-          ? error 
-          : JSON.stringify(error || "Unknown error"));
+      // Safely extract error message without rendering objects
+      let errorMessage = "Unknown error";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (error && typeof error === "object") {
+        // Try to extract a message property if it's a string
+        if (typeof error.message === "string") {
+          errorMessage = error.message;
+        } else if (typeof error.error === "string") {
+          errorMessage = error.error;
+        } else {
+          // Last resort: stringify but limit length
+          try {
+            errorMessage = JSON.stringify(error).substring(0, 200);
+          } catch {
+            errorMessage = "Unknown error (could not serialize)";
+          }
+        }
+      }
       alert(`Error: ${errorMessage}`);
     } finally {
       setRunning(false);
@@ -215,15 +297,13 @@ export function NationalIngestionClient() {
                   <p className="text-sm font-medium mb-2">Recent Errors:</p>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {stats.lastJob.errorRecords.map((error) => {
-                      // Ensure sourceType is always a string (safety check)
-                      const sourceTypeStr = typeof error.sourceType === "string" 
-                        ? error.sourceType 
-                        : (error.sourceType && typeof error.sourceType === "object" 
-                          ? Object.keys(error.sourceType)[0] || "UNKNOWN"
-                          : String(error.sourceType || "UNKNOWN"));
+                      // Use safeStringify to ensure we never render objects
+                      const sourceTypeStr = safeStringify(error.sourceType);
+                      const cuiStr = safeStringify(error.cui);
+                      const reasonStr = safeStringify(error.reason);
                       return (
-                        <div key={error.id} className="text-xs text-muted-foreground">
-                          {error.cui || "N/A"} ({sourceTypeStr}): {error.reason.substring(0, 100)}
+                        <div key={String(error.id || Math.random())} className="text-xs text-muted-foreground">
+                          {cuiStr} ({sourceTypeStr}): {reasonStr.substring(0, 100)}
                         </div>
                       );
                     })}
@@ -340,16 +420,13 @@ export function NationalIngestionClient() {
           <CardBody>
             <div className="space-y-2">
               {stats.errorSummary.map((item) => {
-                // Ensure sourceType is always a string (safety check)
-                const sourceTypeStr = typeof item.sourceType === "string" 
-                  ? item.sourceType 
-                  : (item.sourceType && typeof item.sourceType === "object" 
-                    ? Object.keys(item.sourceType)[0] || "UNKNOWN"
-                    : String(item.sourceType || "UNKNOWN"));
+                // Use safeStringify to ensure we never render objects
+                const sourceTypeStr = safeStringify(item.sourceType);
+                const count = typeof item.count === "number" ? item.count : 0;
                 return (
                   <div key={sourceTypeStr} className="flex items-center justify-between text-sm">
                     <span className="font-medium">{sourceTypeStr}</span>
-                    <span className="text-muted-foreground">{item.count} errors</span>
+                    <span className="text-muted-foreground">{count} errors</span>
                   </div>
                 );
               })}

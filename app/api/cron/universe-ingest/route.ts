@@ -18,6 +18,7 @@ import { SEAPAdapter } from "@/src/lib/ingest/adapters/seap";
 import { EUFundsAdapter } from "@/src/lib/ingest/adapters/euFunds";
 import { normalizeCui } from "@/src/lib/cui/normalize";
 import type { UniverseSource } from "@/src/lib/universe/types";
+import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,16 +40,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Universe ingestion is disabled via feature flag" }, { status: 503 });
     }
 
-    // Check read-only mode
-    const block = await shouldBlockMutation(req, false);
+    // Check if user is admin (allows bypassing cron secret)
+    let isAdmin = false;
+    try {
+      const session = await requireAdminSession();
+      isAdmin = !!session;
+    } catch {
+      // Not an admin, will check cron secret below
+    }
+
+    // Check read-only mode (admins can bypass)
+    const block = await shouldBlockMutation(req, isAdmin);
     if (block.blocked) {
       return NextResponse.json({ ok: false, error: block.reason }, { status: 503 });
     }
 
-    const secret = process.env.CRON_SECRET;
-    const got = req.headers.get("x-cron-secret");
-    if (!secret || got !== secret) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    // Require either cron secret OR admin session
+    if (!isAdmin) {
+      const secret = process.env.CRON_SECRET;
+      const got = req.headers.get("x-cron-secret");
+      if (!secret || got !== secret) {
+        return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Acquire lock
