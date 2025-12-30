@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company " } }, // Also handle old English format
-          { name: null },
+          { name: { equals: null } },
           { name: "" },
         ],
         cui: { not: null },

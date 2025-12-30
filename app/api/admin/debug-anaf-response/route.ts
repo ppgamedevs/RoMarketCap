@@ -48,7 +48,7 @@ export async function GET(req: Request) {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company " } },
-          { name: null },
+          { name: { equals: null } },
           { name: "" },
         ],
         cui: { not: null },
