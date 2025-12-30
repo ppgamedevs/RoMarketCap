@@ -101,7 +101,26 @@ export async function POST() {
       }
     }
 
-    // 5. Verify the columns exist
+    // 5. Add company_integrity_score column
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS company_integrity_score INTEGER;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added company_integrity_score column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ company_integrity_score column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // 6. Verify the columns exist
     const columnCheck = await prisma.$queryRawUnsafe<Array<{
       column_name: string;
       data_type: string;
@@ -109,7 +128,7 @@ export async function POST() {
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'companies' 
-        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile')
+        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score')
       ORDER BY column_name
     `);
 
