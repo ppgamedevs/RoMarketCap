@@ -65,116 +65,121 @@ export async function upsertCompaniesFromCuis(
     return result;
   }
 
-  // Process in batches
+  // Process in batches, but each company in its own transaction
+  // This prevents one failure from aborting the entire batch
   for (let i = 0; i < cuis.length; i += BATCH_SIZE) {
     const batch = cuis.slice(i, i + BATCH_SIZE);
     
-    await prisma.$transaction(async (tx) => {
-      for (const item of batch) {
+    // Process each company in a separate transaction to avoid transaction abort cascades
+    await Promise.allSettled(
+      batch.map(async (item) => {
         try {
           const normalizedCui = normalizeCUI(item.cui);
           if (!normalizedCui) {
             result.errors++;
             result.errorDetails.push({ cui: item.cui, error: "Invalid CUI" });
-            continue;
+            return;
           }
 
-          // Generate slug from name or CUI
-          const slugBase = item.name || normalizedCui;
-          const slug = slugifyCompanyName(slugBase) || `company-${normalizedCui.toLowerCase()}`;
+          // Process each company in its own transaction
+          await prisma.$transaction(async (tx) => {
+            // Generate slug from name or CUI
+            const slugBase = item.name || normalizedCui;
+            const slug = slugifyCompanyName(slugBase) || `company-${normalizedCui.toLowerCase()}`;
 
-          // Check if company exists
-          const existing = await tx.company.findUnique({
-            where: { cui: normalizedCui },
-            select: { id: true, dataConfidence: true },
-          });
+            // Check if company exists
+            const existing = await tx.company.findUnique({
+              where: { cui: normalizedCui },
+              select: { id: true, dataConfidence: true },
+            });
 
-          // Use name if available, otherwise use CUI as fallback (name is required in schema)
-          const companyName = item.name || `Company ${normalizedCui}`;
+            // Use name if available, otherwise use CUI as fallback (name is required in schema)
+            const companyName = item.name || `Company ${normalizedCui}`;
 
-          // Upsert company
-          const company = await tx.company.upsert({
-            where: { cui: normalizedCui },
-            create: {
-              cui: normalizedCui,
-              name: companyName,
-              legalName: companyName,
-              slug,
-              canonicalSlug: slug,
-              isPublic: true,
-              visibilityStatus: "PUBLIC",
-              isSkeleton: false, // Explicitly set to false for national ingestion
-              dataConfidence: item.confidence,
-            },
-            update: {
-              // Only update if we have better data
-              ...(item.name && item.confidence >= 60
-                ? {
-                    name: item.name,
-                    legalName: item.name,
-                  }
-                : {}),
-              dataConfidence: Math.max(
-                item.confidence,
-                existing?.dataConfidence || 0
-              ),
-            },
-            select: { id: true, cui: true },
-          });
-
-          // Track if created or updated
-          if (existing) {
-            result.updated++;
-          } else {
-            result.created++;
-          }
-
-          // Create/update provenance
-          if (item.sourceRef) {
-            await tx.companyProvenance.upsert({
-              where: {
-                company_provenance_unique: {
-                  companyId: company.id,
-                  sourceName: item.sourceType,
-                  rowHash: item.sourceRef,
-                },
-              },
+            // Upsert company
+            const company = await tx.company.upsert({
+              where: { cui: normalizedCui },
               create: {
-                companyId: company.id,
-                sourceName: item.sourceType,
-                externalId: item.sourceRef,
-                firstSeenAt: new Date(),
-                lastSeenAt: new Date(),
-                rowHash: item.sourceRef,
-                rawJson: item.raw as Prisma.InputJsonValue,
+                cui: normalizedCui,
+                name: companyName,
+                legalName: companyName,
+                slug,
+                canonicalSlug: slug,
+                isPublic: true,
+                visibilityStatus: "PUBLIC",
+                isSkeleton: false, // Explicitly set to false for national ingestion
+                dataConfidence: item.confidence,
               },
               update: {
-                lastSeenAt: new Date(),
-                rawJson: item.raw as Prisma.InputJsonValue,
+                // Only update if we have better data
+                ...(item.name && item.confidence >= 60
+                  ? {
+                      name: item.name,
+                      legalName: item.name,
+                    }
+                  : {}),
+                dataConfidence: Math.max(
+                  item.confidence,
+                  existing?.dataConfidence || 0
+                ),
               },
+              select: { id: true, cui: true },
             });
-          }
 
-          // Write field provenance
-          if (item.name && item.confidence >= 60) {
-            await writeFieldProvenance(
-              company.id,
-              "name",
-              item.sourceType as any,
-              item.sourceRef || normalizedCui,
-              item.confidence,
-              `national-ingest:${item.sourceType}`
-            ).catch(() => null);
-          }
+            // Track if created or updated
+            if (existing) {
+              result.updated++;
+            } else {
+              result.created++;
+            }
 
-          // Apply post-ingestion hooks (scoring, integrity, etc.)
-          // Only for newly created companies to avoid unnecessary work on updates
-          if (!existing) {
-            // Run post-hooks asynchronously to avoid blocking the batch
-            applyPostIngestionHooks(company.id).catch((error) => {
-              console.error(`[national-ingest] Post-hooks failed for ${company.id}:`, error);
-            });
-          }
+            // Create/update provenance
+            if (item.sourceRef) {
+              await tx.companyProvenance.upsert({
+                where: {
+                  company_provenance_unique: {
+                    companyId: company.id,
+                    sourceName: item.sourceType,
+                    rowHash: item.sourceRef,
+                  },
+                },
+                create: {
+                  companyId: company.id,
+                  sourceName: item.sourceType,
+                  externalId: item.sourceRef,
+                  firstSeenAt: new Date(),
+                  lastSeenAt: new Date(),
+                  rowHash: item.sourceRef,
+                  rawJson: item.raw as Prisma.InputJsonValue,
+                },
+                update: {
+                  lastSeenAt: new Date(),
+                  rawJson: item.raw as Prisma.InputJsonValue,
+                },
+              });
+            }
+
+            // Write field provenance (outside transaction to avoid blocking)
+            if (item.name && item.confidence >= 60) {
+              writeFieldProvenance(
+                company.id,
+                "name",
+                item.sourceType as any,
+                item.sourceRef || normalizedCui,
+                item.confidence,
+                `national-ingest:${item.sourceType}`
+              ).catch(() => null);
+            }
+
+            // Apply post-ingestion hooks (scoring, integrity, etc.)
+            // Only for newly created companies to avoid unnecessary work on updates
+            // Run outside transaction to avoid blocking and transaction abort issues
+            if (!existing) {
+              applyPostIngestionHooks(company.id).catch((error) => {
+                console.error(`[national-ingest] Post-hooks failed for ${company.id}:`, error);
+              });
+            }
+          });
         } catch (error) {
           result.errors++;
           result.errorDetails.push({
@@ -182,10 +187,8 @@ export async function upsertCompaniesFromCuis(
             error: error instanceof Error ? error.message : "Unknown error",
           });
         }
-      }
-    }, {
-      timeout: 30000, // 30s timeout per batch
-    });
+      })
+    );
   }
 
   return result;
