@@ -62,20 +62,18 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Query 2: Companies with null names (need separate query due to Prisma limitations)
-    const companiesWithNullNames = await prisma.company.findMany({
-      where: {
-        name: null,
-        cui: { not: null },
-      },
-      select: {
-        id: true,
-        cui: true,
-        name: true,
-      },
-      take: Math.max(0, limit - companiesWithGenericNames.length),
-      orderBy: { createdAt: "desc" },
-    });
+    // Query 2: Companies with null names (need raw SQL due to Prisma limitations)
+    const nullNameLimit = Math.max(0, limit - companiesWithGenericNames.length);
+    const companiesWithNullNames = nullNameLimit > 0
+      ? await prisma.$queryRaw<Array<{ id: string; cui: string; name: string | null }>>`
+          SELECT id, cui, name
+          FROM "Company"
+          WHERE name IS NULL
+            AND cui IS NOT NULL
+          ORDER BY "createdAt" DESC
+          LIMIT ${nullNameLimit}
+        `
+      : [];
 
     // Combine results
     const companies = [...companiesWithGenericNames, ...companiesWithNullNames].slice(0, limit);
