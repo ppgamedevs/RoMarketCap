@@ -1,6 +1,8 @@
 /**
  * ANAF (Agenția Națională de Administrare Fiscală) Verification Connector
  * 
+ * PROMPT 62: Production-grade ANAF verification with endpoint fallback chain
+ * 
  * SAFE MODE: Conservative rate limiting, aggressive caching, no retry storms
  */
 
@@ -15,17 +17,33 @@ export type ANAFVerificationResult = {
   rawResponse: unknown;
   errorMessage?: string;
   verificationStatus: "SUCCESS" | "ERROR" | "PENDING";
+  // PROMPT 62: Company general info from date_generale
+  companyName?: string;
+  address?: string;
+  caen?: string;
+  registrationNumber?: string;
+  phone?: string;
+  iban?: string;
+  registrationStatus?: string;
+  fiscalAuthority?: string;
+  endpointUsed?: string; // Which endpoint succeeded
 };
 
-// PROMPT 52: Rate limiting: 1 request per second
+// PROMPT 62: Rate limiting: 1 request per second
 const RATE_LIMIT_MS = 1000;
-// Aggressive caching: 90 days default
-const DEFAULT_CACHE_TTL_DAYS = 90;
+// PROMPT 62: Cache for 7 days (was 90)
+const DEFAULT_CACHE_TTL_DAYS = 7;
 const CACHE_TTL_SECONDS = DEFAULT_CACHE_TTL_DAYS * 24 * 60 * 60;
 
-// ANAF API endpoint (public, read-only)
-// Note: This is a placeholder - replace with actual ANAF API endpoint if available
-const ANAF_API_BASE = process.env.ANAF_API_URL || "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva";
+// PROMPT 62: Endpoint fallback chain
+const ANAF_ENDPOINTS = [
+  "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva",
+  "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v7/ws/tva",
+] as const;
+
+// PROMPT 62: Optional experimental v9 endpoint (gated by feature flag)
+const ANAF_V9_EXPERIMENTAL = process.env.ANAF_V9_EXPERIMENTAL === "true";
+const ANAF_V9_ENDPOINT = "https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva";
 
 /**
  * Get cache key for a CUI
@@ -89,15 +107,140 @@ async function cacheVerification(cui: string, result: ANAFVerificationResult): P
 }
 
 /**
- * Verify company with ANAF API
+ * PROMPT 62: Try a single ANAF endpoint
+ */
+async function tryAnafEndpoint(
+  endpoint: string,
+  cui: number,
+  date: string
+): Promise<{ success: boolean; data?: unknown; status?: number; error?: string }> {
+  try {
+    // PROMPT 62: CUI must be number, not string
+    const requestBody = JSON.stringify([{ cui, data: date }]);
+    
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "RoMarketCap/1.0",
+      },
+      body: requestBody,
+      signal: AbortSignal.timeout(10000), // 10 seconds
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        status: response.status,
+        error: `${response.status} ${response.statusText}`,
+      };
+    }
+
+    const data = await response.json().catch(() => null);
+    
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return {
+        success: false,
+        error: "Invalid response: not an array or empty",
+      };
+    }
+
+    return { success: true, data: data[0] };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * PROMPT 62: Parse ANAF response to extract company info
+ */
+function parseAnafResponse(result: unknown): {
+  isActive: boolean;
+  isVatRegistered: boolean;
+  lastReportedYear: number | null;
+  companyName?: string;
+  address?: string;
+  caen?: string;
+  registrationNumber?: string;
+  phone?: string;
+  iban?: string;
+  registrationStatus?: string;
+  fiscalAuthority?: string;
+} {
+  if (!result || typeof result !== "object") {
+    return {
+      isActive: false,
+      isVatRegistered: false,
+      lastReportedYear: null,
+    };
+  }
+
+  const raw = result as Record<string, unknown>;
+  
+  // PROMPT 62: Extract from date_generale if present
+  const dateGenerale = raw.date_generale as Record<string, unknown> | undefined;
+  
+  // PROMPT 62: Extract company name from date_generale.denumire
+  const companyName = dateGenerale?.denumire as string | undefined;
+  
+  // PROMPT 62: Extract other fields from date_generale
+  const address = dateGenerale?.adresa as string | undefined;
+  const caen = dateGenerale?.cod_CAEN as string | undefined;
+  const registrationNumber = dateGenerale?.nrRegCom as string | undefined;
+  const phone = dateGenerale?.telefon as string | undefined;
+  const iban = dateGenerale?.iban as string | undefined;
+  const registrationStatus = dateGenerale?.stare_inregistrare as string | undefined;
+  const fiscalAuthority = dateGenerale?.organFiscalCompetent as string | undefined;
+
+  // Fallback: try root level fields if date_generale not present
+  const isActive = 
+    raw.valid === true || 
+    raw.valid === "true" || 
+    raw.status === "ACTIV" ||
+    (dateGenerale?.stare_inregistrare as string)?.toUpperCase() === "ACTIV";
+    
+  const isVatRegistered = 
+    raw.tva === true || 
+    raw.tva === "true" || 
+    raw.platitor === true ||
+    (raw.date_generale as Record<string, unknown>)?.platitor === true;
+    
+  const lastReportedYear = raw.dataInceputTva 
+    ? new Date(raw.dataInceputTva as string).getFullYear() 
+    : null;
+
+  return {
+    isActive,
+    isVatRegistered,
+    lastReportedYear,
+    companyName,
+    address,
+    caen,
+    registrationNumber,
+    phone,
+    iban,
+    registrationStatus,
+    fiscalAuthority,
+  };
+}
+
+/**
+ * PROMPT 62: Verify company with ANAF API (with endpoint fallback chain)
  * 
  * SAFE MODE:
  * - Checks rate limit before making request
- * - Checks cache first
+ * - Checks cache first (unless force=true)
+ * - Tries endpoints in fallback chain
  * - No retries on failure
  * - Returns error gracefully
  */
-export async function verifyCompanyANAF(cui: string): Promise<ANAFVerificationResult> {
+export async function verifyCompanyANAF(
+  cui: string,
+  options?: { force?: boolean }
+): Promise<ANAFVerificationResult> {
   const normalized = normalizeCUI(cui);
   if (!normalized) {
     return {
@@ -111,10 +254,12 @@ export async function verifyCompanyANAF(cui: string): Promise<ANAFVerificationRe
     };
   }
 
-  // Check cache first
-  const cached = await getCachedVerification(normalized);
-  if (cached) {
-    return cached;
+  // PROMPT 62: Check cache first (unless force=true)
+  if (!options?.force) {
+    const cached = await getCachedVerification(normalized);
+    if (cached) {
+      return cached;
+    }
   }
 
   // Check rate limit
@@ -131,67 +276,108 @@ export async function verifyCompanyANAF(cui: string): Promise<ANAFVerificationRe
     };
   }
 
-  // Make API request
-  try {
-    // ANAF API expects JSON array with CUI
-    const requestBody = JSON.stringify([{ cui: normalized, data: new Date().toISOString().split("T")[0] }]);
-    
-    const response = await fetch(ANAF_API_BASE, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "RoMarketCap/1.0",
-      },
-      body: requestBody,
-      // Conservative timeout
-      signal: AbortSignal.timeout(10000), // 10 seconds
-    });
-
-    if (!response.ok) {
-      throw new Error(`ANAF API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json().catch(() => null);
-    
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      throw new Error("Invalid ANAF API response");
-    }
-
-    const result = data[0];
-    
-    // Parse ANAF response
-    // Note: Adjust parsing based on actual ANAF API response format
-    const isActive = result.valid === true || result.valid === "true" || result.status === "ACTIV";
-    const isVatRegistered = result.tva === true || result.tva === "true" || result.platitor === true;
-    const lastReportedYear = result.dataInceputTva ? new Date(result.dataInceputTva).getFullYear() : null;
-
-    const verificationResult: ANAFVerificationResult = {
-      isActive,
-      isVatRegistered,
-      lastReportedYear,
-      verifiedAt: new Date(),
-      rawResponse: result,
-      verificationStatus: "SUCCESS",
-    };
-
-    // Cache result
-    await cacheVerification(normalized, verificationResult);
-
-    return verificationResult;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    
-    // Don't cache errors - allow retry after cache expires
+  // PROMPT 62: Convert CUI to number for API request
+  const cuiNumber = parseInt(normalized, 10);
+  if (isNaN(cuiNumber)) {
     return {
       isActive: false,
       isVatRegistered: false,
       lastReportedYear: null,
       verifiedAt: new Date(),
       rawResponse: null,
-      errorMessage,
+      errorMessage: "CUI cannot be converted to number",
       verificationStatus: "ERROR",
     };
   }
+
+  // PROMPT 62: Use current date in YYYY-MM-DD format
+  const date = new Date().toISOString().split("T")[0];
+
+  // PROMPT 62: Build endpoint list (v8, v7, optionally v9)
+  const endpoints: string[] = [...ANAF_ENDPOINTS];
+  if (ANAF_V9_EXPERIMENTAL) {
+    endpoints.push(ANAF_V9_ENDPOINT);
+  }
+
+  // PROMPT 62: Try endpoints in order
+  let lastError: string | undefined;
+  let lastStatus: number | undefined;
+
+  for (const endpoint of endpoints) {
+    console.log(`[anaf-verify] Trying endpoint: ${endpoint} for CUI ${normalized}`);
+    
+    const attempt = await tryAnafEndpoint(endpoint, cuiNumber, date);
+    
+    if (attempt.success && attempt.data) {
+      // PROMPT 62: Parse response
+      const parsed = parseAnafResponse(attempt.data);
+      
+      const verificationResult: ANAFVerificationResult = {
+        isActive: parsed.isActive,
+        isVatRegistered: parsed.isVatRegistered,
+        lastReportedYear: parsed.lastReportedYear,
+        verifiedAt: new Date(),
+        rawResponse: attempt.data,
+        verificationStatus: "SUCCESS",
+        companyName: parsed.companyName,
+        address: parsed.address,
+        caen: parsed.caen,
+        registrationNumber: parsed.registrationNumber,
+        phone: parsed.phone,
+        iban: parsed.iban,
+        registrationStatus: parsed.registrationStatus,
+        fiscalAuthority: parsed.fiscalAuthority,
+        endpointUsed: endpoint,
+      };
+
+      // PROMPT 62: Log success
+      console.log(`[anaf-verify] Success via ${endpoint} for CUI ${normalized}`, {
+        hasName: !!parsed.companyName,
+        hasAddress: !!parsed.address,
+        isActive: parsed.isActive,
+        isVatRegistered: parsed.isVatRegistered,
+      });
+
+      // Cache result
+      await cacheVerification(normalized, verificationResult);
+
+      return verificationResult;
+    }
+
+    // PROMPT 62: Log failure and try next endpoint
+    lastError = attempt.error;
+    lastStatus = attempt.status;
+    
+    console.log(`[anaf-verify] Endpoint ${endpoint} failed for CUI ${normalized}:`, {
+      status: attempt.status,
+      error: attempt.error,
+    });
+
+    // PROMPT 62: If 404, try next endpoint. If other error, also try next (but log)
+    // Continue to next endpoint
+  }
+
+  // PROMPT 62: All endpoints failed
+  const errorMessage = lastStatus === 404
+    ? `All endpoints returned 404 (last: ${lastError})`
+    : `All endpoints failed (last: ${lastError})`;
+
+  console.error(`[anaf-verify] All endpoints failed for CUI ${normalized}:`, {
+    endpointsTried: endpoints.length,
+    lastStatus,
+    lastError,
+  });
+
+  // Don't cache errors - allow retry after cache expires
+  return {
+    isActive: false,
+    isVatRegistered: false,
+    lastReportedYear: null,
+    verifiedAt: new Date(),
+    rawResponse: null,
+    errorMessage,
+    verificationStatus: "ERROR",
+  };
 }
 
 /**

@@ -21,14 +21,15 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const cui = url.searchParams.get("cui");
     const limit = parseInt(url.searchParams.get("limit") || "5", 10);
+    const force = url.searchParams.get("force") === "1" || url.searchParams.get("force") === "true";
 
     if (cui) {
       // Debug a specific CUI
       const normalized = cui.trim();
       
-      // Check cache first
+      // Check cache first (unless force=true)
       const { getCachedVerification } = await import("@/src/lib/verification/anaf");
-      const cached = await getCachedVerification(normalized);
+      const cached = force ? null : await getCachedVerification(normalized);
       
       // Check rate limit status and clear it if needed for debugging
       const { kv } = await import("@vercel/kv");
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
         : { lastRequest: null, elapsedMs: null, canProceed: true };
       
       // For debugging: if rate limited, wait and retry up to 3 times
-      let rawResult = await verifyCompanyANAF(normalized);
+      let rawResult = await verifyCompanyANAF(normalized, { force });
       let retryCount = 0;
       const maxRetries = 3;
       
@@ -46,18 +47,26 @@ export async function GET(req: Request) {
         retryCount++;
         // Wait for rate limit to clear (1 second + buffer)
         await new Promise(resolve => setTimeout(resolve, 1200));
-        rawResult = await verifyCompanyANAF(normalized);
+        rawResult = await verifyCompanyANAF(normalized, { force });
       }
       
       const anafResult = await verifyCompany(normalized);
 
-      // Get the ANAF API endpoint being used
-      const anafApiUrl = process.env.ANAF_API_URL || "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva";
+      // PROMPT 62: Show endpoint chain info
+      const endpoints = [
+        "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva",
+        "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v7/ws/tva",
+      ];
+      if (process.env.ANAF_V9_EXPERIMENTAL === "true") {
+        endpoints.push("https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva");
+      }
 
       return NextResponse.json({
         ok: true,
         cui: normalized,
-        anafApiEndpoint: anafApiUrl,
+        force,
+        endpointChain: endpoints,
+        endpointUsed: rawResult.endpointUsed || null,
         note: rawResult.verificationStatus === "ERROR" && rawResult.errorMessage?.includes("404")
           ? "ANAF API endpoint returned 404. The endpoint may be incorrect, changed, or the API may not be available. The current endpoint is for VAT registration status and may not return company names."
           : null,
@@ -70,6 +79,15 @@ export async function GET(req: Request) {
           isVatRegistered: rawResult.isVatRegistered,
           verifiedAt: rawResult.verifiedAt,
           errorMessage: rawResult.errorMessage,
+          // PROMPT 62: Show parsed company info
+          companyName: rawResult.companyName,
+          address: rawResult.address,
+          caen: rawResult.caen,
+          registrationNumber: rawResult.registrationNumber,
+          phone: rawResult.phone,
+          iban: rawResult.iban,
+          registrationStatus: rawResult.registrationStatus,
+          fiscalAuthority: rawResult.fiscalAuthority,
           rawResponse: rawResult.rawResponse,
           // Show all keys in rawResponse if it exists
           rawResponseKeys: rawResult.rawResponse && typeof rawResult.rawResponse === "object" 
@@ -134,6 +152,10 @@ export async function GET(req: Request) {
             isActive: rawResult.isActive,
             isVatRegistered: rawResult.isVatRegistered,
             verifiedAt: rawResult.verifiedAt,
+            endpointUsed: rawResult.endpointUsed,
+            companyName: rawResult.companyName,
+            address: rawResult.address,
+            caen: rawResult.caen,
             rawResponse: rawResult.rawResponse,
           },
         };

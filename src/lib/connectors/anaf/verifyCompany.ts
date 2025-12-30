@@ -57,17 +57,25 @@ export async function verifyCompany(cui: string): Promise<ANAFVerificationResult
       };
     }
 
-    // Extract official name from raw response if available
-    let officialName: string | undefined;
-    if (result.rawResponse && typeof result.rawResponse === "object") {
+    // PROMPT 62: Extract official name from result.companyName (already parsed from date_generale.denumire)
+    // Fallback to raw response parsing if companyName not set
+    let officialName: string | undefined = result.companyName;
+    
+    if (!officialName && result.rawResponse && typeof result.rawResponse === "object") {
       const raw = result.rawResponse as Record<string, unknown>;
-      // Try common ANAF response fields for company name
-      officialName =
-        (raw.denumire as string) ||
-        (raw.denumireCompleta as string) ||
-        (raw.denumireComplet as string) ||
-        (raw.nume as string) ||
-        undefined;
+      // PROMPT 62: Try date_generale.denumire first
+      const dateGenerale = raw.date_generale as Record<string, unknown> | undefined;
+      officialName = dateGenerale?.denumire as string | undefined;
+      
+      // Fallback: try root level fields
+      if (!officialName) {
+        officialName =
+          (raw.denumire as string) ||
+          (raw.denumireCompleta as string) ||
+          (raw.denumireComplet as string) ||
+          (raw.nume as string) ||
+          undefined;
+      }
     }
 
     return {

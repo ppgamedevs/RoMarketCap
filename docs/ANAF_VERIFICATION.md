@@ -1,10 +1,17 @@
-# ANAF Verification Connector (SAFE MODE)
+# ANAF Verification Connector (PRODUCTION-GRADE)
 
-**Status:** Implemented ✅
+**Status:** Implemented ✅ (PROMPT 62: Enhanced with endpoint fallback chain)
 
 ## Overview
 
 The ANAF Verification Connector verifies the existence and legal status of companies already discovered in RoMarketCap. It operates in **SAFE MODE** with conservative rate limiting, aggressive caching, and no retry storms.
+
+**PROMPT 62 Updates:**
+- ✅ Endpoint fallback chain (v8 → v7 → v9 optional)
+- ✅ Correct POST request format (CUI as number, array body)
+- ✅ Parses `date_generale.denumire` and other company info
+- ✅ Cache TTL reduced to 7 days (was 90)
+- ✅ Structured logging for endpoint attempts
 
 ## Purpose
 
@@ -25,11 +32,19 @@ The ANAF Verification Connector verifies the existence and legal status of compa
 - `lastReportedYear`: Last reported year (if available)
 - `verifiedAt`: Verification timestamp
 - `verificationStatus`: SUCCESS, ERROR, or PENDING
+- **PROMPT 62:** `companyName`: Official company name from `date_generale.denumire`
+- **PROMPT 62:** `address`: Company address from `date_generale.adresa`
+- **PROMPT 62:** `caen`: CAEN code from `date_generale.cod_CAEN`
+- **PROMPT 62:** `registrationNumber`: Registration number from `date_generale.nrRegCom`
+- **PROMPT 62:** `phone`, `iban`, `registrationStatus`, `fiscalAuthority`: Additional company info
+- **PROMPT 62:** `endpointUsed`: Which endpoint succeeded (v8, v7, or v9)
 
 ### B) Safety Rules
 
-- **Rate Limiting**: Extremely conservative (1 request per 2 seconds)
-- **Caching**: Aggressive (90 days default, configurable 30-365 days)
+- **Rate Limiting**: Extremely conservative (1 request per second)
+- **Caching**: 7 days default (PROMPT 62: reduced from 90 days)
+- **Endpoint Fallback**: Tries v8 → v7 → v9 (optional) automatically
+- **Request Format**: POST with JSON array body: `[{"cui": <number>, "data": "YYYY-MM-DD"}]`
 - **No Retry Storms**: Errors are not retried automatically
 - **Feature Flag Controlled**: `CRON_VERIFY_ANAF` flag enables/disables
 - **Read-Only Mode Compliant**: Respects read-only mode
@@ -115,12 +130,23 @@ model CompanyVerification {
 ### Environment Variables
 
 ```env
-# ANAF API URL (optional, has default)
+# ANAF API URL (optional, fallback chain is used by default)
+# The system tries endpoints in order: v8 → v7 → v9 (if enabled)
 ANAF_API_URL=https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva
+
+# Enable experimental v9 endpoint (default: false)
+ANAF_V9_EXPERIMENTAL=false
 
 # Cron secret (required for cron routes)
 CRON_SECRET=your-secret-here
 ```
+
+**PROMPT 62: Endpoint Fallback Chain:**
+1. `https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva` (primary)
+2. `https://webservicesp.anaf.ro/PlatitorTvaRest/api/v7/ws/tva` (fallback)
+3. `https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva` (experimental, if `ANAF_V9_EXPERIMENTAL=true`)
+
+If an endpoint returns 404, the system automatically tries the next one.
 
 ### Feature Flags
 
@@ -134,9 +160,21 @@ Enable/disable via `/admin/flags`:
 ```typescript
 import { verifyCompanyANAF } from "@/src/lib/verification/anaf";
 
+// Basic usage
 const result = await verifyCompanyANAF("RO12345678");
-// Returns: { isActive, isVatRegistered, lastReportedYear, verifiedAt, ... }
+// Returns: { isActive, isVatRegistered, lastReportedYear, verifiedAt, companyName, address, ... }
+
+// Force refresh (bypass cache)
+const freshResult = await verifyCompanyANAF("RO12345678", { force: true });
 ```
+
+**PROMPT 62: Request Format:**
+The ANAF API expects a POST request with:
+- Method: `POST`
+- Content-Type: `application/json`
+- Body: JSON array with CUI as **number** (not string): `[{"cui": 12345678, "data": "2025-12-31"}]`
+
+The system automatically converts CUI string to number and uses current date.
 
 ### Automated Cron
 

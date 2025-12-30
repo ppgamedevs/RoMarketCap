@@ -114,7 +114,7 @@ ANAF_WS_BILANT_URL=https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva
 CRON_SECRET=your-secret-here
 ```
 
-**⚠️ IMPORTANT - Endpoint Configuration (PROMPT 59):**
+**⚠️ IMPORTANT - Endpoint Configuration (PROMPT 59, PROMPT 62):**
 
 - **Current endpoint is a PLACEHOLDER**: The default endpoint points to the ANAF VAT service, not the financial statements service.
 - **Expected endpoint**: The official "Serviciu web pentru obtinerea informatiilor publice din situatiile financiare" endpoint.
@@ -122,6 +122,16 @@ CRON_SECRET=your-secret-here
 - **Safety**: The system logs a warning when using the placeholder endpoint.
 - **Rate limiting**: Conservative (1 request per 2 seconds) to remain polite.
 - **Best-effort**: This is a best-effort sync until the official endpoint is confirmed and configured.
+
+**PROMPT 62 Note - TVA Service Response:**
+The ANAF VAT service (`/PlatitorTvaRest/api/v8/ws/tva`) can return company general information in `date_generale`:
+- `denumire`: Official company name
+- `adresa`: Company address
+- `cod_CAEN`: CAEN code
+- `nrRegCom`: Registration number
+- `telefon`, `iban`, `stare_inregistrare`, `organFiscalCompetent`: Additional company info
+
+The verification service (see `docs/ANAF_VERIFICATION.md`) parses and stores this information when available.
 
 ### Feature Flags
 

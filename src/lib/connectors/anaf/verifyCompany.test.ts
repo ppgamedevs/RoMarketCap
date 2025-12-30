@@ -19,17 +19,23 @@ describe("verifyCompany", () => {
   });
 
   it("should return normalized result for valid CUI", async () => {
+    // PROMPT 62: companyName is now parsed from date_generale.denumire
     const mockResult = {
       isActive: true,
       isVatRegistered: true,
       lastReportedYear: 2023,
       verifiedAt: new Date("2024-01-01"),
+      companyName: "Test Company SRL", // PROMPT 62: Direct from date_generale.denumire
       rawResponse: {
-        denumire: "Test Company SRL",
+        date_generale: {
+          denumire: "Test Company SRL",
+          adresa: "Bucharest",
+        },
         valid: true,
         tva: true,
       },
       verificationStatus: "SUCCESS" as const,
+      endpointUsed: "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva",
     };
 
     vi.mocked(anafInternal.verifyCompanyANAF).mockResolvedValue(mockResult);
@@ -95,13 +101,38 @@ describe("verifyCompany", () => {
     });
   });
 
-  it("should extract official name from various response formats", async () => {
+  it("should extract official name from companyName (PROMPT 62: date_generale.denumire)", async () => {
+    // PROMPT 62: companyName is now parsed directly from date_generale.denumire
+    const mockResult = {
+      isActive: true,
+      isVatRegistered: false,
+      lastReportedYear: null,
+      verifiedAt: new Date("2024-01-01"),
+      companyName: "Company from date_generale", // PROMPT 62: Direct from date_generale.denumire
+      rawResponse: {
+        date_generale: {
+          denumire: "Company from date_generale",
+        },
+      },
+      verificationStatus: "SUCCESS" as const,
+    };
+
+    vi.mocked(anafInternal.verifyCompanyANAF).mockResolvedValue(mockResult);
+
+    const result = await verifyCompany("RO12345678");
+
+    expect(result.officialName).toBe("Company from date_generale");
+  });
+
+  it("should fallback to rawResponse parsing if companyName not set (PROMPT 62: backward compatibility)", async () => {
+    // PROMPT 62: Fallback to old format if companyName not set
     const testCases = [
-      { denumire: "Company A", expected: "Company A" },
-      { denumireCompleta: "Company B", expected: "Company B" },
-      { denumireComplet: "Company C", expected: "Company C" },
-      { nume: "Company D", expected: "Company D" },
-      { other: "Company E", expected: undefined },
+      { date_generale: { denumire: "Company A" }, expected: "Company A" },
+      { denumire: "Company B", expected: "Company B" },
+      { denumireCompleta: "Company C", expected: "Company C" },
+      { denumireComplet: "Company D", expected: "Company D" },
+      { nume: "Company E", expected: "Company E" },
+      { other: "Company F", expected: undefined },
     ];
 
     for (const testCase of testCases) {
