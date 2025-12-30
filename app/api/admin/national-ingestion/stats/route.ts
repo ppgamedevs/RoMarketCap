@@ -69,12 +69,10 @@ export async function GET() {
       _count: {
         _all: true,
       },
-      orderBy: {
-        _count: {
-          _all: "desc",
-        },
-      },
     });
+
+    // Sort by count descending (manually since Prisma's orderBy for groupBy is limited)
+    errorSummary.sort((a, b) => (b._count._all || 0) - (a._count._all || 0));
 
     return NextResponse.json({
       ok: true,
