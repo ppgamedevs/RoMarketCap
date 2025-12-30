@@ -79,14 +79,6 @@ export async function GET(req: Request) {
 
     // Combine results
     const companies = [...companiesWithGenericNames, ...companiesWithNullNames].slice(0, limit);
-      select: {
-        id: true,
-        cui: true,
-        name: true,
-      },
-      take: limit,
-      orderBy: { createdAt: "desc" },
-    });
 
     const results = await Promise.allSettled(
       companies.map(async (company) => {
