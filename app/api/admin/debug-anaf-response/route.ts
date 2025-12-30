@@ -25,19 +25,38 @@ export async function GET(req: Request) {
     if (cui) {
       // Debug a specific CUI
       const normalized = cui.trim();
+      
+      // Check cache first
+      const { getCachedVerification } = await import("@/src/lib/verification/anaf");
+      const cached = await getCachedVerification(normalized);
+      
+      // Check rate limit status
+      const { kv } = await import("@vercel/kv");
+      const lastRequest = await kv.get<number>("anaf:last_request").catch(() => null);
+      const rateLimitInfo = lastRequest 
+        ? { lastRequest: new Date(lastRequest).toISOString(), elapsedMs: Date.now() - lastRequest }
+        : { lastRequest: null, elapsedMs: null };
+      
       const anafResult = await verifyCompany(normalized);
       const rawResult = await verifyCompanyANAF(normalized);
 
       return NextResponse.json({
         ok: true,
         cui: normalized,
+        cached: cached ? { ...cached, verifiedAt: cached.verifiedAt.toISOString() } : null,
+        rateLimitInfo,
         normalizedResult: anafResult,
         rawResult: {
           verificationStatus: rawResult.verificationStatus,
           isActive: rawResult.isActive,
           isVatRegistered: rawResult.isVatRegistered,
           verifiedAt: rawResult.verifiedAt,
+          errorMessage: rawResult.errorMessage,
           rawResponse: rawResult.rawResponse,
+          // Show all keys in rawResponse if it exists
+          rawResponseKeys: rawResult.rawResponse && typeof rawResult.rawResponse === "object" 
+            ? Object.keys(rawResult.rawResponse as Record<string, unknown>)
+            : null,
         },
       });
     }
