@@ -89,6 +89,7 @@ export async function executeNationalIngestRun(
     const fetchResult = await fetchCUIsFromSources({
       limit,
       cursor: cursorIn || undefined,
+      dryRun,
     });
 
     const discovered = fetchResult.cuis.length;

@@ -34,6 +34,7 @@ export type FetchCUIsResult = {
 export async function fetchCUIsFromSources(options: {
   limit: number;
   cursor?: string | null;
+  dryRun?: boolean;
 }): Promise<FetchCUIsResult> {
   const { limit, cursor } = options;
   const cuis: CUIWithProvenance[] = [];
@@ -80,7 +81,9 @@ export async function fetchCUIsFromSources(options: {
     };
 
     try {
-      const batch = await source.fetchBatch(sourceCursor, sourceLimit);
+      // For dry runs, force reprocess of XLSX sources (they're one-time files)
+      const forceReprocess = options.dryRun && source.sourceId === "SEAP_XLSX";
+      const batch = await source.fetchBatch(sourceCursor, sourceLimit, { forceReprocess });
       
       for (const record of batch.records) {
         sourceStats.discovered++;

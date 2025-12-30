@@ -320,7 +320,7 @@ function parseXlsxAndExtractCuis(buffer: Buffer, limit: number): {
 export class SEAPXlsxSource implements IngestionSource {
   sourceId: SourceId = "SEAP_XLSX";
   
-  async fetchBatch(cursor?: string, limit = 100): Promise<{
+  async fetchBatch(cursor?: string, limit = 100, options?: { forceReprocess?: boolean }): Promise<{
     records: SourceCompanyRecord[];
     nextCursor?: string;
   }> {
@@ -331,8 +331,8 @@ export class SEAPXlsxSource implements IngestionSource {
     
     // For XLSX files, we download the entire file once
     // Cursor represents whether we've already processed this file
-    // If cursor is set, we've already processed this file - return empty
-    if (cursor) {
+    // If cursor is set and we're not forcing reprocess, we've already processed this file - return empty
+    if (cursor && !options?.forceReprocess) {
       return { records: [], nextCursor: undefined };
     }
     

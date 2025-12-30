@@ -26,7 +26,7 @@ export interface IngestionSource {
    * @param limit - Max records to fetch
    * @returns Array of SourceCompanyRecord
    */
-  fetchBatch(cursor?: string, limit?: number): Promise<{
+  fetchBatch(cursor?: string, limit?: number, options?: { forceReprocess?: boolean }): Promise<{
     records: SourceCompanyRecord[];
     nextCursor?: string;
   }>;
@@ -44,7 +44,7 @@ class SEAPSource implements IngestionSource {
   sourceId: SourceId = "SEAP";
   private adapter = new SEAPAdapter();
 
-  async fetchBatch(cursor?: string, limit = 100): Promise<{
+  async fetchBatch(cursor?: string, limit = 100, _options?: { forceReprocess?: boolean }): Promise<{
     records: SourceCompanyRecord[];
     nextCursor?: string;
   }> {
@@ -95,7 +95,7 @@ class EUFundsSource implements IngestionSource {
   sourceId: SourceId = "EU_FUNDS";
   private adapter = new EUFundsAdapter();
 
-  async fetchBatch(cursor?: string, limit = 100): Promise<{
+  async fetchBatch(cursor?: string, limit = 100, _options?: { forceReprocess?: boolean }): Promise<{
     records: SourceCompanyRecord[];
     nextCursor?: string;
   }> {
@@ -145,7 +145,7 @@ class EUFundsSource implements IngestionSource {
 class ANAFVerifySource implements IngestionSource {
   sourceId: SourceId = "ANAF_VERIFY";
 
-  async fetchBatch(cursor?: string, limit = 100): Promise<{
+  async fetchBatch(cursor?: string, limit = 100, _options?: { forceReprocess?: boolean }): Promise<{
     records: SourceCompanyRecord[];
     nextCursor?: string;
   }> {
