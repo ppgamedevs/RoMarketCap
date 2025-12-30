@@ -93,6 +93,13 @@ export async function GET(req: Request) {
           rawResponseKeys: rawResult.rawResponse && typeof rawResult.rawResponse === "object" 
             ? Object.keys(rawResult.rawResponse as Record<string, unknown>)
             : null,
+          // PROMPT 62: Show request details for debugging
+          requestDetails: {
+            cui: normalized,
+            cuiAsNumber: parseInt(normalized, 10),
+            date: new Date().toISOString().split("T")[0],
+            requestBody: JSON.stringify([{ cui: parseInt(normalized, 10), data: new Date().toISOString().split("T")[0] }]),
+          },
         },
       });
     }

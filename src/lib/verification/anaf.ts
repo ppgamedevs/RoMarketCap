@@ -113,10 +113,17 @@ async function tryAnafEndpoint(
   endpoint: string,
   cui: number,
   date: string
-): Promise<{ success: boolean; data?: unknown; status?: number; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; status?: number; error?: string; responseBody?: string }> {
   try {
     // PROMPT 62: CUI must be number, not string
     const requestBody = JSON.stringify([{ cui, data: date }]);
+    
+    console.log(`[anaf-verify] Request to ${endpoint}:`, {
+      method: "POST",
+      body: requestBody,
+      cui,
+      date,
+    });
     
     const response = await fetch(endpoint, {
       method: "POST",
@@ -128,28 +135,65 @@ async function tryAnafEndpoint(
       signal: AbortSignal.timeout(10000), // 10 seconds
     });
 
+    // PROMPT 62: Read response body even for errors to get more info
+    const responseText = await response.text().catch(() => "");
+    let responseBody: unknown = null;
+    
+    try {
+      responseBody = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      // Not JSON, keep as text
+      responseBody = responseText;
+    }
+
+    console.log(`[anaf-verify] Response from ${endpoint}:`, {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get("content-type"),
+      bodyLength: responseText.length,
+      bodyPreview: responseText.substring(0, 200),
+    });
+
     if (!response.ok) {
       return {
         success: false,
         status: response.status,
         error: `${response.status} ${response.statusText}`,
+        responseBody: typeof responseBody === "string" ? responseBody : JSON.stringify(responseBody),
       };
     }
 
-    const data = await response.json().catch(() => null);
+    // PROMPT 62: ANAF response might be wrapped in a structure
+    // Try to extract data from various possible formats
+    let data: unknown = responseBody;
+    
+    // If response is an object with a "found" or "data" array
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const obj = data as Record<string, unknown>;
+      if (Array.isArray(obj.found)) {
+        data = obj.found;
+      } else if (Array.isArray(obj.data)) {
+        data = obj.data;
+      } else if (Array.isArray(obj.results)) {
+        data = obj.results;
+      }
+    }
     
     if (!data || !Array.isArray(data) || data.length === 0) {
       return {
         success: false,
-        error: "Invalid response: not an array or empty",
+        error: `Invalid response: not an array or empty. Response type: ${typeof data}, keys: ${data && typeof data === "object" ? Object.keys(data as Record<string, unknown>).join(", ") : "N/A"}`,
+        responseBody: typeof responseBody === "string" ? responseBody : JSON.stringify(responseBody),
       };
     }
 
     return { success: true, data: data[0] };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[anaf-verify] Exception calling ${endpoint}:`, errorMessage);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
     };
   }
 }
@@ -351,6 +395,7 @@ export async function verifyCompanyANAF(
     console.log(`[anaf-verify] Endpoint ${endpoint} failed for CUI ${normalized}:`, {
       status: attempt.status,
       error: attempt.error,
+      responseBody: attempt.responseBody?.substring(0, 200), // First 200 chars for debugging
     });
 
     // PROMPT 62: If 404, try next endpoint. If other error, also try next (but log)
@@ -364,8 +409,11 @@ export async function verifyCompanyANAF(
 
   console.error(`[anaf-verify] All endpoints failed for CUI ${normalized}:`, {
     endpointsTried: endpoints.length,
+    endpoints,
     lastStatus,
     lastError,
+    cuiNumber,
+    date,
   });
 
   // Don't cache errors - allow retry after cache expires
