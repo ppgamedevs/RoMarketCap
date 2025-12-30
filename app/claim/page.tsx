@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type SearchParams = Promise<{ company?: string }>;
 
 export default async function ClaimPage(props: { searchParams: SearchParams }) {
