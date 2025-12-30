@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/lib/db";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
+import { ComputeMissingScoresButton } from "./ComputeMissingScoresButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,6 +96,19 @@ export default async function AdminHomePage() {
         </div>
       </div>
 
+      {/* Scoring & Maintenance */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-4">Scoring & Maintenance</h2>
+        <div className="rounded-xl border bg-card p-6">
+          <h3 className="text-sm font-medium mb-2">Compute Missing Scores</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Calculate ScoreSnapshot (romc_v0) for companies that don't have scores yet. 
+            This is needed for companies to appear on the homepage.
+          </p>
+          <ComputeMissingScoresButton />
+        </div>
+      </div>
+
       {/* Quick Links */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
@@ -134,5 +148,3 @@ export default async function AdminHomePage() {
     </main>
   );
 }
-
-
