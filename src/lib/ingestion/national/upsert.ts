@@ -103,6 +103,7 @@ export async function upsertCompaniesFromCuis(
               canonicalSlug: slug,
               isPublic: true,
               visibilityStatus: "PUBLIC",
+              isSkeleton: false, // Explicitly set to false for national ingestion
               dataConfidence: item.confidence,
             },
             update: {
