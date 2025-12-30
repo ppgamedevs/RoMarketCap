@@ -14,15 +14,17 @@ export default async function RoHomePage() {
   let top: Array<{ id: string; company: { slug: string; name: string }; romcScore: number }> = [];
   
   try {
+    // Build where clause - mergedIntoCompanyId may not exist in DB yet
+    const companyWhere: any = {
+      isPublic: true,
+      visibilityStatus: "PUBLIC",
+      isSkeleton: false,
+    };
+
     const latest = await prisma.scoreSnapshot.findMany({
       where: {
         version: "romc_v0",
-        company: {
-          isPublic: true,
-          visibilityStatus: "PUBLIC",
-          isSkeleton: false,
-          mergedIntoCompanyId: null,
-        },
+        company: companyWhere,
       },
       orderBy: [{ computedAt: "desc" }],
       take: 200,
