@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/button";
 
-export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
+function VerifyEmailForm() {
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState<string>("");
@@ -18,41 +17,44 @@ export default function VerifyEmailPage() {
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const emailParam = searchParams.get("email");
-    if (emailParam) {
-      setEmail(emailParam);
-    }
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const emailParam = params.get("email");
+      if (emailParam) {
+        setEmail(emailParam);
+      }
 
-    if (!token) {
-      setStatus("error");
-      setMessage("No verification token provided");
-      return;
-    }
-
-    fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok && data.ok) {
-          setStatus("success");
-          setMessage(data.message || "Email verified successfully!");
-          setTimeout(() => {
-            router.push("/login");
-          }, 3000);
-        } else {
-          setStatus("error");
-          setMessage(data.error || "Verification failed");
-          // Try to extract email from error or use stored email
-          if (data.email) {
-            setEmail(data.email);
-          }
-        }
-      })
-      .catch(() => {
+      if (!token) {
         setStatus("error");
-        setMessage("An error occurred. Please try again.");
-      });
-  }, [searchParams, router]);
+        setMessage("No verification token provided");
+        return;
+      }
+
+      fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
+        .then(async (res) => {
+          const data = await res.json();
+          if (res.ok && data.ok) {
+            setStatus("success");
+            setMessage(data.message || "Email verified successfully!");
+            setTimeout(() => {
+              router.push("/login");
+            }, 3000);
+          } else {
+            setStatus("error");
+            setMessage(data.error || "Verification failed");
+            // Try to extract email from error or use stored email
+            if (data.email) {
+              setEmail(data.email);
+            }
+          }
+        })
+        .catch(() => {
+          setStatus("error");
+          setMessage("An error occurred. Please try again.");
+        });
+    }
+  }, [router]);
 
   const handleResendVerification = async () => {
     if (!email || resendCooldown > 0) return;
@@ -162,6 +164,21 @@ export default function VerifyEmailPage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <main className="mx-auto max-w-md px-6 py-16">
+        <h1 className="text-2xl font-semibold tracking-tight">Verify Email</h1>
+        <div className="mt-6">
+          <Alert variant="info">Loading...</Alert>
+        </div>
+      </main>
+    }>
+      <VerifyEmailForm />
+    </Suspense>
   );
 }
 
