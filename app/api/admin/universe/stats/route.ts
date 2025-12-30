@@ -74,33 +74,33 @@ export async function GET() {
         () => prisma.company.count({ 
           where: { isPublic: true, isSkeleton: true as any } 
         }),
-        () => 0,
+        async () => 0,
         `SELECT COUNT(*) FROM companies WHERE is_public = true AND is_skeleton = true`
       ),
       // Source breakdowns - try with universeSource, fallback to 0 if column doesn't exist
       countWithFallback(
         () => prisma.company.count({ where: { isPublic: true, universeSource: "SEAP" as any } }),
-        () => 0,
+        async () => 0,
         `SELECT COUNT(*) FROM companies WHERE is_public = true AND universe_source = 'SEAP'`
       ),
       countWithFallback(
         () => prisma.company.count({ where: { isPublic: true, universeSource: "EU_FUNDS" as any } }),
-        () => 0,
+        async () => 0,
         `SELECT COUNT(*) FROM companies WHERE is_public = true AND universe_source = 'EU_FUNDS'`
       ),
       countWithFallback(
         () => prisma.company.count({ where: { isPublic: true, universeSource: "ANAF" as any } }),
-        () => 0,
+        async () => 0,
         `SELECT COUNT(*) FROM companies WHERE is_public = true AND universe_source = 'ANAF'`
       ),
       countWithFallback(
         () => prisma.company.count({ where: { isPublic: true, universeSource: "USER" as any } }),
-        () => 0,
+        async () => 0,
         `SELECT COUNT(*) FROM companies WHERE is_public = true AND universe_source = 'USER'`
       ),
       countWithFallback(
         () => prisma.company.count({ where: { isPublic: true, universeSource: "THIRD_PARTY" as any } }),
-        () => 0,
+        async () => 0,
         `SELECT COUNT(*) FROM companies WHERE is_public = true AND universe_source = 'THIRD_PARTY'`
       ),
     ]);
