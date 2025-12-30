@@ -22,7 +22,29 @@ export async function POST() {
 
     const results: string[] = [];
 
-    // 1. Add previous_romc_ai_score column
+    // 1. Create ScoreStabilityProfile enum if it doesn't exist
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          CREATE TYPE "ScoreStabilityProfile" AS ENUM (
+            'LOW',
+            'MEDIUM',
+            'HIGH'
+          );
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+      `);
+      results.push("✓ Created ScoreStabilityProfile enum");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42P07") {
+        results.push("✓ ScoreStabilityProfile enum already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // 2. Add previous_romc_ai_score column
     try {
       await prisma.$executeRawUnsafe(`
         DO $$ BEGIN
@@ -41,7 +63,7 @@ export async function POST() {
       }
     }
 
-    // 2. Add romc_ai_score_delta column
+    // 3. Add romc_ai_score_delta column
     try {
       await prisma.$executeRawUnsafe(`
         DO $$ BEGIN
@@ -60,7 +82,26 @@ export async function POST() {
       }
     }
 
-    // 3. Verify the columns exist
+    // 4. Add score_stability_profile column
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS score_stability_profile "ScoreStabilityProfile";
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added score_stability_profile column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ score_stability_profile column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // 5. Verify the columns exist
     const columnCheck = await prisma.$queryRawUnsafe<Array<{
       column_name: string;
       data_type: string;
@@ -68,7 +109,7 @@ export async function POST() {
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'companies' 
-        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta')
+        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile')
       ORDER BY column_name
     `);
 
