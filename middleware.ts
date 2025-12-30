@@ -29,7 +29,8 @@ export default withAuth({
           pathname === "/api/admin/setup-database" ||
           pathname === "/api/admin/add-gdpr-columns" ||
           pathname === "/api/admin/add-company-columns" ||
-          pathname === "/api/admin/check-company-columns") {
+          pathname === "/api/admin/check-company-columns" ||
+          pathname === "/api/admin/add-missing-company-columns") {
         return true;
       }
       
