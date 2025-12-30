@@ -38,11 +38,11 @@ export default async function PartnersPage() {
           </CardHeader>
           <CardBody>
             <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-              <li>{lang === "ro" ? "API access" : "API access"}</li>
-              <li>{lang === "ro" ? "Data exports" : "Data exports"}</li>
-              <li>{lang === "ro" ? "Custom reports" : "Custom reports"}</li>
-              <li>{lang === "ro" ? "Media licensing" : "Media licensing"}</li>
-              <li>{lang === "ro" ? "Sponsorship placements" : "Sponsorship placements"}</li>
+              <li>{lang === "ro" ? "Acces API" : "API access"}</li>
+              <li>{lang === "ro" ? "Exporturi de date" : "Data exports"}</li>
+              <li>{lang === "ro" ? "Rapoarte personalizate" : "Custom reports"}</li>
+              <li>{lang === "ro" ? "Licențiere media" : "Media licensing"}</li>
+              <li>{lang === "ro" ? "Placement-uri de sponsorizare" : "Sponsorship placements"}</li>
             </ul>
           </CardBody>
         </Card>

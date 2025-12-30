@@ -33,14 +33,14 @@ export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-[100] border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground leading-6">
           {lang === "ro" ? (
             <>
               Folosim Google Analytics pentru a îmbunătăți site-ul nostru. Continuând să navigați, acceptați
               utilizarea cookie-urilor conform{" "}
-              <Link href="/cookie-policy" className="text-primary underline underline-offset-4">
+              <Link href="/cookie-policy" className="text-primary underline underline-offset-4 hover:text-primary/80">
                 politicii noastre de cookie-uri
               </Link>
               .
@@ -49,18 +49,26 @@ export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
             <>
               We use Google Analytics to improve our website. By continuing to browse, you accept the use of cookies
               according to our{" "}
-              <Link href="/cookie-policy" className="text-primary underline underline-offset-4">
+              <Link href="/cookie-policy" className="text-primary underline underline-offset-4 hover:text-primary/80">
                 cookie policy
               </Link>
               .
             </>
           )}
         </div>
-        <div className="flex gap-3">
-          <button className="rounded-md border px-3 py-2 text-sm" onClick={decline} type="button">
+        <div className="flex gap-3 shrink-0">
+          <button
+            className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+            onClick={decline}
+            type="button"
+          >
             {lang === "ro" ? "Refuz" : "Decline"}
           </button>
-          <button className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" onClick={accept} type="button">
+          <button
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+            onClick={accept}
+            type="button"
+          >
             {lang === "ro" ? "Accept" : "Accept"}
           </button>
         </div>

@@ -68,7 +68,7 @@ export function PartnersLeadForm({ lang }: { lang: "ro" | "en" }) {
             />
             <Input
               type="email"
-              placeholder="Email"
+              placeholder={lang === "ro" ? "Email" : "Email"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -79,11 +79,11 @@ export function PartnersLeadForm({ lang }: { lang: "ro" | "en" }) {
               onChange={(e) => setCompany(e.target.value)}
             />
             <Select value={useCase} onChange={(e) => setUseCase(e.target.value)}>
-              <option value="api">{lang === "ro" ? "API access" : "API access"}</option>
-              <option value="exports">{lang === "ro" ? "Data exports" : "Data exports"}</option>
-              <option value="reports">{lang === "ro" ? "Custom reports" : "Custom reports"}</option>
-              <option value="media">{lang === "ro" ? "Media licensing" : "Media licensing"}</option>
-              <option value="sponsorship">{lang === "ro" ? "Sponsorship placements" : "Sponsorship placements"}</option>
+              <option value="api">{lang === "ro" ? "Acces API" : "API access"}</option>
+              <option value="exports">{lang === "ro" ? "Exporturi de date" : "Data exports"}</option>
+              <option value="reports">{lang === "ro" ? "Rapoarte personalizate" : "Custom reports"}</option>
+              <option value="media">{lang === "ro" ? "Licențiere media" : "Media licensing"}</option>
+              <option value="sponsorship">{lang === "ro" ? "Placement-uri de sponsorizare" : "Sponsorship placements"}</option>
             </Select>
             <Textarea
               placeholder={lang === "ro" ? "Mesaj" : "Message"}
@@ -92,7 +92,7 @@ export function PartnersLeadForm({ lang }: { lang: "ro" | "en" }) {
               rows={4}
             />
             <Button type="submit" disabled={loading}>
-              {loading ? "Loading..." : lang === "ro" ? "Trimite" : "Submit"}
+              {loading ? (lang === "ro" ? "Se trimite..." : "Loading...") : lang === "ro" ? "Trimite" : "Submit"}
             </Button>
             {error && (
               <Alert variant="error">

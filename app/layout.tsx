@@ -32,7 +32,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const lang = await getLangFromRequest();
+  let lang: "ro" | "en" = "ro";
+  try {
+    lang = await getLangFromRequest();
+  } catch (error) {
+    console.error("[layout] Error getting lang, defaulting to ro:", error);
+  }
+
   const siteUrl = getSiteUrl();
   const google = process.env.GOOGLE_SITE_VERIFICATION?.trim() || null;
   const bing = process.env.BING_SITE_VERIFICATION?.trim() || null;
@@ -58,7 +64,7 @@ export default async function RootLayout({
         <ReadOnlyBanner />
         <DemoBanner />
         {children}
-        <SiteFooter />
+        <SiteFooter lang={lang} />
         <CookieConsentBanner lang={lang} />
       </body>
     </html>

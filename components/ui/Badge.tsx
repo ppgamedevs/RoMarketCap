@@ -1,13 +1,14 @@
 import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 
-type BadgeVariant = "neutral" | "success" | "warning" | "danger";
+type BadgeVariant = "neutral" | "success" | "warning" | "danger" | "outline";
 
 const variants: Record<BadgeVariant, string> = {
   neutral: "bg-muted text-foreground",
   success: "bg-emerald-100 text-emerald-800",
   warning: "bg-amber-100 text-amber-800",
   danger: "bg-red-100 text-red-800",
+  outline: "border border-border bg-transparent text-foreground",
 };
 
 export function Badge({ variant = "neutral", className, children }: PropsWithChildren<{ variant?: BadgeVariant; className?: string }>) {

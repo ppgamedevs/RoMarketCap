@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { getLangFromRequest } from "@/src/lib/i18n";
+import type { Lang } from "@/src/lib/i18n";
 import { NewsletterCta } from "@/components/newsletter/NewsletterCta";
 
-export async function SiteFooter() {
-  const lang = await getLangFromRequest();
+export function SiteFooter({ lang }: { lang: Lang }) {
   const contact = "contact@romarketcap.ro";
 
   return (
