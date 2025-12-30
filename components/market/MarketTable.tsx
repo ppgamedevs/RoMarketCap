@@ -19,7 +19,7 @@ type MarketRow = {
   slug: string;
   name: string;
   legalName: string | null;
-  cui: string;
+  cui: string | null;
   romcScore: number | null;
   romcAiScore: number | null;
   dataConfidence: number | null;
@@ -178,7 +178,7 @@ function MarketTableInner({
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">{row.name}</div>
-                        <div className="text-xs text-muted-foreground">{row.cui}</div>
+                        <div className="text-xs text-muted-foreground">{row.cui || "—"}</div>
                       </div>
                     </div>
                   </TD>

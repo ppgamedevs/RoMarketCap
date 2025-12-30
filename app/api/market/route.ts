@@ -38,7 +38,7 @@ type MarketRow = {
   slug: string;
   name: string;
   legalName: string | null;
-  cui: string;
+  cui: string | null;
   romcScore: number | null;
   romcAiScore: number | null;
   dataConfidence: number | null;
