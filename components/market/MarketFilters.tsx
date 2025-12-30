@@ -9,7 +9,7 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 
 type Industry = { slug: string; count: number };
 type County = { slug: string; count: number };
