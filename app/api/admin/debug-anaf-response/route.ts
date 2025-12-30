@@ -30,15 +30,26 @@ export async function GET(req: Request) {
       const { getCachedVerification } = await import("@/src/lib/verification/anaf");
       const cached = await getCachedVerification(normalized);
       
-      // Check rate limit status
+      // Check rate limit status and clear it if needed for debugging
       const { kv } = await import("@vercel/kv");
       const lastRequest = await kv.get<number>("anaf:last_request").catch(() => null);
       const rateLimitInfo = lastRequest 
-        ? { lastRequest: new Date(lastRequest).toISOString(), elapsedMs: Date.now() - lastRequest }
-        : { lastRequest: null, elapsedMs: null };
+        ? { lastRequest: new Date(lastRequest).toISOString(), elapsedMs: Date.now() - lastRequest, canProceed: Date.now() - lastRequest >= 1000 }
+        : { lastRequest: null, elapsedMs: null, canProceed: true };
+      
+      // For debugging: if rate limited, wait and retry up to 3 times
+      let rawResult = await verifyCompanyANAF(normalized);
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (rawResult.verificationStatus === "PENDING" && rawResult.errorMessage === "Rate limit exceeded" && retryCount < maxRetries) {
+        retryCount++;
+        // Wait for rate limit to clear (1 second + buffer)
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        rawResult = await verifyCompanyANAF(normalized);
+      }
       
       const anafResult = await verifyCompany(normalized);
-      const rawResult = await verifyCompanyANAF(normalized);
 
       return NextResponse.json({
         ok: true,
