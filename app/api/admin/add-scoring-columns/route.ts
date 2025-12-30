@@ -120,7 +120,62 @@ export async function POST() {
       }
     }
 
-    // 6. Verify the columns exist
+    // 6. Add ANAF verification columns
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS anaf_verified_at TIMESTAMP(3);
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added anaf_verified_at column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ anaf_verified_at column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS vat_registered BOOLEAN;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added vat_registered column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ vat_registered column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS official_name TEXT;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added official_name column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ official_name column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // 7. Verify the columns exist
     const columnCheck = await prisma.$queryRawUnsafe<Array<{
       column_name: string;
       data_type: string;
@@ -128,7 +183,7 @@ export async function POST() {
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'companies' 
-        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score')
+        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score', 'anaf_verified_at', 'vat_registered', 'official_name')
       ORDER BY column_name
     `);
 
