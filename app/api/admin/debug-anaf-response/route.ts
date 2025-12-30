@@ -43,16 +43,42 @@ export async function GET(req: Request) {
     }
 
     // Get sample companies that need name updates
-    const companies = await prisma.company.findMany({
+    // Query 1: Companies with generic names
+    const companiesWithGenericNames = await prisma.company.findMany({
       where: {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company " } },
-          { name: null as any },
           { name: "" },
         ],
         cui: { not: null },
       },
+      select: {
+        id: true,
+        cui: true,
+        name: true,
+      },
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Query 2: Companies with null names (need separate query due to Prisma limitations)
+    const companiesWithNullNames = await prisma.company.findMany({
+      where: {
+        name: null,
+        cui: { not: null },
+      },
+      select: {
+        id: true,
+        cui: true,
+        name: true,
+      },
+      take: Math.max(0, limit - companiesWithGenericNames.length),
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Combine results
+    const companies = [...companiesWithGenericNames, ...companiesWithNullNames].slice(0, limit);
       select: {
         id: true,
         cui: true,

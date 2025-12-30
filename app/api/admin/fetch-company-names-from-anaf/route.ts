@@ -28,12 +28,12 @@ export async function POST(req: Request) {
     const limit = typeof body.limit === "number" ? Math.min(body.limit, 100) : 50;
 
     // Find companies that need name updates
-    const companies = await prisma.company.findMany({
+    // Query 1: Companies with generic names
+    const companiesWithGenericNames = await prisma.company.findMany({
       where: {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company " } }, // Also handle old English format
-          { name: null as any },
           { name: "" },
         ],
         cui: { not: null },
@@ -46,6 +46,24 @@ export async function POST(req: Request) {
       take: limit,
       orderBy: { createdAt: "desc" },
     });
+
+    // Query 2: Companies with null names (need separate query due to Prisma limitations)
+    const companiesWithNullNames = await prisma.company.findMany({
+      where: {
+        name: null,
+        cui: { not: null },
+      },
+      select: {
+        id: true,
+        cui: true,
+        name: true,
+      },
+      take: Math.max(0, limit - companiesWithGenericNames.length),
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Combine results
+    const companies = [...companiesWithGenericNames, ...companiesWithNullNames].slice(0, limit);
 
     if (companies.length === 0) {
       return NextResponse.json({
