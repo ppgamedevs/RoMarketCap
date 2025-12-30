@@ -81,8 +81,9 @@ export async function fetchCUIsFromSources(options: {
     };
 
     try {
-      // For dry runs, force reprocess of XLSX sources (they're one-time files)
-      const forceReprocess = options.dryRun && source.sourceId === "SEAP_XLSX";
+      // For XLSX sources (one-time files), allow reprocessing in both dry and live runs
+      // This allows re-running ingestion if needed (e.g., after resetting cursor or file update)
+      const forceReprocess = source.sourceId === "SEAP_XLSX";
       const batch = await source.fetchBatch(sourceCursor, sourceLimit, { forceReprocess });
       
       for (const record of batch.records) {
