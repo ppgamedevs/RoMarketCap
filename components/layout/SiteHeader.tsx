@@ -8,6 +8,7 @@ import { useMemo, useState, useTransition, useEffect, Suspense } from "react";
 import clsx from "clsx";
 
 const navItems: Array<{ href: string; key: string; label: { ro: string; en: string } }> = [
+  { href: "/market", key: "market", label: { ro: "Piața", en: "Market" } },
   { href: "/companies", key: "companies", label: { ro: "Companii", en: "Companies" } },
   { href: "/pricing", key: "pricing", label: { ro: "Prețuri", en: "Pricing" } },
   { href: "/movers", key: "movers", label: { ro: "Evoluții", en: "Movers" } },

@@ -44,7 +44,21 @@ export async function fetchCUIsFromSources(options: {
   const enabledSources = await sourceRegistry.getEnabled();
   
   // Per-source cursor management
-  const sourceCursors: Record<string, string> = cursor ? JSON.parse(cursor) : {};
+  // Ensure cursor is a string before parsing (KV might return parsed JSON object)
+  let sourceCursors: Record<string, string> = {};
+  if (cursor) {
+    if (typeof cursor === "string") {
+      try {
+        sourceCursors = JSON.parse(cursor);
+      } catch {
+        // If parsing fails, treat as empty
+        sourceCursors = {};
+      }
+    } else if (typeof cursor === "object" && cursor !== null) {
+      // If it's already an object, use it directly
+      sourceCursors = cursor as Record<string, string>;
+    }
+  }
   const sourceLimits: Record<string, number> = {};
   
   // Distribute limit across sources (roughly equal)

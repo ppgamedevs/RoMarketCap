@@ -38,7 +38,20 @@ export async function executeNationalIngestRun(
   const startTime = Date.now();
 
   // Read cursor if not provided
-  const cursorIn = providedCursor || (await readCursor());
+  let cursorInRaw = providedCursor || (await readCursor());
+  
+  // Ensure cursorIn is always a string or null (KV might return parsed JSON object)
+  let cursorIn: string | null = null;
+  if (cursorInRaw) {
+    if (typeof cursorInRaw === "string") {
+      cursorIn = cursorInRaw;
+    } else if (typeof cursorInRaw === "object") {
+      // If it's an object, stringify it
+      cursorIn = JSON.stringify(cursorInRaw);
+    } else {
+      cursorIn = String(cursorInRaw);
+    }
+  }
 
   // Create job record
   let jobId: string | null = null;
@@ -49,7 +62,7 @@ export async function executeNationalIngestRun(
           status: "STARTED",
           mode: dryRun ? "DRY_RUN" : "LIVE",
           limit,
-          cursorIn,
+          cursorIn, // Now guaranteed to be string | null
           discovered: 0,
           upserted: 0,
           errors: 0,

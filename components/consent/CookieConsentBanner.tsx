@@ -20,21 +20,39 @@ export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
     return v == null;
   });
 
-  const accept = () => {
-    setCookie("romc_consent_analytics", "1", 60 * 60 * 24 * 180);
-    setVisible(false);
+  const accept = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      setCookie("romc_consent_analytics", "1", 60 * 60 * 24 * 180);
+      setVisible(false);
+    } catch (err) {
+      console.error("[CookieConsentBanner] Error accepting:", err);
+    }
   };
 
-  const decline = () => {
-    setCookie("romc_consent_analytics", "0", 60 * 60 * 24 * 180);
-    setVisible(false);
+  const decline = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      setCookie("romc_consent_analytics", "0", 60 * 60 * 24 * 180);
+      setVisible(false);
+    } catch (err) {
+      console.error("[CookieConsentBanner] Error declining:", err);
+    }
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[100] border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div 
+      className="fixed inset-x-0 bottom-0 z-[100] border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="text-sm text-muted-foreground leading-6">
           {lang === "ro" ? (
             <>
