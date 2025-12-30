@@ -94,11 +94,21 @@ export async function upsertCompaniesFromCuis(
             // Check if company exists
             const existing = await tx.company.findUnique({
               where: { cui: normalizedCui },
-              select: { id: true, dataConfidence: true },
+              select: { id: true, dataConfidence: true, name: true },
             });
 
-            // Use name if available, otherwise use CUI as fallback (name is required in schema)
-            const companyName = item.name || `Company ${normalizedCui}`;
+            // Use name if available, otherwise use Romanian fallback
+            // ANAF lookup will happen in post-hooks (after transaction)
+            let companyName = item.name;
+            if (!companyName) {
+              // If company already exists and has a real name (not fallback), use it
+              if (existing?.name && !existing.name.startsWith("Companie CUI:")) {
+                companyName = existing.name;
+              } else {
+                // Use Romanian fallback - ANAF lookup will update it later in post-hooks
+                companyName = `Companie CUI: ${normalizedCui}`;
+              }
+            }
 
             // Upsert company
             const company = await tx.company.upsert({

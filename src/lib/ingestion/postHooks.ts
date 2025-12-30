@@ -12,6 +12,7 @@ import { updateCompanyRomcV1ById } from "@/src/lib/company/updateScore";
 import { updateCompanyRomcAiById } from "@/src/lib/company/updateAiScore";
 import { computeScoreForCompany } from "@/src/lib/scoring/computeScoreForCompany";
 import { updateCompanyIntegrity } from "@/src/lib/integrity/updateIntegrity";
+import { verifyCompany } from "@/src/lib/connectors/anaf/verifyCompany";
 
 /**
  * Apply post-ingestion hooks for a company.
@@ -38,7 +39,35 @@ export async function applyPostIngestionHooks(companyId: string): Promise<void> 
       console.error(`[post-hooks] Failed to update integrity for ${companyId}:`, error);
     });
 
-    // 3. Schedule enrichment (mark company as needing enrichment)
+    // 3. Fetch company name from ANAF if missing (async, non-blocking)
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { cui: true, name: true },
+    });
+
+    if (company?.cui && (!company.name || company.name.startsWith("Companie CUI:"))) {
+      // Try to fetch name from ANAF (non-blocking)
+      verifyCompany(company.cui)
+        .then((anafResult) => {
+          if (anafResult.officialName) {
+            return prisma.company.update({
+              where: { id: companyId },
+              data: {
+                name: anafResult.officialName,
+                legalName: anafResult.officialName,
+                officialName: anafResult.officialName,
+                anafVerifiedAt: anafResult.verifiedAt,
+                vatRegistered: anafResult.vatRegistered ?? undefined,
+              },
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(`[post-hooks] Failed to fetch company name from ANAF for ${companyId}:`, error);
+        });
+    }
+
+    // 4. Schedule enrichment (mark company as needing enrichment)
     // The existing enrichment cron will pick it up
     // We can optionally set a flag or just rely on the enrichment cron's logic
     // For now, we'll just ensure the company is marked as public and active
