@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/Alert";
 
-export default function ResetPasswordPage() {
-  const searchParams = useSearchParams();
+function ResetPasswordForm() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [password, setPassword] = useState("");
@@ -18,13 +17,16 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const tokenParam = searchParams.get("token");
-    if (!tokenParam) {
-      setError("No reset token provided");
-    } else {
-      setToken(tokenParam);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tokenParam = params.get("token");
+      if (!tokenParam) {
+        setError("No reset token provided");
+      } else {
+        setToken(tokenParam);
+      }
     }
-  }, [searchParams]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +138,19 @@ export default function ResetPasswordPage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <main className="mx-auto max-w-md px-6 py-16">
+        <h1 className="text-2xl font-semibold tracking-tight">Reset Password</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+      </main>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
 
