@@ -97,26 +97,28 @@ export async function GET() {
       stats: {
         lastJob: lastJob ? {
           ...lastJob,
-          errorRecords: lastJob.errorRecords.map((e) => {
-            let sourceTypeStr: string;
-            if (typeof e.sourceType === "string") {
-              sourceTypeStr = e.sourceType;
-            } else if (e.sourceType && typeof e.sourceType === "object") {
-              const keys = Object.keys(e.sourceType);
-              sourceTypeStr = keys.length > 0 ? keys[0] : "UNKNOWN";
-            } else {
-              sourceTypeStr = "UNKNOWN";
-            }
-            return {
-              ...e,
-              sourceType: sourceTypeStr,
-            };
-          }),
+          errorRecords: Array.isArray(lastJob.errorRecords) 
+            ? lastJob.errorRecords.map((e) => {
+                let sourceTypeStr: string;
+                if (typeof e.sourceType === "string") {
+                  sourceTypeStr = e.sourceType;
+                } else if (e.sourceType && typeof e.sourceType === "object") {
+                  const keys = Object.keys(e.sourceType);
+                  sourceTypeStr = keys.length > 0 ? keys[0] : "UNKNOWN";
+                } else {
+                  sourceTypeStr = "UNKNOWN";
+                }
+                return {
+                  ...e,
+                  sourceType: sourceTypeStr,
+                };
+              })
+            : [],
         } : null,
-        recentJobs,
+        recentJobs: Array.isArray(recentJobs) ? recentJobs : [],
         checkpoint: checkpointStats,
         currentCursor,
-        errorSummary,
+        errorSummary: Array.isArray(errorSummary) ? errorSummary : [],
       },
     });
   } catch (error) {

@@ -338,15 +338,15 @@ export function NationalIngestionClient() {
                 </div>
               )}
               <div className="text-sm">
-                <span className="font-medium">Discovered:</span> {stats.lastJob.discovered}
+                <span className="font-medium">Discovered:</span> {stats.lastJob?.discovered ?? 0}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Upserted:</span> {stats.lastJob.upserted}
+                <span className="font-medium">Upserted:</span> {stats.lastJob?.upserted ?? 0}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Errors:</span> {stats.lastJob.errors}
+                <span className="font-medium">Errors:</span> {stats.lastJob?.errors ?? 0}
               </div>
-              {stats.lastJob.errorRecords.length > 0 && (
+              {stats.lastJob?.errorRecords && Array.isArray(stats.lastJob.errorRecords) && stats.lastJob.errorRecords.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium mb-2">Recent Errors:</p>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
@@ -380,20 +380,20 @@ export function NationalIngestionClient() {
           {stats.checkpoint ? (
             <div className="space-y-2">
               <div className="text-sm">
-                <span className="font-medium">Last Run:</span> {formatDate(stats.checkpoint.lastRunAt)}
+                <span className="font-medium">Last Run:</span> {formatDate(stats.checkpoint?.lastRunAt)}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Discovered:</span> {stats.checkpoint.discovered}
+                <span className="font-medium">Discovered:</span> {stats.checkpoint?.discovered ?? 0}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Upserted:</span> {stats.checkpoint.upserted}
+                <span className="font-medium">Upserted:</span> {stats.checkpoint?.upserted ?? 0}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Errors:</span> {stats.checkpoint.errors}
+                <span className="font-medium">Errors:</span> {stats.checkpoint?.errors ?? 0}
               </div>
               <div className="text-sm">
                 <span className="font-medium">Cursor:</span>{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">{stats.currentCursor || "null"}</code>
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">{stats.currentCursor ?? "null"}</code>
               </div>
             </div>
           ) : (
@@ -441,7 +441,7 @@ export function NationalIngestionClient() {
           <CardTitle>Recent Jobs</CardTitle>
         </CardHeader>
         <CardBody>
-          {stats.recentJobs.length > 0 ? (
+          {stats.recentJobs && Array.isArray(stats.recentJobs) && stats.recentJobs.length > 0 ? (
             <div className="space-y-2">
               {stats.recentJobs.map((job) => (
                 <div key={job.id} className="border-b pb-2 last:border-0">
@@ -453,7 +453,7 @@ export function NationalIngestionClient() {
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {job.discovered} discovered, {job.upserted} upserted, {job.errors} errors
+                      {job?.discovered ?? 0} discovered, {job?.upserted ?? 0} upserted, {job?.errors ?? 0} errors
                     </div>
                   </div>
                 </div>
@@ -466,7 +466,7 @@ export function NationalIngestionClient() {
       </Card>
 
       {/* Error Summary */}
-      {stats.errorSummary.length > 0 && (
+      {stats.errorSummary && Array.isArray(stats.errorSummary) && stats.errorSummary.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Error Summary (Last 7 Days)</CardTitle>
