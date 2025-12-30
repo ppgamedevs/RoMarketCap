@@ -306,7 +306,108 @@ export async function POST() {
       results.push("⚠ Foreign key constraint may already exist or failed");
     }
 
-    // 10. Verify the columns exist
+    // 10. Add outreach columns
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS outreach_status VARCHAR(50);
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added outreach_status column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ outreach_status column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS outreach_notes TEXT;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added outreach_notes column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ outreach_notes column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS outreach_contacted_at TIMESTAMP(3);
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added outreach_contacted_at column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ outreach_contacted_at column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS outreach_responded_at TIMESTAMP(3);
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added outreach_responded_at column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ outreach_responded_at column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS outreach_converted_at TIMESTAMP(3);
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added outreach_converted_at column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ outreach_converted_at column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // Create index for outreach_status if it doesn't exist
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS idx_companies_outreach_status ON companies(outreach_status);
+      `);
+      results.push("✓ Created index for outreach_status");
+    } catch (error: any) {
+      results.push("⚠ Index for outreach_status may already exist");
+    }
+
+    // 11. Verify the columns exist
     const columnCheck = await prisma.$queryRawUnsafe<Array<{
       column_name: string;
       data_type: string;
@@ -314,7 +415,7 @@ export async function POST() {
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'companies' 
-        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score', 'anaf_verified_at', 'vat_registered', 'official_name', 'field_provenance', 'last_seen_at_from_sources', 'founded_at', 'last_financial_sync_at', 'financial_source', 'merged_into_company_id')
+        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score', 'anaf_verified_at', 'vat_registered', 'official_name', 'field_provenance', 'last_seen_at_from_sources', 'founded_at', 'last_financial_sync_at', 'financial_source', 'merged_into_company_id', 'outreach_status', 'outreach_notes', 'outreach_contacted_at', 'outreach_responded_at', 'outreach_converted_at')
       ORDER BY column_name
     `);
 
