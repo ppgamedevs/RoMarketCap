@@ -57,11 +57,37 @@ export function NationalIngestionClient() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/national-ingestion/stats");
-      if (!res.ok) throw new Error("Failed to fetch stats");
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMessage = "Failed to fetch stats";
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = typeof errorData.error === "string" ? errorData.error : errorMessage;
+        } catch {
+          errorMessage = errorText.substring(0, 200) || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
       const data = await res.json();
+      // Ensure all sourceType values are strings
+      if (data.stats) {
+        if (data.stats.errorSummary) {
+          data.stats.errorSummary = data.stats.errorSummary.map((item: any) => ({
+            sourceType: typeof item.sourceType === "string" ? item.sourceType : String(item.sourceType || "UNKNOWN"),
+            count: item.count || 0,
+          }));
+        }
+        if (data.stats.lastJob?.errorRecords) {
+          data.stats.lastJob.errorRecords = data.stats.lastJob.errorRecords.map((e: any) => ({
+            ...e,
+            sourceType: typeof e.sourceType === "string" ? e.sourceType : String(e.sourceType || "UNKNOWN"),
+          }));
+        }
+      }
       setStats(data.stats);
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error || "Unknown error");
+      alert(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -93,7 +119,8 @@ export function NationalIngestionClient() {
       }
 
       if (!res.ok) {
-        throw new Error(data.error || "Trigger failed");
+        const errorMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error || "Trigger failed");
+        throw new Error(errorMsg);
       }
 
       alert(`${dry ? "Dry run" : "Run"} completed: ${data.discovered} discovered, ${data.upserted} upserted, ${data.errors} errors`);

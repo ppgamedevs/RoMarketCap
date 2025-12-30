@@ -59,7 +59,7 @@ export async function GET() {
     const currentCursor = await readCursor();
 
     // Get error summary
-    const errorSummary = await prisma.nationalIngestError.groupBy({
+    const errorSummaryRaw = await prisma.nationalIngestError.groupBy({
       by: ["sourceType"],
       where: {
         createdAt: {
@@ -72,25 +72,51 @@ export async function GET() {
     });
 
     // Sort by count descending (manually since Prisma's orderBy for groupBy is limited)
-    errorSummary.sort((a, b) => (b._count._all || 0) - (a._count._all || 0));
+    errorSummaryRaw.sort((a, b) => (b._count._all || 0) - (a._count._all || 0));
+
+    // Ensure sourceType is always a string (handle both string and object cases)
+    const errorSummary = errorSummaryRaw.map((e) => {
+      let sourceTypeStr: string;
+      if (typeof e.sourceType === "string") {
+        sourceTypeStr = e.sourceType;
+      } else if (e.sourceType && typeof e.sourceType === "object") {
+        // If it's an object, try to extract the key or stringify it safely
+        const keys = Object.keys(e.sourceType);
+        sourceTypeStr = keys.length > 0 ? keys[0] : "UNKNOWN";
+      } else {
+        sourceTypeStr = "UNKNOWN";
+      }
+      return {
+        sourceType: sourceTypeStr,
+        count: e._count._all || 0,
+      };
+    });
 
     return NextResponse.json({
       ok: true,
       stats: {
         lastJob: lastJob ? {
           ...lastJob,
-          errorRecords: lastJob.errorRecords.map((e) => ({
-            ...e,
-            sourceType: String(e.sourceType || "UNKNOWN"), // Ensure sourceType is always a string
-          })),
+          errorRecords: lastJob.errorRecords.map((e) => {
+            let sourceTypeStr: string;
+            if (typeof e.sourceType === "string") {
+              sourceTypeStr = e.sourceType;
+            } else if (e.sourceType && typeof e.sourceType === "object") {
+              const keys = Object.keys(e.sourceType);
+              sourceTypeStr = keys.length > 0 ? keys[0] : "UNKNOWN";
+            } else {
+              sourceTypeStr = "UNKNOWN";
+            }
+            return {
+              ...e,
+              sourceType: sourceTypeStr,
+            };
+          }),
         } : null,
         recentJobs,
         checkpoint: checkpointStats,
         currentCursor,
-        errorSummary: errorSummary.map((e) => ({
-          sourceType: String(e.sourceType || "UNKNOWN"), // Ensure it's always a string
-          count: e._count._all || 0,
-        })),
+        errorSummary,
       },
     });
   } catch (error) {
