@@ -3,6 +3,14 @@ import Link from "next/link";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { prisma } from "@/src/lib/db";
 import { ImportJobsClient } from "./ImportJobsClient";
+import type { Prisma } from "@prisma/client";
+
+type ImportJobWithIncludes = Prisma.ImportJobGetPayload<{
+  include: {
+    errors: true;
+    _count: { select: { errors: true } };
+  };
+}>;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +19,7 @@ export default async function AdminImportJobsPage() {
   const session = await requireAdminSession();
   if (!session) redirect("/");
 
-  let jobs: Awaited<ReturnType<typeof prisma.importJob.findMany>> = [];
+  let jobs: ImportJobWithIncludes[] = [];
   let tableError: string | null = null;
 
   try {
