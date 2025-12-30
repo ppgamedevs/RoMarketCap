@@ -51,9 +51,16 @@ export async function GET(req: Request) {
       
       const anafResult = await verifyCompany(normalized);
 
+      // Get the ANAF API endpoint being used
+      const anafApiUrl = process.env.ANAF_API_URL || "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva";
+
       return NextResponse.json({
         ok: true,
         cui: normalized,
+        anafApiEndpoint: anafApiUrl,
+        note: rawResult.verificationStatus === "ERROR" && rawResult.errorMessage?.includes("404")
+          ? "ANAF API endpoint returned 404. The endpoint may be incorrect, changed, or the API may not be available. The current endpoint is for VAT registration status and may not return company names."
+          : null,
         cached: cached ? { ...cached, verifiedAt: cached.verifiedAt.toISOString() } : null,
         rateLimitInfo,
         normalizedResult: anafResult,
