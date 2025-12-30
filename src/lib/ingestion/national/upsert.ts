@@ -10,6 +10,7 @@ import { normalizeCUI } from "../cuiValidation";
 import { writeFieldProvenance } from "../provenance";
 import type { CUIWithProvenance } from "./sources";
 import { slugifyCompanyName } from "@/src/lib/slug";
+import { applyPostIngestionHooks } from "../postHooks";
 
 const BATCH_SIZE = 50; // Process in batches to avoid timeouts
 
@@ -163,6 +164,15 @@ export async function upsertCompaniesFromCuis(
               item.confidence,
               `national-ingest:${item.sourceType}`
             ).catch(() => null);
+          }
+
+          // Apply post-ingestion hooks (scoring, integrity, etc.)
+          // Only for newly created companies to avoid unnecessary work on updates
+          if (!existing) {
+            // Run post-hooks asynchronously to avoid blocking the batch
+            applyPostIngestionHooks(company.id).catch((error) => {
+              console.error(`[national-ingest] Post-hooks failed for ${company.id}:`, error);
+            });
           }
         } catch (error) {
           result.errors++;
