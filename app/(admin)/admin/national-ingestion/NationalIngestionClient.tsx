@@ -126,7 +126,12 @@ export function NationalIngestionClient() {
       alert(`${dry ? "Dry run" : "Run"} completed: ${data.discovered} discovered, ${data.upserted} upserted, ${data.errors} errors`);
       await fetchStats();
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (typeof error === "string" 
+          ? error 
+          : JSON.stringify(error || "Unknown error"));
+      alert(`Error: ${errorMessage}`);
     } finally {
       setRunning(false);
     }
@@ -150,7 +155,12 @@ export function NationalIngestionClient() {
       alert("Cursor reset successfully");
       await fetchStats();
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (typeof error === "string" 
+          ? error 
+          : JSON.stringify(error || "Unknown error"));
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -204,11 +214,19 @@ export function NationalIngestionClient() {
                 <div className="mt-4">
                   <p className="text-sm font-medium mb-2">Recent Errors:</p>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {stats.lastJob.errorRecords.map((error) => (
-                      <div key={error.id} className="text-xs text-muted-foreground">
-                        {error.cui || "N/A"} ({error.sourceType}): {error.reason.substring(0, 100)}
-                      </div>
-                    ))}
+                    {stats.lastJob.errorRecords.map((error) => {
+                      // Ensure sourceType is always a string (safety check)
+                      const sourceTypeStr = typeof error.sourceType === "string" 
+                        ? error.sourceType 
+                        : (error.sourceType && typeof error.sourceType === "object" 
+                          ? Object.keys(error.sourceType)[0] || "UNKNOWN"
+                          : String(error.sourceType || "UNKNOWN"));
+                      return (
+                        <div key={error.id} className="text-xs text-muted-foreground">
+                          {error.cui || "N/A"} ({sourceTypeStr}): {error.reason.substring(0, 100)}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -321,12 +339,20 @@ export function NationalIngestionClient() {
           </CardHeader>
           <CardBody>
             <div className="space-y-2">
-              {stats.errorSummary.map((item) => (
-                <div key={item.sourceType} className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{item.sourceType}</span>
-                  <span className="text-muted-foreground">{item.count} errors</span>
-                </div>
-              ))}
+              {stats.errorSummary.map((item) => {
+                // Ensure sourceType is always a string (safety check)
+                const sourceTypeStr = typeof item.sourceType === "string" 
+                  ? item.sourceType 
+                  : (item.sourceType && typeof item.sourceType === "object" 
+                    ? Object.keys(item.sourceType)[0] || "UNKNOWN"
+                    : String(item.sourceType || "UNKNOWN"));
+                return (
+                  <div key={sourceTypeStr} className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{sourceTypeStr}</span>
+                    <span className="text-muted-foreground">{item.count} errors</span>
+                  </div>
+                );
+              })}
             </div>
           </CardBody>
         </Card>

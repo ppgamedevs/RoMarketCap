@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   ...getDefaultMetadata({ locale: "ro" }),
 };
 
+// Mark layout as dynamic since we use cookies() for language detection
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
