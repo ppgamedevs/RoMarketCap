@@ -79,7 +79,62 @@ export async function POST() {
       }
     }
 
-    // 4. Verify the columns exist
+    // 4. Add financial sync columns
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS last_financial_sync_at TIMESTAMP(3);
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added last_financial_sync_at column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ last_financial_sync_at column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS financial_sync_version INTEGER NOT NULL DEFAULT 1;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added financial_sync_version column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ financial_sync_version column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS financial_source JSONB;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added financial_source column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ financial_source column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // 5. Verify all columns exist
     const columnCheck = await prisma.$queryRawUnsafe<Array<{
       column_name: string;
       data_type: string;
@@ -87,7 +142,14 @@ export async function POST() {
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'companies' 
-        AND column_name IN ('universe_source', 'universe_confidence', 'universe_verified')
+        AND column_name IN (
+          'universe_source', 
+          'universe_confidence', 
+          'universe_verified',
+          'last_financial_sync_at',
+          'financial_sync_version',
+          'financial_source'
+        )
       ORDER BY column_name
     `);
 
