@@ -13,6 +13,7 @@ import { slugifyCompanyName } from "@/src/lib/slug";
 import { applyPostIngestionHooks } from "../postHooks";
 
 const BATCH_SIZE = 50; // Process in batches to avoid timeouts
+const CONCURRENT_TRANSACTIONS = 5; // Limit concurrent transactions to avoid DB overload
 
 export type UpsertResult = {
   created: number;
@@ -65,14 +66,17 @@ export async function upsertCompaniesFromCuis(
     return result;
   }
 
-  // Process in batches, but each company in its own transaction
+  // Process in batches with limited concurrency to avoid transaction timeouts
   // This prevents one failure from aborting the entire batch
   for (let i = 0; i < cuis.length; i += BATCH_SIZE) {
     const batch = cuis.slice(i, i + BATCH_SIZE);
     
-    // Process each company in a separate transaction to avoid transaction abort cascades
-    await Promise.allSettled(
-      batch.map(async (item) => {
+    // Process companies with limited concurrency to avoid DB overload
+    for (let j = 0; j < batch.length; j += CONCURRENT_TRANSACTIONS) {
+      const concurrentBatch = batch.slice(j, j + CONCURRENT_TRANSACTIONS);
+      
+      await Promise.allSettled(
+        concurrentBatch.map(async (item) => {
         try {
           const normalizedCui = normalizeCUI(item.cui);
           if (!normalizedCui) {
@@ -187,8 +191,9 @@ export async function upsertCompaniesFromCuis(
             error: error instanceof Error ? error.message : "Unknown error",
           });
         }
-      })
-    );
+        })
+      );
+    }
   }
 
   return result;
