@@ -9,6 +9,10 @@ import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   try {
     const session = await requireAdminSession();
