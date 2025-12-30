@@ -15,7 +15,15 @@ export default async function RoHomePage() {
   
   try {
     const latest = await prisma.scoreSnapshot.findMany({
-      where: { version: "romc_v0" },
+      where: {
+        version: "romc_v0",
+        company: {
+          isPublic: true,
+          visibilityStatus: "PUBLIC",
+          isSkeleton: false,
+          mergedIntoCompanyId: null,
+        },
+      },
       orderBy: [{ computedAt: "desc" }],
       take: 200,
       include: { company: { select: { slug: true, name: true } } },
