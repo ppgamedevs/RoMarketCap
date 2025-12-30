@@ -20,7 +20,6 @@ type MarketRow = {
   name: string;
   legalName: string | null;
   cui: string;
-  logo: string | null;
   romcScore: number | null;
   romcAiScore: number | null;
   dataConfidence: number | null;
@@ -174,13 +173,9 @@ function MarketTableInner({
                   <TD className="font-medium">{row.rank}</TD>
                   <TD>
                     <div className="flex items-center gap-2">
-                      {row.logo ? (
-                        <img src={row.logo} alt="" className="h-8 w-8 rounded" />
-                      ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold">
-                          {row.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold">
+                        {row.name.charAt(0).toUpperCase()}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">{row.name}</div>
                         <div className="text-xs text-muted-foreground">{row.cui}</div>
