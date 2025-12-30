@@ -34,7 +34,8 @@ export default withAuth({
           pathname === "/api/admin/add-import-jobs-tables" ||
           pathname === "/api/admin/add-company-risk-flags" ||
           pathname === "/api/admin/add-universe-columns" ||
-          pathname === "/api/admin/add-company-provenance-table") {
+          pathname === "/api/admin/add-company-provenance-table" ||
+          pathname === "/api/admin/add-scoring-columns") {
         return true;
       }
       
