@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 const BATCH_SIZE = 10; // Process in small batches to respect ANAF rate limits
 const DELAY_BETWEEN_BATCHES = 2000; // 2 seconds delay between batches
 
-export async function GET() {
-  return POST();
+export async function GET(req: Request) {
+  return POST(req);
 }
 
 export async function POST(req: Request) {
