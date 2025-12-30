@@ -68,6 +68,23 @@ export function NationalIngestionClient() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [limit, setLimit] = useState(500);
+  const [error, setError] = useState<string | null>(null);
+
+  // Wrapper to safely set stats with error handling
+  const safeSetStats = (newStats: Stats | null) => {
+    try {
+      // Double-check that stats is serializable
+      if (newStats) {
+        JSON.stringify(newStats); // This will throw if there are non-serializable values
+      }
+      setStats(newStats);
+      setError(null);
+    } catch (err) {
+      console.error("[NationalIngestionClient] Stats not serializable:", err);
+      setError("Failed to load stats: data contains invalid values");
+      setStats(null);
+    }
+  };
 
   const fetchStats = async () => {
     setLoading(true);
@@ -144,11 +161,30 @@ export function NationalIngestionClient() {
             errorRecords: data.stats.lastJob.errorRecords || [],
           };
         }
+        
+        // Final safety check: ensure stats object is fully serializable
+        // Deep clone and convert all values to primitives
+        const sanitizedStats = JSON.parse(JSON.stringify(data.stats, (key, value) => {
+          // Convert any remaining objects to strings
+          if (value && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
+            const keys = Object.keys(value);
+            if (keys.length > 0) {
+              return keys[0]; // Return first key as string
+            }
+            return "UNKNOWN";
+          }
+          return value;
+        }));
+        
+        safeSetStats(sanitizedStats);
+      } else {
+        safeSetStats(null);
       }
-      setStats(data.stats);
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : String(error || "Unknown error");
-      alert(`Error: ${errorMessage}`);
+      console.error("[NationalIngestionClient] Error fetching stats:", error);
+      setError(errorMessage);
+      safeSetStats(null); // Set to null on error to prevent rendering issues
     } finally {
       setLoading(false);
     }
@@ -248,6 +284,24 @@ export function NationalIngestionClient() {
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading...</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+        <p className="text-sm text-red-800 font-medium">Error</p>
+        <p className="text-sm text-red-700 mt-1">{error}</p>
+        <button
+          onClick={() => {
+            setError(null);
+            fetchStats();
+          }}
+          className="mt-2 text-sm text-red-600 underline"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (!stats) {

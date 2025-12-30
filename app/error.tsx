@@ -18,6 +18,11 @@ export default function Error({
     Sentry.captureException(error);
   }, [error]);
 
+  // Safely extract error message to prevent rendering objects
+  const errorMessage = error?.message 
+    ? (typeof error.message === "string" ? error.message : String(error.message))
+    : "An unexpected error occurred";
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <Card>
@@ -28,9 +33,9 @@ export default function Error({
           <p className="text-sm text-muted-foreground">
             We encountered an unexpected error. Our team has been notified and is working on a fix.
           </p>
-          {process.env.NODE_ENV === "development" && error.message && (
+          {process.env.NODE_ENV === "development" && errorMessage && (
             <div className="rounded-md bg-muted p-3">
-              <p className="text-xs font-mono text-destructive">{error.message}</p>
+              <p className="text-xs font-mono text-destructive">{errorMessage}</p>
             </div>
           )}
           <div className="flex gap-3">
