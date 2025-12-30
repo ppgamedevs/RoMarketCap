@@ -267,7 +267,46 @@ export async function POST() {
       }
     }
 
-    // 9. Verify the columns exist
+    // 9. Add merge-related column
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE companies
+          ADD COLUMN IF NOT EXISTS merged_into_company_id UUID;
+        EXCEPTION
+          WHEN duplicate_column THEN null;
+        END $$;
+      `);
+      results.push("✓ Added merged_into_company_id column");
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.code === "42701") {
+        results.push("✓ merged_into_company_id column already exists");
+      } else {
+        throw error;
+      }
+    }
+
+    // Add foreign key constraint if it doesn't exist
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE constraint_name = 'companies_merged_into_company_id_fkey'
+            AND table_name = 'companies'
+          ) THEN
+            ALTER TABLE companies
+            ADD CONSTRAINT companies_merged_into_company_id_fkey
+            FOREIGN KEY (merged_into_company_id) REFERENCES companies(id) ON DELETE SET NULL;
+          END IF;
+        END $$;
+      `);
+      results.push("✓ Added foreign key constraint for merged_into_company_id");
+    } catch (error: any) {
+      results.push("⚠ Foreign key constraint may already exist or failed");
+    }
+
+    // 10. Verify the columns exist
     const columnCheck = await prisma.$queryRawUnsafe<Array<{
       column_name: string;
       data_type: string;
@@ -275,7 +314,7 @@ export async function POST() {
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'companies' 
-        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score', 'anaf_verified_at', 'vat_registered', 'official_name', 'field_provenance', 'last_seen_at_from_sources', 'founded_at', 'last_financial_sync_at', 'financial_source')
+        AND column_name IN ('previous_romc_ai_score', 'romc_ai_score_delta', 'score_stability_profile', 'company_integrity_score', 'anaf_verified_at', 'vat_registered', 'official_name', 'field_provenance', 'last_seen_at_from_sources', 'founded_at', 'last_financial_sync_at', 'financial_source', 'merged_into_company_id')
       ORDER BY column_name
     `);
 
