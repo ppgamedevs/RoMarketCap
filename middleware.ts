@@ -36,7 +36,8 @@ export default withAuth({
           pathname === "/api/admin/add-universe-columns" ||
           pathname === "/api/admin/add-company-provenance-table" ||
           pathname === "/api/admin/add-scoring-columns" ||
-          pathname === "/api/admin/fetch-company-names-from-anaf") {
+          pathname === "/api/admin/fetch-company-names-from-anaf" ||
+          pathname === "/api/admin/debug-anaf-response") {
         return true;
       }
       

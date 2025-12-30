@@ -33,6 +33,8 @@ export async function POST(req: Request) {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company " } }, // Also handle old English format
+          { name: null },
+          { name: "" },
         ],
         cui: { not: null },
       },
@@ -73,22 +75,27 @@ export async function POST(req: Request) {
             // Fetch name from ANAF
             const anafResult = await verifyCompany(company.cui);
 
-            if (anafResult.officialName) {
-              // Update company with official name
-              await prisma.company.update({
-                where: { id: company.id },
-                data: {
-                  name: anafResult.officialName,
-                  legalName: anafResult.officialName,
-                  officialName: anafResult.officialName,
-                  anafVerifiedAt: anafResult.verifiedAt,
-                  vatRegistered: anafResult.vatRegistered ?? undefined,
-                },
-              });
-              updated++;
+            if (anafResult.officialName && anafResult.officialName.trim().length > 0) {
+              // Only update if the new name is different from current
+              const currentName = company.name || "";
+              if (currentName !== anafResult.officialName) {
+                // Update company with official name
+                await prisma.company.update({
+                  where: { id: company.id },
+                  data: {
+                    name: anafResult.officialName,
+                    legalName: anafResult.officialName,
+                    officialName: anafResult.officialName,
+                    anafVerifiedAt: anafResult.verifiedAt,
+                    vatRegistered: anafResult.vatRegistered ?? undefined,
+                  },
+                });
+                updated++;
+                console.log(`[fetch-names] Updated CUI ${company.cui}: "${currentName}" -> "${anafResult.officialName}"`);
+              }
             } else {
               // ANAF didn't return a name - log but don't count as error
-              console.log(`[fetch-names] No name found in ANAF for CUI ${company.cui}`);
+              console.log(`[fetch-names] No name found in ANAF for CUI ${company.cui} (current: "${company.name || "null"}")`);
             }
           } catch (error) {
             errors++;
