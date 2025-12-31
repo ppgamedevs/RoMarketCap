@@ -96,15 +96,29 @@ async function executeUpdate(req: Request) {
 
     // Find companies that need updates
     // Priority: companies with placeholder names first, then companies without scores
+    // Exclude companies that were recently verified (anafVerifiedAt is set) to prevent overwriting
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const companiesWithPlaceholderNames = await prisma.company.findMany({
       where: {
-        OR: [
-          { name: { startsWith: "Companie CUI:" } },
-          { name: { startsWith: "Company CUI:" } },
-          { name: { startsWith: "Company " } }, // Also match "Company 29496051" format
-          { name: "" },
+        AND: [
+          {
+            OR: [
+              { name: { startsWith: "Companie CUI:" } },
+              { name: { startsWith: "Company CUI:" } },
+              { name: { startsWith: "Company " } }, // Also match "Company 29496051" format
+              { name: "" },
+            ],
+          },
+          { cui: { not: null } },
+          // Only update if not recently verified (anafVerifiedAt is null or very old)
+          // This prevents overwriting names that were just updated
+          {
+            OR: [
+              { anafVerifiedAt: null },
+              { anafVerifiedAt: { lt: sevenDaysAgo } }, // Older than 7 days
+            ],
+          },
         ],
-        cui: { not: null },
       },
       select: {
         id: true,
@@ -129,6 +143,7 @@ async function executeUpdate(req: Request) {
           WHERE (name IS NULL OR name = '')
             AND cui IS NOT NULL
             AND id > ${cursor}
+            AND (anaf_verified_at IS NULL OR anaf_verified_at < NOW() - INTERVAL '7 days')
           ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
         `;
@@ -138,6 +153,7 @@ async function executeUpdate(req: Request) {
           FROM "companies"
           WHERE (name IS NULL OR name = '')
             AND cui IS NOT NULL
+            AND (anaf_verified_at IS NULL OR anaf_verified_at < NOW() - INTERVAL '7 days')
           ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
         `;

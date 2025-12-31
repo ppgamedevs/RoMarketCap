@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 function getCookie(name: string): string | null {
@@ -15,10 +15,14 @@ function setCookie(name: string, value: string, maxAgeSeconds: number) {
 }
 
 export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
-  const [visible, setVisible] = useState(() => {
+  const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
     const v = getCookie("romc_consent_analytics");
-    return v == null;
-  });
+    setVisible(v == null);
+  }, []);
 
   const accept = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -42,7 +46,7 @@ export function CookieConsentBanner({ lang }: { lang: "ro" | "en" }) {
     }
   };
 
-  if (!visible) return null;
+  if (!mounted || !visible) return null;
 
   return (
     <div 

@@ -1,111 +1,108 @@
-import Link from "next/link";
+/**
+ * Homepage with CoinMarketCap-style Market View
+ * 
+ * Shows ranked companies with sparklines, scores, and filters
+ */
+
 import type { Metadata } from "next";
 import { getDefaultMetadata } from "@/lib/seo/metadata";
-import { prisma } from "@/src/lib/db";
-import { getLangFromRequest, t } from "@/src/lib/i18n";
+import { getLangFromRequest } from "@/src/lib/i18n";
+import { getSiteUrl } from "@/lib/seo/site";
+import { MarketTable } from "@/components/market/MarketTable";
+import { MarketFilters } from "@/components/market/MarketFilters";
+import { listIndustrySlugsWithCounts, listCountySlugsWithCounts } from "@/src/lib/db/companyQueries";
 
 export const metadata: Metadata = getDefaultMetadata({ locale: "ro" });
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function RoHomePage() {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function asString(v: string | string[] | undefined): string {
+  return Array.isArray(v) ? v[0] ?? "" : v ?? "";
+}
+
+export default async function RoHomePage({ searchParams }: { searchParams: SearchParams }) {
   const lang = await getLangFromRequest();
-  
-  let top: Array<{ id: string; company: { slug: string; name: string }; romcScore: number }> = [];
-  
-  try {
-    // Build where clause - mergedIntoCompanyId may not exist in DB yet
-    const companyWhere: any = {
-      isPublic: true,
-      visibilityStatus: "PUBLIC",
-      isSkeleton: false,
-      mergedIntoCompanyId: null, // Exclude merged companies
-    };
+  const sp = await searchParams;
 
-    const latest = await prisma.scoreSnapshot.findMany({
-      where: {
-        version: "romc_v0",
-        company: companyWhere,
-      },
-      orderBy: [{ computedAt: "desc" }],
-      take: 200,
-      include: { company: { select: { slug: true, name: true } } },
-    });
+  // Parse search params
+  const page = Math.max(Number(asString(sp.page) || "1"), 1);
+  const pageSize = Math.max(Number(asString(sp.pageSize) || "50"), 1);
+  const search = asString(sp.search);
+  const industry = asString(sp.industry);
+  const county = asString(sp.county);
+  const confidence = asString(sp.confidence) as "high" | "medium" | "low" | undefined;
+  const integrity = asString(sp.integrity) === "true";
+  const verified = asString(sp.verified) === "true";
+  const fresh = asString(sp.fresh) === "true";
+  const sort = (asString(sp.sort) as "romcAiScore" | "romcScore" | "marketCap" | "confidence") || "romcAiScore";
 
-    // De-dup per company, then take top by score.
-    const byCompany = new Map<string, (typeof latest)[number]>();
-    for (const s of latest) {
-      if (!byCompany.has(s.companyId)) byCompany.set(s.companyId, s);
-    }
-    top = Array.from(byCompany.values())
-      .sort((a, b) => b.romcScore - a.romcScore)
-      .slice(0, 10);
-  } catch (error) {
-    // Database connection error - show empty state
-    console.error("[RoHomePage] Database error:", error);
-    // Continue with empty top array - page will show "N/A"
-  }
+  // Fetch filter options
+  const [industries, counties] = await Promise.all([
+    listIndustrySlugsWithCounts(),
+    listCountySlugsWithCounts(),
+  ]);
+
+  // Build JSON-LD ItemList schema
+  const baseUrl = getSiteUrl();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: lang === "ro" ? "Clasamentul Firmelor Românești" : "Romanian Company Market Rankings",
+    description: lang === "ro" 
+      ? "Clasament complet al companiilor românești după scor ROMC" 
+      : "Complete ranking of Romanian companies by ROMC score",
+    url: baseUrl,
+  };
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-1px)] max-w-3xl flex-col gap-6 px-6 py-16">
-      <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">{t(lang, "hero_title")}</h1>
-        <p className="text-sm text-muted-foreground leading-6">{t(lang, "hero_subtitle")}</p>
-        <div className="mt-2 flex gap-3">
-          <Link className="inline-flex rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" href="/companies">
-            {t(lang, "cta_explore")}
-          </Link>
-          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" href="/billing">
-            {t(lang, "cta_upgrade")}
-          </Link>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">
+            {lang === "ro" ? "Piața Firmelor Românești" : "Romanian Company Market"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {lang === "ro"
+              ? "Clasament complet al companiilor românești după scor ROMC, tendințe și confidență"
+              : "Complete ranking of Romanian companies by ROMC score, trends, and confidence"}
+          </p>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
-      </header>
 
-      <section className="rounded-xl border bg-card p-6 text-card-foreground">
-        <h2 className="text-sm font-medium">{lang === "ro" ? "Top companii" : "Top companies"}</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">{t(lang, "disclaimer")}</p>
-        <div className="mt-4 flex flex-col gap-2 text-sm">
-          {top.length === 0 ? (
-            <span className="text-muted-foreground">N/A</span>
-          ) : (
-            top.map((s) => (
-              <Link key={s.id} className="flex items-center justify-between underline underline-offset-4" href={`/company/${s.company.slug}`}>
-                <span>{s.company.name}</span>
-                <span className="text-muted-foreground">{s.romcScore}/100</span>
-              </Link>
-            ))
-          )}
-        </div>
-      </section>
+        <MarketFilters
+          lang={lang}
+          industries={industries}
+          counties={counties}
+          initialSearch={search}
+          initialIndustry={industry}
+          initialCounty={county}
+          initialConfidence={confidence}
+          initialIntegrity={integrity}
+          initialVerified={verified}
+          initialFresh={fresh}
+          initialSort={sort}
+        />
 
-      <section className="rounded-xl border bg-card p-6 text-card-foreground">
-        <h2 className="text-sm font-medium">{lang === "ro" ? "Browse" : "Browse"}</h2>
-        <div className="mt-3 flex flex-wrap gap-3 text-sm">
-          <Link className="underline underline-offset-4" href="/industries">
-            {lang === "ro" ? "Industrii" : "Industries"}
-          </Link>
-          <Link className="underline underline-offset-4" href="/counties">
-            {lang === "ro" ? "Județe" : "Counties"}
-          </Link>
-          <Link className="underline underline-offset-4" href="/companies">
-            {lang === "ro" ? "Director companii" : "Company directory"}
-          </Link>
-          <Link className="underline underline-offset-4" href="/movers">
-            {lang === "ro" ? "Market Movers" : "Market Movers"}
-          </Link>
-          <Link className="underline underline-offset-4" href="/digest">
-            {lang === "ro" ? "Digest" : "Digest"}
-          </Link>
-          <Link className="underline underline-offset-4" href="/newsletter">
-            {lang === "ro" ? "Newsletter" : "Newsletter"}
-          </Link>
-          <Link className="underline underline-offset-4" href="/partners">
-            {lang === "ro" ? "Parteneri" : "Partners"}
-          </Link>
-        </div>
-      </section>
-    </main>
+        <MarketTable
+          lang={lang}
+          page={page}
+          pageSize={pageSize}
+          search={search}
+          industry={industry}
+          county={county}
+          confidence={confidence}
+          integrity={integrity}
+          verified={verified}
+          fresh={fresh}
+          sort={sort}
+        />
+      </main>
+    </>
   );
 }
 

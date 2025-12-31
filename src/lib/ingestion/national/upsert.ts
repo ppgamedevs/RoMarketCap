@@ -141,7 +141,8 @@ export async function upsertCompaniesFromCuis(
               },
               update: {
                 // PROMPT 62: Only update name if current is empty/placeholder
-                ...(item.name && isPlaceholder(existing?.name || null)
+                // AND if company hasn't been verified by ANAF recently (to prevent overwriting verified names)
+                ...(item.name && isPlaceholder(existing?.name || null) && !existing?.anafVerifiedAt
                   ? {
                       name: item.name,
                       legalName: item.name,
