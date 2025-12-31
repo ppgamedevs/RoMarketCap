@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
 import { verifyCompany } from "@/src/lib/connectors/anaf/verifyCompany";
+import { verifyCompanyANAF } from "@/src/lib/verification/anaf";
 import { updateCompanyRomcV1ById } from "@/src/lib/company/updateScore";
 import { updateCompanyRomcAiById } from "@/src/lib/company/updateAiScore";
 import { computeScoreForCompany } from "@/src/lib/scoring/computeScoreForCompany";
@@ -147,7 +148,9 @@ export async function POST(req: Request) {
               await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_REQUESTS));
             }
 
-            const anafResult = await verifyCompany(company.cui);
+            // Use verifyCompanyANAF to get full result with address and other fields
+            const anafResultInternal = await verifyCompanyANAF(company.cui, { force: false });
+            const anafResult = await verifyCompany(company.cui); // For normalized result
 
             if (anafResult.officialName && anafResult.officialName.trim().length > 0) {
               const currentName = company.name || "";
@@ -161,8 +164,8 @@ export async function POST(req: Request) {
                       officialName: anafResult.officialName,
                       anafVerifiedAt: anafResult.verifiedAt,
                       vatRegistered: anafResult.vatRegistered ?? undefined,
-                      // Also update address if available
-                      ...(anafResult.address ? { address: anafResult.address } : {}),
+                      // Also update address if available from internal result
+                      ...(anafResultInternal.address ? { address: anafResultInternal.address } : {}),
                     },
                   });
                 }
