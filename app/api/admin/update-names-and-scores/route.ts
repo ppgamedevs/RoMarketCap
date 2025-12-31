@@ -99,7 +99,7 @@ export async function POST(req: Request) {
           FROM "companies"
           WHERE name IS NULL
             AND cui IS NOT NULL
-          ORDER BY "createdAt" DESC
+          ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
         `
       : [];
