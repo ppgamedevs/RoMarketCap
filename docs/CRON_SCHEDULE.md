@@ -52,29 +52,34 @@ The orchestrator (`/api/cron/orchestrate`) runs jobs in this order:
    - Syncs financial data from ANAF
    - Runs if `FINANCIAL_SYNC_CRON_ENABLED` flag is enabled
 
-5. **Enrich** (limit: 50 companies)
+5. **Update Names and Scores** (limit: 50 companies)
+   - Updates company names from ANAF for companies with placeholder names
+   - Recalculates scores for updated companies
+   - Runs if `UPDATE_NAMES_SCORES_CRON_ENABLED` flag is enabled (default: true)
+
+6. **Enrich** (limit: 50 companies)
    - Fetches external data (LinkedIn, SimilarWeb, etc.)
    - Runs if `CRON_ENRICH` flag is enabled
 
-6. **Watchlist Alerts** (limit: 200 alerts)
+7. **Watchlist Alerts** (limit: 200 alerts)
    - Sends email alerts for watchlist items
    - Runs if `ALERTS` flag is enabled
 
-7. **Billing Reconcile** (limit: 500 subscriptions)
+8. **Billing Reconcile** (limit: 500 subscriptions)
    - Syncs Stripe subscriptions with DB
    - Runs if `CRON_BILLING_RECONCILE` flag is enabled
 
-8. **Snapshot** (once per day only)
+9. **Snapshot** (once per day only)
    - Creates daily system snapshot
    - Runs if `CRON_SNAPSHOT` flag is enabled
    - Only runs once per UTC day (tracked in KV)
 
-9. **Weekly Digest** (once per week only)
+10. **Weekly Digest** (once per week only)
    - Generates and sends weekly newsletter
    - Runs if `NEWSLETTER_SENDS` flag is enabled
    - Only runs once per week (tracked in KV)
 
-10. **Claim Drip** (daily)
+11. **Claim Drip** (daily)
    - Sends claim drip emails (day 2 and day 5 after claim submission)
    - Runs daily to check for claims that need follow-up emails
    - No feature flag (always enabled)
@@ -101,6 +106,7 @@ Check KV keys for last execution timestamps:
 - `cron:last:merge-candidates` - Last merge candidates run (PROMPT 60)
 - `cron:last:national-ingest` - Last national ingestion run (PROMPT 61)
 - `cron:last:financial-sync` - Last financial sync run (PROMPT 58)
+- `cron:last:update-names-scores` - Last update names/scores run
 - `cron:last:enrich` - Last enrich run
 - `cron:last:watchlist-alerts` - Last alerts run
 - `cron:last:billing-reconcile` - Last billing run
@@ -118,6 +124,7 @@ The orchestrator enforces batch limits to prevent quota exhaustion:
 - Merge Candidates: max 50 companies per run (PROMPT 60)
 - National Ingestion: max 500 CUIs per run (PROMPT 61)
 - Financial Sync: max 10 companies per run (PROMPT 58)
+- Update Names and Scores: max 50 companies per run
 - Enrich: max 50 companies per run
 - Watchlist Alerts: max 200 alerts per run
 - Billing Reconcile: max 500 subscriptions per run
@@ -137,6 +144,7 @@ All cron jobs respect feature flags. If a flag is disabled, the orchestrator ski
 
 Each job has a maximum runtime:
 - Recalculate: 30 minutes
+- Update Names and Scores: 1 hour (due to ANAF rate limiting)
 - Enrich: 30 minutes
 - Watchlist Alerts: 15 minutes
 - Billing Reconcile: 30 minutes

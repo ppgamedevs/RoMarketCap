@@ -159,7 +159,37 @@ async function handleOrchestrate(req: Request) {
         stats.financialSync = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 3. Enrich (if enabled)
+      // 5. Update Names and Scores (if enabled)
+      if (await isFlagEnabled("UPDATE_NAMES_SCORES_CRON_ENABLED", true)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/update-names-scores?limit=50`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.updateNamesScores = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:update-names-scores", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.updateNamesScores = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.updateNamesScores = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 6. Enrich (if enabled)
       if (await isFlagEnabled("CRON_ENRICH", true)) {
         try {
           const stepStart = Date.now();
