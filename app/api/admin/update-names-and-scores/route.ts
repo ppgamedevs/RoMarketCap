@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     const companiesWithNullNames = remainingLimit > 0
       ? await prisma.$queryRaw<Array<{ id: string; cui: string; name: string | null }>>`
           SELECT id, cui, name
-          FROM "Company"
+          FROM "companies"
           WHERE name IS NULL
             AND cui IS NOT NULL
           ORDER BY "createdAt" DESC
