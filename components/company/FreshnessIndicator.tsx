@@ -18,6 +18,7 @@ function getSourceDisplayName(sourceId: SourceId, lang: "ro" | "en"): string {
   const names: Record<SourceId, { ro: string; en: string }> = {
     SEAP: { ro: "SEAP", en: "SEAP" },
     SEAP_XLSX: { ro: "SEAP", en: "SEAP" },
+    DATAGOV_SEAP: { ro: "data.gov.ro", en: "data.gov.ro" }, // PROMPT 62: data.gov.ro SEAP datasets
     EU_FUNDS: { ro: "Fonduri UE", en: "EU Funds" },
     ANAF_VERIFY: { ro: "ANAF", en: "ANAF" },
     THIRD_PARTY: { ro: "Terți", en: "Third Party" },
