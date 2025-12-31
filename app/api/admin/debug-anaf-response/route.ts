@@ -52,14 +52,11 @@ export async function GET(req: Request) {
       
       const anafResult = await verifyCompany(normalized);
 
-      // PROMPT 62: Show endpoint chain info
+      // PROMPT 62: Show endpoint chain info (v9 is primary, v8 is fallback)
       const endpoints = [
-        "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva",
-        "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v7/ws/tva",
+        "https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva", // Primary: v9 (official)
+        "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva", // Fallback: v8
       ];
-      if (process.env.ANAF_V9_EXPERIMENTAL === "true") {
-        endpoints.push("https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva");
-      }
 
       return NextResponse.json({
         ok: true,
