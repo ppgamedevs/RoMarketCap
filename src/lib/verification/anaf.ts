@@ -8,6 +8,7 @@
 
 import { kv } from "@vercel/kv";
 import { normalizeCUI } from "../ingestion/cuiValidation";
+import { withRetry, isRetryableError } from "../retry/withRetry";
 
 export type ANAFVerificationResult = {
   isActive: boolean;
@@ -36,14 +37,12 @@ const DEFAULT_CACHE_TTL_DAYS = 7;
 const CACHE_TTL_SECONDS = DEFAULT_CACHE_TTL_DAYS * 24 * 60 * 60;
 
 // PROMPT 62: Endpoint fallback chain
+// v9 is primary (official ANAF documentation), v8 is fallback
+// Note: ANAF WAF may return 404 or "requested URL was rejected" - we need robust retry/backoff
 const ANAF_ENDPOINTS = [
-  "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva",
-  "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v7/ws/tva",
+  "https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva", // Primary: v9 (official)
+  "https://webservicesp.anaf.ro/PlatitorTvaRest/api/v8/ws/tva", // Fallback: v8
 ] as const;
-
-// PROMPT 62: Optional experimental v9 endpoint (gated by feature flag)
-const ANAF_V9_EXPERIMENTAL = process.env.ANAF_V9_EXPERIMENTAL === "true";
-const ANAF_V9_ENDPOINT = "https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva";
 
 /**
  * Get cache key for a CUI
@@ -107,35 +106,84 @@ async function cacheVerification(cui: string, result: ANAFVerificationResult): P
 }
 
 /**
- * PROMPT 62: Try a single ANAF endpoint
+ * PROMPT 62: Check if error is retryable for ANAF (404/WAF errors are retryable)
+ */
+function isAnafRetryableError(error: unknown, status?: number): boolean {
+  // ANAF WAF may return 404 or "requested URL was rejected" - these are transient
+  if (status === 404) {
+    return true; // WAF blocking - retry with backoff
+  }
+  
+  // Network errors, timeouts, 5xx are retryable
+  if (isRetryableError(error)) {
+    return true;
+  }
+  
+  // Check error message for WAF patterns
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("rejected") || msg.includes("waf") || msg.includes("forbidden")) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * PROMPT 62: Try a single ANAF endpoint with retry/backoff
  */
 async function tryAnafEndpoint(
   endpoint: string,
   cui: number,
   date: string
 ): Promise<{ success: boolean; data?: unknown; status?: number; error?: string; responseBody?: string }> {
+  // PROMPT 62: CUI must be number, not string
+  const requestBody = JSON.stringify([{ cui, data: date }]);
+  
+  console.log(`[anaf-verify] Request to ${endpoint}:`, {
+    method: "POST",
+    body: requestBody,
+    cui,
+    date,
+  });
+  
   try {
-    // PROMPT 62: CUI must be number, not string
-    const requestBody = JSON.stringify([{ cui, data: date }]);
-    
-    console.log(`[anaf-verify] Request to ${endpoint}:`, {
-      method: "POST",
-      body: requestBody,
-      cui,
-      date,
-    });
-    
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "RoMarketCap/1.0",
+    // PROMPT 62: Use withRetry for robust handling of WAF/404 errors
+    const response = await withRetry(
+      async () => {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "RoMarketCap/1.0",
+          },
+          body: requestBody,
+          signal: AbortSignal.timeout(15000), // 15 seconds (increased for WAF delays)
+        });
+        
+        // Throw for non-2xx to trigger retry
+        if (!res.ok) {
+          const error: Error & { status?: number } = new Error(`${res.status} ${res.statusText}`);
+          error.status = res.status;
+          throw error;
+        }
+        
+        return res;
       },
-      body: requestBody,
-      signal: AbortSignal.timeout(10000), // 10 seconds
-    });
+      {
+        maxRetries: 3,
+        initialDelay: 2000, // 2 seconds initial delay
+        maxDelay: 10000, // Max 10 seconds between retries
+        backoffFactor: 2,
+        retryable: (error) => {
+          const status = (error as { status?: number }).status;
+          return isAnafRetryableError(error, status);
+        },
+      }
+    );
 
-    // PROMPT 62: Read response body even for errors to get more info
+    // PROMPT 62: Read response body
     const responseText = await response.text().catch(() => "");
     let responseBody: unknown = null;
     
@@ -153,15 +201,6 @@ async function tryAnafEndpoint(
       bodyLength: responseText.length,
       bodyPreview: responseText.substring(0, 200),
     });
-
-    if (!response.ok) {
-      return {
-        success: false,
-        status: response.status,
-        error: `${response.status} ${response.statusText}`,
-        responseBody: typeof responseBody === "string" ? responseBody : JSON.stringify(responseBody),
-      };
-    }
 
     // PROMPT 62: ANAF response might be wrapped in a structure
     // Try to extract data from various possible formats
@@ -190,9 +229,17 @@ async function tryAnafEndpoint(
     return { success: true, data: data[0] };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`[anaf-verify] Exception calling ${endpoint}:`, errorMessage);
+    const status = (error as { status?: number }).status;
+    
+    console.error(`[anaf-verify] Exception calling ${endpoint}:`, {
+      error: errorMessage,
+      status,
+      retryable: isAnafRetryableError(error, status),
+    });
+    
     return {
       success: false,
+      status,
       error: errorMessage,
     };
   }

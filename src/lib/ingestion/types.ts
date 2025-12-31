@@ -7,7 +7,7 @@
 /**
  * Source IDs
  */
-export type SourceId = "SEAP" | "EU_FUNDS" | "ANAF_VERIFY" | "THIRD_PARTY" | "SEAP_XLSX";
+export type SourceId = "SEAP" | "EU_FUNDS" | "ANAF_VERIFY" | "THIRD_PARTY" | "SEAP_XLSX" | "DATAGOV_SEAP";
 
 /**
  * Contacts information
@@ -101,6 +101,7 @@ export const MERGE_PRIORITY: Record<SourceId, number> = {
   EU_FUNDS: 70, // High - official EU data
   SEAP: 60, // Medium-high - official public procurement
   SEAP_XLSX: 60, // Medium-high - official public procurement (XLSX format)
+  DATAGOV_SEAP: 60, // PROMPT 62: Medium-high - official data.gov.ro SEAP datasets
   THIRD_PARTY: 40, // Lower - third-party sources
 };
 

@@ -31,7 +31,7 @@ export async function setCursor(sourceId: SourceId, cursor: string | null): Prom
  * Get all cursors snapshot
  */
 export async function getCursorsSnapshot(): Promise<Record<SourceId, string | null>> {
-  const sources: SourceId[] = ["SEAP", "SEAP_XLSX", "EU_FUNDS", "ANAF_VERIFY", "THIRD_PARTY"];
+  const sources: SourceId[] = ["SEAP", "SEAP_XLSX", "EU_FUNDS", "ANAF_VERIFY", "THIRD_PARTY", "DATAGOV_SEAP"];
   const cursors: Record<string, string | null> = {};
 
   await Promise.all(

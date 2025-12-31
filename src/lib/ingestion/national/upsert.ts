@@ -97,17 +97,32 @@ export async function upsertCompaniesFromCuis(
               select: { id: true, dataConfidence: true, name: true },
             });
 
-            // Use name if available, otherwise use Romanian fallback
-            // ANAF lookup will happen in post-hooks (after transaction)
+            // PROMPT 62: Determine company name
+            // - Use provided name if available
+            // - If empty or placeholder, use provided name or fallback
+            // - Never overwrite manually curated names (non-placeholder, non-empty)
             let companyName = item.name;
+            const isPlaceholder = (name: string | null) => 
+              !name || 
+              name.startsWith("Companie CUI:") || 
+              name.startsWith("Company CUI:") ||
+              name.trim().length === 0;
+
             if (!companyName) {
-              // If company already exists and has a real name (not fallback), use it
-              if (existing?.name && !existing.name.startsWith("Companie CUI:")) {
+              // If company already exists and has a real name (not placeholder), keep it
+              if (existing?.name && !isPlaceholder(existing.name)) {
                 companyName = existing.name;
               } else {
                 // Use Romanian fallback - ANAF lookup will update it later in post-hooks
                 companyName = `Companie CUI: ${normalizedCui}`;
               }
+            } else {
+              // PROMPT 62: Only update name if current is empty/placeholder or new name looks better
+              if (existing?.name && !isPlaceholder(existing.name)) {
+                // Existing name is real (not placeholder) - don't overwrite
+                companyName = existing.name;
+              }
+              // Otherwise use the new name
             }
 
             // Upsert company
@@ -125,8 +140,8 @@ export async function upsertCompaniesFromCuis(
                 dataConfidence: item.confidence,
               },
               update: {
-                // Only update if we have better data
-                ...(item.name && item.confidence >= 60
+                // PROMPT 62: Only update name if current is empty/placeholder
+                ...(item.name && isPlaceholder(existing?.name || null)
                   ? {
                       name: item.name,
                       legalName: item.name,
@@ -147,23 +162,24 @@ export async function upsertCompaniesFromCuis(
               result.created++;
             }
 
-            // Create/update provenance
-            if (item.sourceRef) {
+            // PROMPT 62: Create/update provenance with rowHash from raw if available
+            const rowHash = (item.raw as { rowHash?: string } | null)?.rowHash || item.sourceRef;
+            if (rowHash) {
               await tx.companyProvenance.upsert({
                 where: {
                   company_provenance_unique: {
                     companyId: company.id,
                     sourceName: item.sourceType,
-                    rowHash: item.sourceRef,
+                    rowHash,
                   },
                 },
                 create: {
                   companyId: company.id,
                   sourceName: item.sourceType,
-                  externalId: item.sourceRef,
+                  externalId: item.sourceRef || rowHash,
                   firstSeenAt: new Date(),
                   lastSeenAt: new Date(),
-                  rowHash: item.sourceRef,
+                  rowHash,
                   rawJson: item.raw as Prisma.InputJsonValue,
                 },
                 update: {

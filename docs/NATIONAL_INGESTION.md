@@ -1,17 +1,23 @@
-# National Ingestion Pipeline (PROMPT 61)
+# National Ingestion Pipeline (PROMPT 61 + PROMPT 62)
 
 **Status:** ✅ Implemented
 
 ## Overview
 
-The National Ingestion Pipeline is an automated system that continuously ingests Romanian companies from multiple public sources (SEAP, EU funds, SEAP XLSX, providers, ANAF verification) to build a comprehensive "All Companies in Romania" index, similar to CoinMarketCap's asset ingestion loop.
+The National Ingestion Pipeline is an automated system that continuously ingests Romanian companies from multiple public sources (SEAP, EU funds, SEAP XLSX, data.gov.ro XLSX, providers, ANAF verification) to build a comprehensive "All Companies in Romania" index, similar to CoinMarketCap's asset ingestion loop.
+
+**PROMPT 62 Updates:**
+- ✅ data.gov.ro XLSX adapter for automatic SEAP dataset ingestion
+- ✅ Automatic name extraction from XLSX columns
+- ✅ Smart name upsert (only updates if empty/placeholder)
+- ✅ Rate limiting for data.gov.ro downloads (1 download per 10 minutes per resource)
 
 ## Architecture
 
 ### Core Components
 
 1. **Sources** (`src/lib/ingestion/national/sources.ts`)
-   - Fetches CUIs from all enabled sources (SEAP, SEAP XLSX, EU funds, providers)
+   - Fetches CUIs from all enabled sources (SEAP, SEAP XLSX, data.gov.ro XLSX, EU funds, providers)
    - Normalizes and deduplicates by CUI
    - Returns CUIs with provenance metadata
 
@@ -215,6 +221,51 @@ After ingestion, companies are eligible for:
 
 These run in subsequent cron cycles (not inline) to keep latency low.
 
+## Configuration
+
+### Environment Variables
+
+**SEAP XLSX:**
+```env
+SEAP_XLSX_URL=https://example.com/seap-data.xlsx
+```
+
+**data.gov.ro XLSX (PROMPT 62):**
+```env
+# Comma-separated list of resource URLs (optional, has default)
+DATAGOV_RESOURCE_URLS=https://data.gov.ro/dataset/achizitii-publice-2025/resource/4ea2f0d0-ad5d-440f-af9d-7101bc9e4969,https://data.gov.ro/dataset/.../resource/...
+```
+
+**Default Resource:**
+If `DATAGOV_RESOURCE_URLS` is not set, the system uses a default URL:
+- `https://data.gov.ro/dataset/achizitii-publice-2025/resource/4ea2f0d0-ad5d-440f-af9d-7101bc9e4969`
+
+**Direct Download URLs:**
+You can also pass direct download URLs (ending with `/download/...xlsx`):
+```env
+DATAGOV_RESOURCE_URLS=https://data.gov.ro/dataset/.../resource/.../download/file.xlsx
+```
+
+### data.gov.ro XLSX Adapter (PROMPT 62)
+
+**Features:**
+- Automatic download from data.gov.ro resource URLs
+- Automatic column detection (CUI, company name)
+- Rate limiting: 1 download per 10 minutes per resource
+- Row hash computation for provenance tracking
+- Smart name extraction (only updates if empty/placeholder)
+
+**Column Detection:**
+The adapter automatically detects columns by header normalization:
+- **CUI columns:** "cui", "cod fiscal", "cod unic", "cif", "cod unic de inregistrare"
+- **Name columns:** "denumire operator economic", "denumire ofertant", "furnizor", "operator economic", "denumire", "nume", "companie", "firma"
+
+**Name Upsert Logic:**
+- Only updates company name if:
+  - Current name is empty/null, OR
+  - Current name is a placeholder (starts with "Companie CUI:" or "Company CUI:")
+- Never overwrites manually curated names
+
 ## Testing
 
 Run unit tests:
@@ -228,3 +279,9 @@ Manual QA:
 3. Run live: `POST /api/cron/national-ingest?limit=50`
 4. Check `/admin/national-ingestion` for stats
 5. Verify `/api/health` shows national ingestion status
+
+**PROMPT 62: Testing data.gov.ro adapter:**
+1. Set `DATAGOV_RESOURCE_URLS` (or use default)
+2. Run dry run to verify XLSX parsing
+3. Check logs for column detection and record extraction
+4. Run live to verify upsert with names

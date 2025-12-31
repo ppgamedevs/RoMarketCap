@@ -8,6 +8,7 @@ import type { SourceId, SourceCompanyRecord } from "./types";
 import { SEAPAdapter } from "@/src/lib/ingest/adapters/seap";
 import { EUFundsAdapter } from "@/src/lib/ingest/adapters/euFunds";
 import { SEAPXlsxSource } from "./national/sources/seapXlsx";
+import { DataGovXlsxSource } from "./national/sources/datagovXlsx";
 import { DiscoverySource } from "@prisma/client";
 
 /**
@@ -170,6 +171,7 @@ class SourceRegistry {
     this.register(new EUFundsSource());
     this.register(new ANAFVerifySource());
     this.register(new SEAPXlsxSource());
+    this.register(new DataGovXlsxSource());
   }
 
   /**
@@ -222,6 +224,9 @@ class SourceRegistry {
         hasConfig = !!(process.env.EU_FUNDS_CSV_URL || process.env.EU_FUNDS_JSON_URL || process.env.EU_FUNDS_DATA_URL);
       } else if (source.sourceId === "SEAP_XLSX") {
         hasConfig = !!process.env.SEAP_XLSX_URL;
+      } else if (source.sourceId === "DATAGOV_SEAP") {
+        // PROMPT 62: DATAGOV_SEAP uses DATAGOV_RESOURCE_URLS or default URL
+        hasConfig = true; // Always enabled (has default URL)
       }
 
       if (hasConfig) {
