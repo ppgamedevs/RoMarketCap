@@ -35,10 +35,16 @@ const CURSOR_KEY = "admin:update-names-scores:cursor";
  */
 function isPlaceholderName(name: string | null): boolean {
   if (!name) return true;
+  const trimmed = name.trim();
+  if (trimmed.length === 0) return true;
+  
+  // Check for various placeholder formats
   return (
-    name.startsWith("Companie CUI:") ||
-    name.startsWith("Company CUI:") ||
-    name.trim().length === 0
+    trimmed.startsWith("Companie CUI:") ||
+    trimmed.startsWith("Company CUI:") ||
+    // Also match "Company 29496051" format (starts with "Company " followed by digits)
+    /^Company \d+$/.test(trimmed) ||
+    trimmed.startsWith("Company ") // Catch-all for "Company " prefix
   );
 }
 
@@ -72,11 +78,13 @@ export async function POST(req: Request) {
 
     // Find companies that need updates
     // Priority: companies with placeholder names first, then companies without scores
+    // Note: Some companies have "Company 29496051" format (without "CUI:")
     const companiesWithPlaceholderNames = await prisma.company.findMany({
       where: {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company CUI:" } },
+          { name: { startsWith: "Company " } }, // Also match "Company 29496051" format
           { name: "" },
         ],
         cui: { not: null },

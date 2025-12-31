@@ -17,11 +17,13 @@ export async function GET() {
     }
 
     // Count companies with placeholder names
+    // Note: Some companies have "Company 29496051" format (without "CUI:")
     const placeholderCount = await prisma.company.count({
       where: {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company CUI:" } },
+          { name: { startsWith: "Company " } }, // Also match "Company 29496051" format
           { name: "" },
         ],
         cui: { not: null },
@@ -37,11 +39,13 @@ export async function GET() {
     `;
 
     // Get sample companies with placeholder names
+    // Note: Some companies have "Company 29496051" format (without "CUI:")
     const samplePlaceholder = await prisma.company.findMany({
       where: {
         OR: [
           { name: { startsWith: "Companie CUI:" } },
           { name: { startsWith: "Company CUI:" } },
+          { name: { startsWith: "Company " } }, // Also match "Company 29496051" format
           { name: "" },
         ],
         cui: { not: null },
