@@ -384,11 +384,8 @@ export async function verifyCompanyANAF(
   // PROMPT 62: Use current date in YYYY-MM-DD format
   const date = new Date().toISOString().split("T")[0];
 
-  // PROMPT 62: Build endpoint list (v8, v7, optionally v9)
+  // PROMPT 62: Build endpoint list (v9 is primary, v8 is fallback)
   const endpoints: string[] = [...ANAF_ENDPOINTS];
-  if (ANAF_V9_EXPERIMENTAL) {
-    endpoints.push(ANAF_V9_ENDPOINT);
-  }
 
   // PROMPT 62: Try endpoints in order
   let lastError: string | undefined;
