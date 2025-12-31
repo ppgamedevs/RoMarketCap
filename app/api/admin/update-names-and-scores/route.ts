@@ -93,16 +93,31 @@ export async function POST(req: Request) {
 
     // Also get companies with null names (using raw SQL due to Prisma limitations)
     const remainingLimit = Math.max(0, limit - companiesWithPlaceholderNames.length);
-    const companiesWithNullNames = remainingLimit > 0
-      ? await prisma.$queryRaw<Array<{ id: string; cui: string; name: string | null }>>`
+    let companiesWithNullNames: Array<{ id: string; cui: string; name: string | null }> = [];
+    
+    if (remainingLimit > 0) {
+      // Build query with optional cursor filter
+      if (cursor) {
+        companiesWithNullNames = await prisma.$queryRaw<Array<{ id: string; cui: string; name: string | null }>>`
           SELECT id, cui, name
           FROM "companies"
-          WHERE name IS NULL
+          WHERE (name IS NULL OR name = '')
+            AND cui IS NOT NULL
+            AND id > ${cursor}
+          ORDER BY "created_at" DESC
+          LIMIT ${remainingLimit}
+        `;
+      } else {
+        companiesWithNullNames = await prisma.$queryRaw<Array<{ id: string; cui: string; name: string | null }>>`
+          SELECT id, cui, name
+          FROM "companies"
+          WHERE (name IS NULL OR name = '')
             AND cui IS NOT NULL
           ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
-        `
-      : [];
+        `;
+      }
+    }
 
     // Combine results
     const companies = [...companiesWithPlaceholderNames, ...companiesWithNullNames].slice(0, limit);
