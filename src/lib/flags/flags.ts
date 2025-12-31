@@ -36,7 +36,8 @@ export type FeatureFlag =
   | "MERGE_ADMIN_ENABLED" // PROMPT 60: Merge admin UI
   | "NATIONAL_INGESTION_ENABLED" // PROMPT 61: National ingestion feature
   | "NATIONAL_INGESTION_CRON_ENABLED" // PROMPT 61: National ingestion cron
-  | "NATIONAL_INGESTION_ADMIN_ENABLED"; // PROMPT 61: National ingestion admin UI
+  | "NATIONAL_INGESTION_ADMIN_ENABLED" // PROMPT 61: National ingestion admin UI
+  | "UPDATE_NAMES_SCORES_CRON_ENABLED"; // Update company names and scores cron
 
 /**
  * Flags that default to DISABLED (fail-closed) for safety.
@@ -134,6 +135,7 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
     "NATIONAL_INGESTION_ENABLED",
     "NATIONAL_INGESTION_CRON_ENABLED",
     "NATIONAL_INGESTION_ADMIN_ENABLED",
+    "UPDATE_NAMES_SCORES_CRON_ENABLED",
   ];
 
   const results = await Promise.all(flags.map(async (flag) => [flag, await getFlag(flag)] as const));
