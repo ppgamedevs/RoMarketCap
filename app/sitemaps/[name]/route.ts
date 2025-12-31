@@ -144,9 +144,9 @@ export async function GET(_req: Request, ctx: Ctx) {
     const companiesRaw = await prisma.$queryRawUnsafe<Array<{
       slug: string;
       canonical_slug: string | null;
-      last_updated_at: Date;
+      updated_at: Date;
     }>>(`
-      SELECT slug, canonical_slug, last_updated_at
+      SELECT slug, canonical_slug, updated_at
       FROM companies
       WHERE is_public = true
         AND visibility_status = 'PUBLIC'
@@ -159,7 +159,7 @@ export async function GET(_req: Request, ctx: Ctx) {
     companies = companiesRaw.map((c) => ({
       slug: c.slug,
       canonicalSlug: c.canonical_slug,
-      lastUpdatedAt: c.last_updated_at,
+      lastUpdatedAt: c.updated_at,
     }));
   } catch (error) {
     // Database error - return minimal valid sitemap with homepage
