@@ -15,6 +15,7 @@ const SOURCE_PRIORITY: Record<SourceId | "USER_APPROVED" | "ENRICHMENT", number>
   EU_FUNDS: 70, // High - official EU data
   SEAP: 60, // Medium-high - official public procurement
   SEAP_XLSX: 60, // Medium-high - official public procurement (XLSX format)
+  DATAGOV_SEAP: 60, // PROMPT 62: Medium-high - official data.gov.ro SEAP datasets
   USER_APPROVED: 90, // High - manually approved by users
   THIRD_PARTY: 40, // Lower - third-party sources
   ENRICHMENT: 30, // Lowest - enrichment/scraping
