@@ -17,7 +17,7 @@ import { verifyCompany } from "@/src/lib/connectors/anaf/verifyCompany";
 import { updateCompanyRomcV1ById } from "@/src/lib/company/updateScore";
 import { updateCompanyRomcAiById } from "@/src/lib/company/updateAiScore";
 import { computeScoreForCompany } from "@/src/lib/scoring/computeScoreForCompany";
-import { updateCompanyIntegrity } from "@/src/lib/company/updateIntegrity";
+import { updateCompanyIntegrity } from "@/src/lib/integrity/updateIntegrity";
 import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
