@@ -148,6 +148,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable admin endpoints for national ingestion (PROMPT 61)",
     risky: false,
   },
+  UPDATE_NAMES_SCORES_CRON_ENABLED: {
+    label: "Update Names & Scores: Cron",
+    description: "Enable/disable automated cron job to update company names from ANAF and recalculate scores",
+    risky: false,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",
