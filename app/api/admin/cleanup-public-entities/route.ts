@@ -15,32 +15,45 @@ export const maxDuration = 300;
 
 // Patterns that indicate public sector entities
 const PUBLIC_SECTOR_PATTERNS = [
+  // Educational
   "SCOALA",
   "COLEGIUL",
   "LICEUL",
-  "SPITAL",
   "GRADINITA",
+  
+  // Healthcare
+  "SPITAL",
+  
+  // Government
   "MUNICIPIUL",
   "COMUNA",
   "ORAS",
   "PRIMARIA",
   "CONSILIUL LOCAL",
   "CONSILIUL JUDETEAN",
-  "DIRECTIA GENERALA",
+  
+  // Directorates & Services
   "DIRECTIA",
-  "CENTRUL",
-  "UNITATEA DE ASISTENTA",
+  "ADMINISTRATIA",
   "SERVICIUL PUBLIC",
   "SERVICII LOCALE",
+  
+  // Centers & Institutions
+  "CENTRUL",
   "INSPECTORATUL",
   "BIBLIOTECA",
   "CASA DE CULTURA",
   "PALATUL",
-  "ASOCIATIA DE DEZVOLTARE INTERCOMUNITARA",
-  "ADMINISTRATIA SERVICIULUI",
-  "ADMINISTRATIA PUBLICA",
+  
+  // Social Services
   "ASISTENTA SOCIALA",
   "PROTECTIA COPILULUI",
+  "UNITATEA DE ASISTENTA",
+  
+  // Associations & Public Bodies
+  "ASOCIATIA DE DEZVOLTARE",
+  "MANAGEMENT INTEGRAT AL DESEURILOR",
+  "SALUBRIZARE",
 ];
 
 function isPublicSectorEntity(name: string): boolean {
