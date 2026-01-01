@@ -152,8 +152,8 @@ function parseXLSXFinancials(buffer: Buffer, fiscalYear: number): ANAFBulkFinanc
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   
-  // Convert to JSON
-  const rawData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { header: 1 });
+  // Convert to JSON with header: 1 returns array of arrays
+  const rawData = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
   
   if (rawData.length < 2) {
     console.warn("[anaf-bulk] XLSX file has insufficient rows");
@@ -161,7 +161,12 @@ function parseXLSXFinancials(buffer: Buffer, fiscalYear: number): ANAFBulkFinanc
   }
   
   // Get headers from first row
-  const headers = (rawData[0] as unknown[]).map((h) => String(h || ""));
+  const firstRow = rawData[0];
+  if (!Array.isArray(firstRow)) {
+    console.error("[anaf-bulk] First row is not an array");
+    return [];
+  }
+  const headers = firstRow.map((h) => String(h || ""));
   
   // Find column indices
   const cuiIdx = findColumnIndex(headers, "cui");
@@ -194,7 +199,8 @@ function parseXLSXFinancials(buffer: Buffer, fiscalYear: number): ANAFBulkFinanc
   
   // Process data rows
   for (let i = 1; i < rawData.length; i++) {
-    const row = rawData[i] as unknown[];
+    const row = rawData[i];
+    if (!Array.isArray(row)) continue;
     
     const cuiRaw = String(row[cuiIdx] || "").trim();
     const normalizedCui = normalizeCUI(cuiRaw);
