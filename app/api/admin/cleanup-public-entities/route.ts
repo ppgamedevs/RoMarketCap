@@ -56,9 +56,20 @@ const PUBLIC_SECTOR_PATTERNS = [
   "SALUBRIZARE",
 ];
 
+function normalizeText(text: string): string {
+  return text
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+    .replace(/[^A-Z0-9\s]/g, ""); // Keep only letters, numbers, spaces
+}
+
 function isPublicSectorEntity(name: string): boolean {
-  const upperName = name.toUpperCase();
-  return PUBLIC_SECTOR_PATTERNS.some(pattern => upperName.includes(pattern));
+  const normalizedName = normalizeText(name);
+  return PUBLIC_SECTOR_PATTERNS.some(pattern => {
+    const normalizedPattern = normalizeText(pattern);
+    return normalizedName.includes(normalizedPattern);
+  });
 }
 
 export async function GET(req: Request) {
