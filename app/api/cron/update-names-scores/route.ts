@@ -96,8 +96,8 @@ async function executeUpdate(req: Request) {
 
     // Find companies that need updates
     // Priority: companies with placeholder names first, then companies without scores
-    // Exclude companies that were recently verified (anafVerifiedAt is set) to prevent overwriting
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // For placeholder names, we allow retry even if anafVerifiedAt is set (ANAF might have failed before)
+    // We only protect companies with real names that were verified recently
     const companiesWithPlaceholderNames = await prisma.company.findMany({
       where: {
         AND: [
@@ -110,14 +110,8 @@ async function executeUpdate(req: Request) {
             ],
           },
           { cui: { not: null } },
-          // Only update if not recently verified (anafVerifiedAt is null or very old)
-          // This prevents overwriting names that were just updated
-          {
-            OR: [
-              { anafVerifiedAt: null },
-              { anafVerifiedAt: { lt: sevenDaysAgo } }, // Older than 7 days
-            ],
-          },
+          // Don't exclude based on anafVerifiedAt for placeholder names - allow retry
+          // The update logic will check if ANAF actually returns a name before updating
         ],
       },
       select: {
@@ -143,7 +137,6 @@ async function executeUpdate(req: Request) {
           WHERE (name IS NULL OR name = '')
             AND cui IS NOT NULL
             AND id > ${cursor}
-            AND (anaf_verified_at IS NULL OR anaf_verified_at < NOW() - INTERVAL '7 days')
           ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
         `;
@@ -153,7 +146,6 @@ async function executeUpdate(req: Request) {
           FROM "companies"
           WHERE (name IS NULL OR name = '')
             AND cui IS NOT NULL
-            AND (anaf_verified_at IS NULL OR anaf_verified_at < NOW() - INTERVAL '7 days')
           ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
         `;
@@ -210,6 +202,16 @@ async function executeUpdate(req: Request) {
             const anafResultInternal = await verifyCompanyANAF(company.cui, { force: false });
             const anafResult = await verifyCompany(company.cui); // For normalized result
 
+            // Log detailed info for debugging
+            console.log(`[cron:update-names-scores] CUI ${company.cui}:`, {
+              currentName: company.name,
+              anafStatus: anafResultInternal.verificationStatus,
+              hasOfficialName: !!anafResult.officialName,
+              officialName: anafResult.officialName,
+              hasRawResponse: !!anafResultInternal.rawResponse,
+              endpointUsed: anafResultInternal.endpointUsed,
+            });
+
             if (anafResult.officialName && anafResult.officialName.trim().length > 0) {
               const currentName = company.name || "";
               if (currentName !== anafResult.officialName) {
@@ -227,10 +229,18 @@ async function executeUpdate(req: Request) {
                 });
                 namesUpdated++;
                 nameWasUpdated = true;
-                console.log(`[cron:update-names-scores] Updated CUI ${company.cui}: "${currentName}" -> "${anafResult.officialName}"`);
+                console.log(`[cron:update-names-scores] ✓ Updated CUI ${company.cui}: "${currentName}" -> "${anafResult.officialName}"`);
+              } else {
+                console.log(`[cron:update-names-scores] ⊘ CUI ${company.cui} already has correct name: "${currentName}"`);
               }
             } else {
-              console.log(`[cron:update-names-scores] No name found in ANAF for CUI ${company.cui} (current: "${company.name || "null"}")`);
+              // Log why name wasn't found
+              const reason = anafResultInternal.verificationStatus !== "SUCCESS"
+                ? `ANAF verification failed: ${anafResultInternal.errorMessage || anafResultInternal.verificationStatus}`
+                : anafResultInternal.rawResponse
+                ? "ANAF response exists but no name field found"
+                : "ANAF returned no response";
+              console.log(`[cron:update-names-scores] ✗ No name found for CUI ${company.cui} (current: "${company.name || "null"}") - ${reason}`);
             }
           }
 
