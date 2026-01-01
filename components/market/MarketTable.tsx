@@ -47,6 +47,22 @@ type MarketTableProps = {
   sort: "romcAiScore" | "romcScore" | "marketCap" | "confidence";
 };
 
+function isPlaceholderDisplayName(name: string): boolean {
+  const trimmed = (name ?? "").trim();
+  if (!trimmed) return true;
+  if (trimmed.startsWith("Companie CUI:")) return true;
+  if (trimmed.startsWith("Company CUI:")) return true;
+  if (/^Company \d+$/.test(trimmed)) return true;
+  return false;
+}
+
+function formatCompanyDisplayName(lang: "ro" | "en", name: string, cui: string | null): string {
+  if (!isPlaceholderDisplayName(name)) return name;
+  const cuiText = cui?.trim() ? cui.trim() : "";
+  if (!cuiText) return lang === "ro" ? "Companie" : "Company";
+  return lang === "ro" ? `Companie CUI: ${cuiText}` : `Company CUI: ${cuiText}`;
+}
+
 export function MarketTable(props: MarketTableProps) {
   return (
     <Suspense fallback={<MarketTableSkeleton />}>
@@ -168,16 +184,17 @@ function MarketTableInner({
           <TBody>
             {rows.map((row, idx) => {
               const isBlurred = !isPremium && idx >= freeLimit;
+              const displayName = formatCompanyDisplayName(lang, row.name, row.cui);
               return (
                 <TR key={row.companyId} className={isBlurred ? "opacity-50 blur-sm" : ""}>
                   <TD className="font-medium">{row.rank}</TD>
                   <TD>
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold">
-                        {row.name.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium">{row.name}</div>
+                        <div className="font-medium">{displayName}</div>
                         <div className="text-xs text-muted-foreground">{row.cui || "—"}</div>
                       </div>
                     </div>

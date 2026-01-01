@@ -7,9 +7,10 @@
 import { Prisma, CompanyRiskFlag } from "@prisma/client";
 
 /**
- * Minimum data confidence threshold for appearing in top lists
+ * Default minimum data confidence threshold for appearing in strict rankings.
+ * NOTE: Some pages (directory/market) should include low-confidence rows; they can override this.
  */
-const MIN_DATA_CONFIDENCE = 40;
+const DEFAULT_MIN_DATA_CONFIDENCE = 40;
 
 /**
  * Risk flags that should exclude companies from rankings
@@ -41,13 +42,21 @@ export type RankingGuardFilter = {
  * - lastScoredAt desc
  * - CUI asc
  */
-export function buildRankingGuard(launchMode: boolean = false): RankingGuardFilter {
+export function buildRankingGuard(
+  launchMode: boolean = false,
+  options?: { minDataConfidence?: number },
+): RankingGuardFilter {
+  const minDataConfidence = Math.max(0, options?.minDataConfidence ?? DEFAULT_MIN_DATA_CONFIDENCE);
   const where: Prisma.CompanyWhereInput = {
     isPublic: true,
     visibilityStatus: "PUBLIC",
-    dataConfidence: {
-      gte: MIN_DATA_CONFIDENCE,
-    },
+    ...(minDataConfidence > 0
+      ? {
+          dataConfidence: {
+            gte: minDataConfidence,
+          },
+        }
+      : {}),
     // PROMPT 57: Exclude skeleton companies from rankings
     isSkeleton: false,
     // PROMPT 60: Exclude merged companies (only show canonical)
@@ -112,8 +121,8 @@ export function shouldIncludeInRanking(company: {
     return false;
   }
 
-  // Must meet minimum confidence
-  if ((company.dataConfidence ?? 0) < MIN_DATA_CONFIDENCE) {
+  // Must meet minimum confidence (strict default)
+  if ((company.dataConfidence ?? 0) < DEFAULT_MIN_DATA_CONFIDENCE) {
     return false;
   }
 

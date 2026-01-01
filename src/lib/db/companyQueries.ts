@@ -27,7 +27,8 @@ export async function listCompanies(filters: CompanyListFilters) {
   const launchMode = isLaunchMode();
   
   // Use ranking guard for deterministic, fair rankings
-  const rankingGuard = buildRankingGuard(launchMode);
+  // Directory/top lists should include low-confidence companies early on; keep risk + public filters.
+  const rankingGuard = buildRankingGuard(launchMode, { minDataConfidence: 0 });
   
   const where = {
     ...rankingGuard.where,

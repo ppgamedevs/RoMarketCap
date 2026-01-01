@@ -88,7 +88,8 @@ export async function GET(req: NextRequest) {
 
     // Build ranking guard
     const launchMode = isLaunchMode();
-    const guard = buildRankingGuard(launchMode);
+    // Market/directory should include low-confidence companies; we still keep risk + public filters.
+    const guard = buildRankingGuard(launchMode, { minDataConfidence: 0 });
 
     // Apply filters
     const where = { ...guard.where };
