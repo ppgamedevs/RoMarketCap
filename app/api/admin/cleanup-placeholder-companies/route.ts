@@ -72,32 +72,21 @@ export async function POST(req: Request) {
     results.total = candidates.length;
 
     for (const company of candidates) {
-      // Keep if:
-      // 1. Listed on BVB
+      // ONLY keep if:
+      // 1. Listed on BVB (these are real companies)
       if (company.isListed) {
         results.kept++;
         continue;
       }
 
-      // 2. Has financial data
-      if (company.financials.length > 0 || company.revenueLatest || company.profitLatest) {
+      // 2. Has substantial revenue (> 1M RON = real business)
+      if (company.revenueLatest && company.revenueLatest.toNumber() > 1000000) {
         results.kept++;
         continue;
       }
 
-      // 3. Has scores
-      if (company.scores.length > 0 || company.romcScore || company.romcAiScore) {
-        results.kept++;
-        continue;
-      }
-
-      // 4. High confidence
-      if (company.dataConfidence && company.dataConfidence >= 60) {
-        results.kept++;
-        continue;
-      }
-
-      // Delete this company
+      // Delete everything else with placeholder names
+      // Even if they have scores/confidence - we want to start fresh
       results.deleted++;
       
       if (company.name?.startsWith("Companie CUI:") || company.name?.startsWith("Company CUI:")) {
