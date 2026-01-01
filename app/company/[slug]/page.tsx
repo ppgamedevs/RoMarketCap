@@ -259,7 +259,8 @@ export default async function CompanyPage({ params }: PageProps) {
   const placements = await getPlacementsForLocation("company", lang);
   const supportEmail = getSupportEmail();
 
-  const fin = company.financials[0] ?? null;
+  // Note: financials are now fetched separately below to handle missing employees column
+  const fin = null; // Will use financialSnapshots instead
 
   // Fetch financial snapshots for FinancialsCard (PROMPT 58)
   // Note: employees column may not exist in database yet, so we check first
@@ -340,7 +341,8 @@ export default async function CompanyPage({ params }: PageProps) {
   }
 
   const riskFlags = riskFlagsForCompany(company);
-  const confidence = latestDaily?.confidence ?? fin?.confidenceScore ?? 50;
+  // Use confidence from latestDaily or financialSnapshots, fallback to 50
+  const confidence = latestDaily?.confidence ?? (financialSnapshots[0] ? 70 : 50);
 
   // ROMC v1 is denormalized on Company.
   const romcScore = company.romcScore ?? null;

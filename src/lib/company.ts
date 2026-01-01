@@ -5,7 +5,8 @@ import { prisma } from "@/src/lib/db";
 
 const companyWithCoreRelationsArgs = Prisma.validator<Prisma.CompanyDefaultArgs>()({
   include: {
-    financials: { orderBy: [{ fiscalYear: "desc" }, { createdAt: "desc" }], take: 1 },
+    // Note: employees column may not exist in company_financial_snapshots yet
+    // We'll fetch financials separately with error handling in the page
     scores: {
       where: { scoreType: "ROMC_SCORE" },
       orderBy: [{ calculatedAt: "desc" }],

@@ -117,7 +117,7 @@ export async function POST(req: Request) {
           FROM "companies"
           WHERE (name IS NULL OR name = '')
             AND cui IS NOT NULL
-            AND id > ${cursor}
+            AND id::text > ${cursor}::text
           ORDER BY "created_at" DESC
           LIMIT ${remainingLimit}
         `;
