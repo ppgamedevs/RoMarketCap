@@ -12,9 +12,11 @@ export type CompanyListFilters = {
 };
 
 export async function listCompanies(filters: CompanyListFilters) {
-  const pageSize = Math.min(Math.max(filters.pageSize ?? 25, 10), 50);
-  const page = Math.max(filters.page ?? 1, 1);
-  const skip = (page - 1) * pageSize;
+  const rawPageSize = typeof filters.pageSize === "number" && Number.isFinite(filters.pageSize) ? filters.pageSize : 25;
+  const pageSize = Math.min(Math.max(rawPageSize, 10), 50);
+  const rawPage = typeof filters.page === "number" && Number.isFinite(filters.page) ? filters.page : 1;
+  const page = Math.max(rawPage, 1);
+  const skip = Math.max(0, (page - 1) * pageSize);
 
   const q = (filters.q ?? "").trim();
   const { getEffectiveDemoMode } = await import("@/src/lib/launch/mode");
