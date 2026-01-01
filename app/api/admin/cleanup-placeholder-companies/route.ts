@@ -17,8 +17,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export async function GET() {
-  return POST();
+export async function GET(req: Request) {
+  return POST(req);
 }
 
 export async function POST(req: Request) {
