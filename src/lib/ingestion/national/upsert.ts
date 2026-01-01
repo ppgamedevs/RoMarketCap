@@ -94,7 +94,7 @@ export async function upsertCompaniesFromCuis(
             // Check if company exists
             const existing = await tx.company.findUnique({
               where: { cui: normalizedCui },
-              select: { id: true, dataConfidence: true, name: true },
+              select: { id: true, dataConfidence: true, name: true, anafVerifiedAt: true },
             });
 
             // PROMPT 62: Determine company name
