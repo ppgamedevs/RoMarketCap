@@ -41,7 +41,8 @@ export default withAuth({
           pathname === "/api/admin/add-ingest-runs-table" ||
           pathname === "/api/admin/add-financial-snapshots-employees-column" ||
           pathname === "/api/admin/seed-top100" ||
-          pathname === "/api/admin/add-bvb-columns") {
+          pathname === "/api/admin/add-bvb-columns" ||
+          pathname === "/api/admin/cleanup-placeholder-companies") {
         return true;
       }
       
