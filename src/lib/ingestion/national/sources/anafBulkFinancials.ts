@@ -437,6 +437,7 @@ export async function processANAFBulkFinancials(
             employees: fin.employees,
             currency: "RON",
             dataSource: "ANAF_WS",
+            confidenceScore: 90, // High confidence for official ANAF data
             fetchedAt: new Date(),
           },
         });
