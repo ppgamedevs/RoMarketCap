@@ -39,7 +39,9 @@ export default withAuth({
           pathname === "/api/admin/fetch-company-names-from-anaf" ||
           pathname === "/api/admin/debug-anaf-response" ||
           pathname === "/api/admin/add-ingest-runs-table" ||
-          pathname === "/api/admin/add-financial-snapshots-employees-column") {
+          pathname === "/api/admin/add-financial-snapshots-employees-column" ||
+          pathname === "/api/admin/seed-top100" ||
+          pathname === "/api/admin/add-bvb-columns") {
         return true;
       }
       

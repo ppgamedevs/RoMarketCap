@@ -1,0 +1,931 @@
+[
+  {
+    "name": "OMV Petrom SA",
+    "cui": "1590082",
+    "county": "București",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": true,
+    "stockSymbol": "SNP",
+    "stockExchange": "BVB",
+    "website": "https://www.omvpetrom.com"
+  },
+  {
+    "name": "Banca Transilvania SA",
+    "cui": "5022670",
+    "county": "Cluj",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": true,
+    "stockSymbol": "TLV",
+    "stockExchange": "BVB",
+    "website": "https://www.bancatransilvania.ro"
+  },
+  {
+    "name": "Romgaz SA",
+    "cui": "14056826",
+    "county": "Sibiu",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": true,
+    "stockSymbol": "SNG",
+    "stockExchange": "BVB",
+    "website": "https://www.romgaz.ro"
+  },
+  {
+    "name": "Fondul Proprietatea SA",
+    "cui": "18253260",
+    "county": "București",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "FP",
+    "stockExchange": "BVB",
+    "website": "https://www.fondulproprietatea.ro"
+  },
+  {
+    "name": "BRD - Groupe Société Générale SA",
+    "cui": "361579",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": true,
+    "stockSymbol": "BRD",
+    "stockExchange": "BVB",
+    "website": "https://www.brd.ro"
+  },
+  {
+    "name": "Transelectrica SA",
+    "cui": "13328043",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": true,
+    "stockSymbol": "TEL",
+    "stockExchange": "BVB",
+    "website": "https://www.transelectrica.ro"
+  },
+  {
+    "name": "Transgaz SA",
+    "cui": "13068733",
+    "county": "Sibiu",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": true,
+    "stockSymbol": "TGN",
+    "stockExchange": "BVB",
+    "website": "https://www.transgaz.ro"
+  },
+  {
+    "name": "Electrica SA",
+    "cui": "13267221",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": true,
+    "stockSymbol": "EL",
+    "stockExchange": "BVB",
+    "website": "https://www.electrica.ro"
+  },
+  {
+    "name": "Nuclearelectrica SA",
+    "cui": "10874881",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": true,
+    "stockSymbol": "SNN",
+    "stockExchange": "BVB",
+    "website": "https://www.nuclearelectrica.ro"
+  },
+  {
+    "name": "Hidroelectrica SA",
+    "cui": "13267213",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": true,
+    "stockSymbol": "H2O",
+    "stockExchange": "BVB",
+    "website": "https://www.hidroelectrica.ro"
+  },
+  {
+    "name": "Dedeman SRL",
+    "cui": "3034818",
+    "county": "Bacău",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.dedeman.ro"
+  },
+  {
+    "name": "Kaufland Romania SCS",
+    "cui": "15991456",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.kaufland.ro"
+  },
+  {
+    "name": "Lidl Discount SRL",
+    "cui": "15859559",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.lidl.ro"
+  },
+  {
+    "name": "Carrefour Romania SA",
+    "cui": "11588780",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.carrefour.ro"
+  },
+  {
+    "name": "Mega Image SRL",
+    "cui": "6719590",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.mega-image.ro"
+  },
+  {
+    "name": "Auchan Romania SA",
+    "cui": "15348584",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.auchan.ro"
+  },
+  {
+    "name": "Profi Rom Food SRL",
+    "cui": "11336814",
+    "county": "Timiș",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.profi.ro"
+  },
+  {
+    "name": "Dante International SA (eMAG)",
+    "cui": "14399840",
+    "county": "București",
+    "industry": "E-commerce",
+    "industrySlug": "ecommerce",
+    "isListed": false,
+    "website": "https://www.emag.ro"
+  },
+  {
+    "name": "FAN Courier Express SRL",
+    "cui": "14674310",
+    "county": "București",
+    "industry": "Logistics",
+    "industrySlug": "logistics",
+    "isListed": false,
+    "website": "https://www.fancourier.ro"
+  },
+  {
+    "name": "Sameday Courier SRL",
+    "cui": "27084373",
+    "county": "București",
+    "industry": "Logistics",
+    "industrySlug": "logistics",
+    "isListed": false,
+    "website": "https://sameday.ro"
+  },
+  {
+    "name": "Automobile Dacia SA",
+    "cui": "120292",
+    "county": "Argeș",
+    "industry": "Automotive",
+    "industrySlug": "automotive",
+    "isListed": false,
+    "website": "https://www.dacia.ro"
+  },
+  {
+    "name": "Ford Romania SA",
+    "cui": "3111101",
+    "county": "Argeș",
+    "industry": "Automotive",
+    "industrySlug": "automotive",
+    "isListed": false,
+    "website": "https://www.ford.ro"
+  },
+  {
+    "name": "Continental Automotive Romania SRL",
+    "cui": "2573900",
+    "county": "Timiș",
+    "industry": "Automotive",
+    "industrySlug": "automotive",
+    "isListed": false,
+    "website": "https://www.continental.com"
+  },
+  {
+    "name": "Rompetrol Rafinare SA",
+    "cui": "1860712",
+    "county": "Constanța",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": true,
+    "stockSymbol": "RRC",
+    "stockExchange": "BVB",
+    "website": "https://www.rompetrol.ro"
+  },
+  {
+    "name": "Digi Communications NV",
+    "cui": "14474448",
+    "county": "București",
+    "industry": "Telecom",
+    "industrySlug": "telecom",
+    "isListed": true,
+    "stockSymbol": "DIGI",
+    "stockExchange": "BVB",
+    "website": "https://www.digi.ro"
+  },
+  {
+    "name": "Orange Romania SA",
+    "cui": "9010105",
+    "county": "București",
+    "industry": "Telecom",
+    "industrySlug": "telecom",
+    "isListed": false,
+    "website": "https://www.orange.ro"
+  },
+  {
+    "name": "Vodafone Romania SA",
+    "cui": "11951598",
+    "county": "București",
+    "industry": "Telecom",
+    "industrySlug": "telecom",
+    "isListed": false,
+    "website": "https://www.vodafone.ro"
+  },
+  {
+    "name": "Telekom Romania Communications SA",
+    "cui": "427320",
+    "county": "București",
+    "industry": "Telecom",
+    "industrySlug": "telecom",
+    "isListed": false,
+    "website": "https://www.telekom.ro"
+  },
+  {
+    "name": "Bitdefender SRL",
+    "cui": "14652669",
+    "county": "București",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": false,
+    "website": "https://www.bitdefender.com"
+  },
+  {
+    "name": "UiPath SRL",
+    "cui": "30993044",
+    "county": "București",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": false,
+    "website": "https://www.uipath.com"
+  },
+  {
+    "name": "MedLife SA",
+    "cui": "8422035",
+    "county": "București",
+    "industry": "Healthcare",
+    "industrySlug": "healthcare",
+    "isListed": true,
+    "stockSymbol": "M",
+    "stockExchange": "BVB",
+    "website": "https://www.medlife.ro"
+  },
+  {
+    "name": "Regina Maria SRL",
+    "cui": "7889260",
+    "county": "București",
+    "industry": "Healthcare",
+    "industrySlug": "healthcare",
+    "isListed": false,
+    "website": "https://www.reginamaria.ro"
+  },
+  {
+    "name": "Antibiotice SA",
+    "cui": "1973096",
+    "county": "Iași",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": true,
+    "stockSymbol": "ATB",
+    "stockExchange": "BVB",
+    "website": "https://www.antibiotice.ro"
+  },
+  {
+    "name": "Zentiva SA",
+    "cui": "336206",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": true,
+    "stockSymbol": "SCD",
+    "stockExchange": "BVB",
+    "website": "https://www.zentiva.ro"
+  },
+  {
+    "name": "Sphera Franchise Group SA",
+    "cui": "7653460",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": true,
+    "stockSymbol": "SFG",
+    "stockExchange": "BVB",
+    "website": "https://www.spheragroup.com"
+  },
+  {
+    "name": "Conpet SA",
+    "cui": "1350020",
+    "county": "Prahova",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": true,
+    "stockSymbol": "COTE",
+    "stockExchange": "BVB",
+    "website": "https://www.conpet.ro"
+  },
+  {
+    "name": "Purcari Wineries PLC",
+    "cui": "22174189",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": true,
+    "stockSymbol": "WINE",
+    "stockExchange": "BVB",
+    "website": "https://www.purcari.wine"
+  },
+  {
+    "name": "Teraplast SA",
+    "cui": "3094980",
+    "county": "Bistrița-Năsăud",
+    "industry": "Construction",
+    "industrySlug": "construction",
+    "isListed": true,
+    "stockSymbol": "TRP",
+    "stockExchange": "BVB",
+    "website": "https://www.teraplast.ro"
+  },
+  {
+    "name": "Alro SA",
+    "cui": "1515374",
+    "county": "Olt",
+    "industry": "Manufacturing",
+    "industrySlug": "manufacturing",
+    "isListed": true,
+    "stockSymbol": "ALR",
+    "stockExchange": "BVB",
+    "website": "https://www.alro.ro"
+  },
+  {
+    "name": "Chimcomplex SA",
+    "cui": "960322",
+    "county": "Neamț",
+    "industry": "Chemicals",
+    "industrySlug": "chemicals",
+    "isListed": true,
+    "stockSymbol": "CHOB",
+    "stockExchange": "BVB",
+    "website": "https://www.chimcomplex.ro"
+  },
+  {
+    "name": "Compa SA",
+    "cui": "776171",
+    "county": "Sibiu",
+    "industry": "Automotive",
+    "industrySlug": "automotive",
+    "isListed": true,
+    "stockSymbol": "CMP",
+    "stockExchange": "BVB",
+    "website": "https://www.compa.ro"
+  },
+  {
+    "name": "Bittnet Systems SA",
+    "cui": "21181848",
+    "county": "București",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": true,
+    "stockSymbol": "BNET",
+    "stockExchange": "BVB",
+    "website": "https://www.bittnet.ro"
+  },
+  {
+    "name": "SIF Banat-Crișana SA",
+    "cui": "2761040",
+    "county": "Arad",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "SIF1",
+    "stockExchange": "BVB",
+    "website": "https://www.sif1.ro"
+  },
+  {
+    "name": "SIF Moldova SA",
+    "cui": "2816954",
+    "county": "Bacău",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "SIF2",
+    "stockExchange": "BVB",
+    "website": "https://www.sif2.ro"
+  },
+  {
+    "name": "SIF Transilvania SA",
+    "cui": "3047687",
+    "county": "Brașov",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "SIF3",
+    "stockExchange": "BVB",
+    "website": "https://www.siftransilvania.ro"
+  },
+  {
+    "name": "SIF Muntenia SA",
+    "cui": "3168735",
+    "county": "București",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "SIF4",
+    "stockExchange": "BVB",
+    "website": "https://www.sif4.ro"
+  },
+  {
+    "name": "SIF Oltenia SA",
+    "cui": "2689271",
+    "county": "Dolj",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "SIF5",
+    "stockExchange": "BVB",
+    "website": "https://www.sifolt.ro"
+  },
+  {
+    "name": "One United Properties SA",
+    "cui": "22767862",
+    "county": "București",
+    "industry": "Real Estate",
+    "industrySlug": "real-estate",
+    "isListed": true,
+    "stockSymbol": "ONE",
+    "stockExchange": "BVB",
+    "website": "https://www.one.ro"
+  },
+  {
+    "name": "Impact Developer & Contractor SA",
+    "cui": "4889507",
+    "county": "București",
+    "industry": "Real Estate",
+    "industrySlug": "real-estate",
+    "isListed": true,
+    "stockSymbol": "IMP",
+    "stockExchange": "BVB",
+    "website": "https://www.impact-sa.ro"
+  },
+  {
+    "name": "Arobs Transilvania Software SA",
+    "cui": "11291045",
+    "county": "Cluj",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": true,
+    "stockSymbol": "AROBS",
+    "stockExchange": "BVB",
+    "website": "https://www.arobs.com"
+  },
+  {
+    "name": "Aquila Part Prod Com SA",
+    "cui": "1609070",
+    "county": "București",
+    "industry": "Distribution",
+    "industrySlug": "distribution",
+    "isListed": true,
+    "stockSymbol": "AQ",
+    "stockExchange": "BVB",
+    "website": "https://www.aquila.ro"
+  },
+  {
+    "name": "Bursa de Valori București SA",
+    "cui": "17777754",
+    "county": "București",
+    "industry": "Finance",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "BVB",
+    "stockExchange": "BVB",
+    "website": "https://www.bvb.ro"
+  },
+  {
+    "name": "Electromagnetica SA",
+    "cui": "414118",
+    "county": "București",
+    "industry": "Manufacturing",
+    "industrySlug": "manufacturing",
+    "isListed": true,
+    "stockSymbol": "ELMA",
+    "stockExchange": "BVB",
+    "website": "https://www.electromagnetica.ro"
+  },
+  {
+    "name": "Cemacon SA",
+    "cui": "4443242",
+    "county": "Cluj",
+    "industry": "Construction",
+    "industrySlug": "construction",
+    "isListed": true,
+    "stockSymbol": "CEON",
+    "stockExchange": "BVB",
+    "website": "https://www.cemacon.ro"
+  },
+  {
+    "name": "Holde Agri Invest SA",
+    "cui": "38281640",
+    "county": "București",
+    "industry": "Agriculture",
+    "industrySlug": "agriculture",
+    "isListed": true,
+    "stockSymbol": "HAI",
+    "stockExchange": "BVB",
+    "website": "https://www.holdeagri.ro"
+  },
+  {
+    "name": "Agroland Business System SA",
+    "cui": "15926323",
+    "county": "Timiș",
+    "industry": "Agriculture",
+    "industrySlug": "agriculture",
+    "isListed": true,
+    "stockSymbol": "AG",
+    "stockExchange": "BVB",
+    "website": "https://www.agroland.ro"
+  },
+  {
+    "name": "NN Asigurări de Viață SA",
+    "cui": "6861682",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.nn.ro"
+  },
+  {
+    "name": "Allianz-Țiriac Asigurări SA",
+    "cui": "2449180",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.allianztiriac.ro"
+  },
+  {
+    "name": "Groupama Asigurări SA",
+    "cui": "3889263",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.groupama.ro"
+  },
+  {
+    "name": "Raiffeisen Bank SA",
+    "cui": "361820",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.raiffeisen.ro"
+  },
+  {
+    "name": "UniCredit Bank SA",
+    "cui": "3663060",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.unicredit.ro"
+  },
+  {
+    "name": "Garanti BBVA Romania SA",
+    "cui": "18031797",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.garantibbva.ro"
+  },
+  {
+    "name": "Autonom Services SA",
+    "cui": "14532901",
+    "county": "Iași",
+    "industry": "Automotive Services",
+    "industrySlug": "automotive",
+    "isListed": true,
+    "stockSymbol": "AUT",
+    "stockExchange": "BVB",
+    "website": "https://www.autonom.com"
+  },
+  {
+    "name": "Simtel Team SA",
+    "cui": "25829879",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": true,
+    "stockSymbol": "SMTL",
+    "stockExchange": "BVB",
+    "website": "https://www.simtel.ro"
+  },
+  {
+    "name": "Electroprecizia SA",
+    "cui": "1106591",
+    "county": "Brașov",
+    "industry": "Manufacturing",
+    "industrySlug": "manufacturing",
+    "isListed": true,
+    "stockSymbol": "EPT",
+    "stockExchange": "BVB",
+    "website": "https://www.electroprecizia.ro"
+  },
+  {
+    "name": "Vrancart SA",
+    "cui": "1454846",
+    "county": "Vrancea",
+    "industry": "Manufacturing",
+    "industrySlug": "manufacturing",
+    "isListed": true,
+    "stockSymbol": "VNC",
+    "stockExchange": "BVB",
+    "website": "https://www.vrancart.ro"
+  },
+  {
+    "name": "Ropharma SA",
+    "cui": "1760712",
+    "county": "Brașov",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": true,
+    "stockSymbol": "RPH",
+    "stockExchange": "BVB",
+    "website": "https://www.ropharma.ro"
+  },
+  {
+    "name": "Farmaceutica Remedia SA",
+    "cui": "1567706",
+    "county": "Dâmbovița",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": true,
+    "stockSymbol": "RMAH",
+    "stockExchange": "BVB",
+    "website": "https://www.remedia.ro"
+  },
+  {
+    "name": "Policolor SA",
+    "cui": "338974",
+    "county": "București",
+    "industry": "Chemicals",
+    "industrySlug": "chemicals",
+    "isListed": true,
+    "stockSymbol": "PCL",
+    "stockExchange": "BVB",
+    "website": "https://www.policolor.ro"
+  },
+  {
+    "name": "Oil Terminal SA",
+    "cui": "2410163",
+    "county": "Constanța",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": true,
+    "stockSymbol": "OIL",
+    "stockExchange": "BVB",
+    "website": "https://www.oil-terminal.ro"
+  },
+  {
+    "name": "Prodplast SA",
+    "cui": "340263",
+    "county": "București",
+    "industry": "Manufacturing",
+    "industrySlug": "manufacturing",
+    "isListed": true,
+    "stockSymbol": "PPL",
+    "stockExchange": "BVB",
+    "website": "https://www.prodplast.ro"
+  },
+  {
+    "name": "Turism Felix SA",
+    "cui": "107425",
+    "county": "Bihor",
+    "industry": "Tourism",
+    "industrySlug": "tourism",
+    "isListed": true,
+    "stockSymbol": "TUFE",
+    "stockExchange": "BVB",
+    "website": "https://www.turismfelix.ro"
+  },
+  {
+    "name": "Agricover Holding SA",
+    "cui": "38858154",
+    "county": "București",
+    "industry": "Agriculture",
+    "industrySlug": "agriculture",
+    "isListed": true,
+    "stockSymbol": "AGR",
+    "stockExchange": "BVB",
+    "website": "https://www.agricover.ro"
+  },
+  {
+    "name": "Premier Energy PLC",
+    "cui": "40917687",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": true,
+    "stockSymbol": "PE",
+    "stockExchange": "BVB",
+    "website": "https://www.premierenergy.ro"
+  },
+  {
+    "name": "Transport Trade Services SA",
+    "cui": "6876804",
+    "county": "Constanța",
+    "industry": "Logistics",
+    "industrySlug": "logistics",
+    "isListed": true,
+    "stockSymbol": "TTS",
+    "stockExchange": "BVB",
+    "website": "https://www.tfrried.ro"
+  },
+  {
+    "name": "Evergent Investments SA",
+    "cui": "2816969",
+    "county": "Iași",
+    "industry": "Investment Fund",
+    "industrySlug": "finance",
+    "isListed": true,
+    "stockSymbol": "EVER",
+    "stockExchange": "BVB",
+    "website": "https://www.evergent.ro"
+  },
+  {
+    "name": "Visual Fan SA (Allview)",
+    "cui": "5765547",
+    "county": "Brașov",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": true,
+    "stockSymbol": "ALW",
+    "stockExchange": "AeRO",
+    "website": "https://www.allview.ro"
+  },
+  {
+    "name": "Norofert SA",
+    "cui": "34270612",
+    "county": "București",
+    "industry": "Agriculture",
+    "industrySlug": "agriculture",
+    "isListed": true,
+    "stockSymbol": "NRF",
+    "stockExchange": "AeRO",
+    "website": "https://www.norofert.ro"
+  },
+  {
+    "name": "2Performant Network SA",
+    "cui": "26405652",
+    "county": "București",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": true,
+    "stockSymbol": "2P",
+    "stockExchange": "AeRO",
+    "website": "https://www.2performant.com"
+  },
+  {
+    "name": "SafeTech Innovations SA",
+    "cui": "37282445",
+    "county": "București",
+    "industry": "Technology",
+    "industrySlug": "technology",
+    "isListed": true,
+    "stockSymbol": "SAFE",
+    "stockExchange": "AeRO",
+    "website": "https://www.safetech.ro"
+  },
+  {
+    "name": "Penny Market SRL",
+    "cui": "5765920",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.penny.ro"
+  },
+  {
+    "name": "Metro Cash & Carry Romania SRL",
+    "cui": "8951664",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.metro.ro"
+  },
+  {
+    "name": "Selgros Cash & Carry SRL",
+    "cui": "8614832",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.selgros.ro"
+  },
+  {
+    "name": "Leroy Merlin Romania SRL",
+    "cui": "18263075",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.leroymerlin.ro"
+  },
+  {
+    "name": "IKEA Romania SA",
+    "cui": "24547687",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.ikea.ro"
+  },
+  {
+    "name": "Altex Romania SRL",
+    "cui": "3772344",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://altex.ro"
+  },
+  {
+    "name": "Flanco Retail SA",
+    "cui": "3292522",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.flanco.ro"
+  },
+  {
+    "name": "Cora Romania SRL",
+    "cui": "11268539",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.cora.ro"
+  },
+  {
+    "name": "CEZ Romania SA",
+    "cui": "17983171",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": false,
+    "website": "https://www.cez.ro"
+  },
+  {
+    "name": "E.ON Energie Romania SA",
+    "cui": "18025825",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": false,
+    "website": "https://www.eon.ro"
+  },
+  {
+    "name": "Engie Romania SA",
+    "cui": "13093222",
+    "county": "București",
+    "industry": "Energy",
+    "industrySlug": "energy",
+    "isListed": false,
+    "website": "https://www.engie.ro"
+  }
+]

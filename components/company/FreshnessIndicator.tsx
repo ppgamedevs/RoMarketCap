@@ -21,6 +21,8 @@ function getSourceDisplayName(sourceId: SourceId, lang: "ro" | "en"): string {
     DATAGOV_SEAP: { ro: "data.gov.ro", en: "data.gov.ro" }, // PROMPT 62: data.gov.ro SEAP datasets
     EU_FUNDS: { ro: "Fonduri UE", en: "EU Funds" },
     ANAF_VERIFY: { ro: "ANAF", en: "ANAF" },
+    BVB: { ro: "Bursa București", en: "Bucharest Stock Exchange" }, // PROMPT 63: BVB listed companies
+    ANAF_BULK: { ro: "ANAF Bilanțuri", en: "ANAF Financials" }, // PROMPT 63: ANAF bulk financials
     THIRD_PARTY: { ro: "Terți", en: "Third Party" },
   };
   return names[sourceId]?.[lang] || sourceId;

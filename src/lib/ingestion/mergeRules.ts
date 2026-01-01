@@ -12,11 +12,13 @@ import { Prisma } from "@prisma/client";
  */
 const SOURCE_PRIORITY: Record<SourceId | "USER_APPROVED" | "ENRICHMENT", number> = {
   ANAF_VERIFY: 100, // Highest - verified by ANAF
+  BVB: 95, // Very high - official stock exchange data
+  ANAF_BULK: 90, // High - official ANAF bulk financial data
+  USER_APPROVED: 90, // High - manually approved by users
   EU_FUNDS: 70, // High - official EU data
   SEAP: 60, // Medium-high - official public procurement
   SEAP_XLSX: 60, // Medium-high - official public procurement (XLSX format)
   DATAGOV_SEAP: 60, // PROMPT 62: Medium-high - official data.gov.ro SEAP datasets
-  USER_APPROVED: 90, // High - manually approved by users
   THIRD_PARTY: 40, // Lower - third-party sources
   ENRICHMENT: 30, // Lowest - enrichment/scraping
 };

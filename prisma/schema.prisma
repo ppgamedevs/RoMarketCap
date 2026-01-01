@@ -394,6 +394,13 @@ model Company {
   isSkeleton          Boolean @default(false) @map("is_skeleton") // True if minimal data only (no financials/scoring)
   foundedAt           DateTime? @map("founded_at") // Registration/founding date
 
+  // PROMPT 63: BVB Listed Company Fields
+  isListed      Boolean   @default(false) @map("is_listed") // True if listed on stock exchange
+  stockSymbol   String?   @map("stock_symbol") // BVB stock symbol (e.g., "TLV", "SNP", "H2O")
+  stockExchange String?   @map("stock_exchange") // "BVB", "AeRO", etc.
+  marketCap     Decimal?  @map("market_cap") @db.Decimal(18, 2) // Real market cap from stock price
+  lastPriceAt   DateTime? @map("last_price_at") // Last time stock price was updated
+
   // PROMPT 58: ANAF Financial Sync
   lastFinancialSyncAt DateTime? @map("last_financial_sync_at") // Last time financials were synced from ANAF
   financialSyncVersion Int @default(1) @map("financial_sync_version") // Version of sync logic used
@@ -460,6 +467,9 @@ model Company {
   @@index([isDemo])
   @@index([outreachStatus])
   @@index([mergedIntoCompanyId])
+  @@index([isListed])
+  @@index([stockSymbol])
+  @@index([marketCap])
   @@map("companies")
 }
 

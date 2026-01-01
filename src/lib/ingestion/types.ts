@@ -7,7 +7,7 @@
 /**
  * Source IDs
  */
-export type SourceId = "SEAP" | "EU_FUNDS" | "ANAF_VERIFY" | "THIRD_PARTY" | "SEAP_XLSX" | "DATAGOV_SEAP";
+export type SourceId = "SEAP" | "EU_FUNDS" | "ANAF_VERIFY" | "THIRD_PARTY" | "SEAP_XLSX" | "DATAGOV_SEAP" | "BVB" | "ANAF_BULK";
 
 /**
  * Contacts information
@@ -98,6 +98,8 @@ export type CompanyPatch = {
  */
 export const MERGE_PRIORITY: Record<SourceId, number> = {
   ANAF_VERIFY: 100, // Highest - verified by ANAF
+  BVB: 95, // Very high - official stock exchange data
+  ANAF_BULK: 90, // High - official ANAF bulk financial data
   EU_FUNDS: 70, // High - official EU data
   SEAP: 60, // Medium-high - official public procurement
   SEAP_XLSX: 60, // Medium-high - official public procurement (XLSX format)
