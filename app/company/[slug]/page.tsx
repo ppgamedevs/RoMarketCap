@@ -7,7 +7,7 @@ import { VerificationBadge } from "@/components/company/VerificationBadge";
 import { getCompanyBySlugOrThrow } from "@/src/lib/company";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { prisma } from "@/src/lib/db";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { getLangFromRequest, t } from "@/src/lib/i18n";
 import { PremiumPanel } from "@/components/company/PremiumPanel";
 import { ClaimSubmitPanel } from "@/components/company/ClaimSubmitPanel";
@@ -262,14 +262,82 @@ export default async function CompanyPage({ params }: PageProps) {
   const fin = company.financials[0] ?? null;
 
   // Fetch financial snapshots for FinancialsCard (PROMPT 58)
-  const financialSnapshots = await prisma.companyFinancialSnapshot.findMany({
-    where: {
-      companyId: company.id,
-      dataSource: CompanyFinancialDataSource.ANAF_WS,
-    },
-    orderBy: { fiscalYear: "desc" },
-    take: 3, // Last 3 years
-  });
+  // Note: employees column may not exist in database yet, so we check first
+  let financialSnapshots: Array<{
+    fiscalYear: number;
+    revenue: Prisma.Decimal | null;
+    profit: Prisma.Decimal | null;
+    currency: string;
+    dataSource: CompanyFinancialDataSource;
+    fetchedAt: Date;
+    employees: number | null;
+  }> = [];
+  
+  try {
+    // Check if employees column exists
+    const hasEmployeesColumn = await prisma.$queryRaw<Array<{ column_name: string }>>`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'company_financial_snapshots' AND column_name = 'employees'
+    `;
+    
+    if (hasEmployeesColumn.length > 0) {
+      // Column exists - use normal Prisma query
+      const snapshots = await prisma.companyFinancialSnapshot.findMany({
+        where: {
+          companyId: company.id,
+          dataSource: CompanyFinancialDataSource.ANAF_WS,
+        },
+        orderBy: { fiscalYear: "desc" },
+        take: 3,
+      });
+      financialSnapshots = snapshots.map((s) => ({
+        fiscalYear: s.fiscalYear,
+        revenue: s.revenue,
+        profit: s.profit,
+        currency: s.currency,
+        dataSource: s.dataSource,
+        fetchedAt: s.fetchedAt,
+        employees: (s as any).employees ?? null,
+      }));
+    } else {
+      // Column doesn't exist - use raw SQL without employees
+      const snapshotsRaw = await prisma.$queryRaw<Array<{
+        fiscal_year: number;
+        revenue: number | null;
+        profit: number | null;
+        currency: string;
+        data_source: string;
+        fetched_at: Date;
+      }>>`
+        SELECT 
+          fiscal_year,
+          revenue,
+          profit,
+          currency,
+          data_source,
+          fetched_at
+        FROM company_financial_snapshots
+        WHERE company_id = ${company.id}
+          AND data_source = 'ANAF_WS'
+        ORDER BY fiscal_year DESC
+        LIMIT 3
+      `;
+      financialSnapshots = snapshotsRaw.map((s) => ({
+        fiscalYear: s.fiscal_year,
+        revenue: s.revenue ? new Prisma.Decimal(s.revenue) : null,
+        profit: s.profit ? new Prisma.Decimal(s.profit) : null,
+        currency: s.currency,
+        dataSource: s.data_source as CompanyFinancialDataSource,
+        fetchedAt: s.fetched_at,
+        employees: null, // Column doesn't exist
+      }));
+    }
+  } catch (error) {
+    // Fallback: return empty array if query fails
+    console.error("[company-page] Error fetching financial snapshots:", error);
+    financialSnapshots = [];
+  }
 
   const riskFlags = riskFlagsForCompany(company);
   const confidence = latestDaily?.confidence ?? fin?.confidenceScore ?? 50;
@@ -484,7 +552,7 @@ export default async function CompanyPage({ params }: PageProps) {
             fiscalYear: s.fiscalYear,
             revenue: s.revenue ? Number(String(s.revenue)) : null,
             profit: s.profit ? Number(String(s.profit)) : null,
-            employees: s.employees,
+            employees: (s as any).employees ?? null, // employees may not exist in DB yet
             currency: s.currency,
             dataSource: s.dataSource,
             fetchedAt: s.fetchedAt,
