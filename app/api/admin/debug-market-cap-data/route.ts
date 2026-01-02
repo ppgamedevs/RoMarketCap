@@ -40,21 +40,20 @@ export async function GET(req: Request) {
     });
 
     // Analyze data availability
-    const analysis = {
-      total: companiesWithoutMarketCap.length,
-      hasRevenue: 0,
-      hasEmployees: 0,
-      hasValuation: 0,
-      hasNothing: 0,
-      companies: companiesWithoutMarketCap.map(c => {
-        const hasRev = c.revenueLatest && Number(c.revenueLatest) > 0;
-        const hasEmp = c.employees && c.employees > 0;
-        const hasVal = c.valuationRangeLow && Number(c.valuationRangeLow) > 0;
+    let hasRevenue = 0;
+    let hasEmployees = 0;
+    let hasValuation = 0;
+    let hasNothing = 0;
 
-        if (hasRev) analysis.hasRevenue++;
-        if (hasEmp) analysis.hasEmployees++;
-        if (hasVal) analysis.hasValuation++;
-        if (!hasRev && !hasEmp && !hasVal) analysis.hasNothing++;
+    const companies = companiesWithoutMarketCap.map(c => {
+      const hasRev = c.revenueLatest && Number(c.revenueLatest) > 0;
+      const hasEmp = c.employees && c.employees > 0;
+      const hasVal = c.valuationRangeLow && Number(c.valuationRangeLow) > 0;
+
+      if (hasRev) hasRevenue++;
+      if (hasEmp) hasEmployees++;
+      if (hasVal) hasValuation++;
+      if (!hasRev && !hasEmp && !hasVal) hasNothing++;
 
         return {
           cui: c.cui,
@@ -73,12 +72,16 @@ export async function GET(req: Request) {
                   hasEmp ? "HAS_EMPLOYEES" :
                   "HAS_VALUATION",
         };
-      }),
-    };
+      });
 
     return NextResponse.json({
       ok: true,
-      ...analysis,
+      total: companiesWithoutMarketCap.length,
+      hasRevenue,
+      hasEmployees,
+      hasValuation,
+      hasNothing,
+      companies,
     });
 
   } catch (error) {
