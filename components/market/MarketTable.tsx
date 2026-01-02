@@ -26,6 +26,9 @@ type MarketRow = {
   integrityScore: number | null;
   valuationRangeLow: number | null;
   valuationRangeHigh: number | null;
+  marketCap: number | null;
+  isListed: boolean;
+  stockSymbol: string | null;
   industrySlug: string | null;
   countySlug: string | null;
   lastScoredAt: Date | null;
@@ -231,7 +234,19 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    {row.valuationRangeLow !== null && row.valuationRangeHigh !== null ? (
+                    {row.isListed && row.marketCap !== null ? (
+                      <div>
+                        <div className="text-sm font-medium">
+                          {new Intl.NumberFormat(lang === "ro" ? "ro-RO" : "en-US", {
+                            style: "currency",
+                            currency: "RON",
+                            notation: "compact",
+                            maximumFractionDigits: 1,
+                          }).format(row.marketCap)}
+                        </div>
+                        <div className="text-xs text-primary">{row.stockSymbol}</div>
+                      </div>
+                    ) : row.valuationRangeLow !== null && row.valuationRangeHigh !== null ? (
                       <div className="text-sm">
                         <div className="font-medium">
                           {formatCurrency(row.valuationRangeLow)} - {formatCurrency(row.valuationRangeHigh)}

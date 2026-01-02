@@ -45,6 +45,9 @@ type MarketRow = {
   integrityScore: number | null;
   valuationRangeLow: number | null;
   valuationRangeHigh: number | null;
+  marketCap: number | null;
+  isListed: boolean;
+  stockSymbol: string | null;
   industrySlug: string | null;
   countySlug: string | null;
   lastScoredAt: Date | null;
@@ -138,7 +141,7 @@ export async function GET(req: NextRequest) {
     if (sort === "romcScore") {
       orderBy = [{ romcScore: "desc" }, { dataConfidence: "desc" as any }, { lastScoredAt: "desc" }, { cui: "asc" }];
     } else if (sort === "marketCap") {
-      orderBy = [{ valuationRangeHigh: "desc" }, { romcAiScore: "desc" }, { cui: "asc" }];
+      orderBy = [{ marketCap: "desc" }, { valuationRangeHigh: "desc" }, { romcAiScore: "desc" }, { cui: "asc" }];
     } else if (sort === "confidence") {
       orderBy = [{ dataConfidence: "desc" as any }, { romcAiScore: "desc" }, { lastScoredAt: "desc" }, { cui: "asc" }];
     }
@@ -182,6 +185,9 @@ export async function GET(req: NextRequest) {
         companyIntegrityScore: true,
         valuationRangeLow: true,
         valuationRangeHigh: true,
+        marketCap: true,
+        isListed: true,
+        stockSymbol: true,
         industrySlug: true,
         countySlug: true,
         lastScoredAt: true,
@@ -239,6 +245,9 @@ export async function GET(req: NextRequest) {
         integrityScore: company.companyIntegrityScore,
         valuationRangeLow: company.valuationRangeLow ? Number(company.valuationRangeLow) : null,
         valuationRangeHigh: company.valuationRangeHigh ? Number(company.valuationRangeHigh) : null,
+        marketCap: company.marketCap ? Number(company.marketCap) : null,
+        isListed: company.isListed,
+        stockSymbol: company.stockSymbol,
         industrySlug: company.industrySlug,
         countySlug: company.countySlug,
         lastScoredAt: company.lastScoredAt,
