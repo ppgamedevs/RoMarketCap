@@ -500,106 +500,106 @@ export default async function CompanyPage({ params }: PageProps) {
           />
 
           {/* Company Overview */}
-          <section className="grid gap-4">
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{lang === "ro" ? "Data sources" : "Data sources"}</h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-6">
-            {lang === "ro"
-              ? "Public filings, user submissions (verificate), semnale automate. Nu este consultanță financiară."
-              : "Public filings, verified user submissions, automated signals. Not financial advice."}
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{t(lang, "company_summary")}</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-4">
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">{t(lang, "romc_score")}</p>
-              <p className="mt-1 text-lg font-semibold">{romcScore != null ? `${romcScore}/100` : "N/A"}</p>
+          <div className="space-y-4">
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Data sources" : "Data sources"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-6">
+                {lang === "ro"
+                  ? "Public filings, user submissions (verificate), semnale automate. Nu este consultanță financiară."
+                  : "Public filings, verified user submissions, automated signals. Not financial advice."}
+              </p>
             </div>
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">{t(lang, "confidence")}</p>
-              <p className="mt-1 text-lg font-semibold">{romcConfidence != null ? `${romcConfidence}/100` : "N/A"}</p>
+
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{t(lang, "company_summary")}</h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">{t(lang, "romc_score")}</p>
+                  <p className="mt-1 text-lg font-semibold">{romcScore != null ? `${romcScore}/100` : "N/A"}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">{t(lang, "confidence")}</p>
+                  <p className="mt-1 text-lg font-semibold">{romcConfidence != null ? `${romcConfidence}/100` : "N/A"}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">{t(lang, "last_scored")}</p>
+                  <p className="mt-1 text-lg font-semibold">{company.lastScoredAt ? company.lastScoredAt.toISOString().slice(0, 10) : "N/A"}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">{lang === "ro" ? "Last enriched" : "Last enriched"}</p>
+                  <p className="mt-1 text-lg font-semibold">{company.lastEnrichedAt ? company.lastEnrichedAt.toISOString().slice(0, 10) : "N/A"}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
             </div>
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">{t(lang, "last_scored")}</p>
-              <p className="mt-1 text-lg font-semibold">{company.lastScoredAt ? company.lastScoredAt.toISOString().slice(0, 10) : "N/A"}</p>
-            </div>
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">{lang === "ro" ? "Last enriched" : "Last enriched"}</p>
-              <p className="mt-1 text-lg font-semibold">{company.lastEnrichedAt ? company.lastEnrichedAt.toISOString().slice(0, 10) : "N/A"}</p>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
-        </div>
 
-        <IntegrityIndicators
-          lang={lang}
-          scoreStabilityProfile={company.scoreStabilityProfile}
-          dataConfidence={company.dataConfidence}
-          companyIntegrityScore={company.companyIntegrityScore}
-          companyRiskFlags={company.companyRiskFlags}
-        />
-
-        <FreshnessIndicator
-          lang={lang}
-          lastEnrichedAt={company.lastEnrichedAt}
-          lastScoredAt={company.lastScoredAt}
-          dataConfidence={company.dataConfidence}
-          integrityScore={company.companyIntegrityScore}
-          lastSeenAtFromSources={company.lastSeenAtFromSources}
-          fieldProvenance={company.fieldProvenance ? (company.fieldProvenance as unknown as Record<string, { sourceId: SourceId; sourceRef: string; seenAt: Date; confidence: number }>) : null}
-        />
-
-          <FinancialsCard
-            lang={lang}
-            revenueLatest={company.revenueLatest ? Number(String(company.revenueLatest)) : null}
-            profitLatest={company.profitLatest ? Number(String(company.profitLatest)) : null}
-            employees={company.employees}
-            currency={company.currency}
-            lastFinancialSyncAt={company.lastFinancialSyncAt}
-            financialSource={company.financialSource}
-            financialSnapshots={financialSnapshots.map((s) => ({
-              fiscalYear: s.fiscalYear,
-              revenue: s.revenue ? Number(String(s.revenue)) : null,
-              profit: s.profit ? Number(String(s.profit)) : null,
-              employees: s.employees ?? null,
-              currency: s.currency,
-              dataSource: s.dataSource,
-              fetchedAt: s.fetchedAt,
-            }))}
-          />
-
-          <details className="rounded-xl border bg-card p-6 text-card-foreground">
-            <summary className="cursor-pointer text-sm font-medium">{t(lang, "how_romc_works")}</summary>
-            <p className="mt-3 text-sm text-muted-foreground leading-6">{t(lang, "how_romc_body")}</p>
-            <p className="mt-3 text-sm text-muted-foreground leading-6">
-              {lang === "ro"
-                ? "Enrichment v1 folosește doar website-ul companiei (dacă există) pentru a extrage titlu, descriere și linkuri sociale, cu timeout și limite stricte."
-                : "Enrichment v1 uses only the company website (if present) to extract title, description, and social links, with strict timeouts and limits."}
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
-          </details>
-
-          {company.cui ? <PremiumPanel lang={lang} cui={company.cui} /> : null}
-
-          <Placements placements={placements} location="company" showEmptyState />
-
-          {company.cui ? <ForecastPanel lang={lang} cui={company.cui} /> : null}
-
-          {/* Claim CTAs - show if not claimed */}
-          {company.cui && session?.user?.id && !isClaimed ? (
-            <ClaimCtas
+            <IntegrityIndicators
               lang={lang}
-              companySlug={company.slug}
-              companyCui={company.cui}
-              romcScore={company.romcScore}
-              isClaimed={isClaimed}
-              isPremium={session.user.isPremium ?? false}
+              scoreStabilityProfile={company.scoreStabilityProfile}
+              dataConfidence={company.dataConfidence}
+              companyIntegrityScore={company.companyIntegrityScore}
+              companyRiskFlags={company.companyRiskFlags}
             />
-          ) : null}
 
-          {company.cui ? <ClaimSubmitPanel lang={lang} cui={company.cui} /> : null}
+            <FreshnessIndicator
+              lang={lang}
+              lastEnrichedAt={company.lastEnrichedAt}
+              lastScoredAt={company.lastScoredAt}
+              dataConfidence={company.dataConfidence}
+              integrityScore={company.companyIntegrityScore}
+              lastSeenAtFromSources={company.lastSeenAtFromSources}
+              fieldProvenance={company.fieldProvenance ? (company.fieldProvenance as unknown as Record<string, { sourceId: SourceId; sourceRef: string; seenAt: Date; confidence: number }>) : null}
+            />
+
+              lang={lang}
+              revenueLatest={company.revenueLatest ? Number(String(company.revenueLatest)) : null}
+              profitLatest={company.profitLatest ? Number(String(company.profitLatest)) : null}
+              employees={company.employees}
+              currency={company.currency}
+              lastFinancialSyncAt={company.lastFinancialSyncAt}
+              financialSource={company.financialSource}
+              financialSnapshots={financialSnapshots.map((s) => ({
+                fiscalYear: s.fiscalYear,
+                revenue: s.revenue ? Number(String(s.revenue)) : null,
+                profit: s.profit ? Number(String(s.profit)) : null,
+                employees: s.employees ?? null,
+                currency: s.currency,
+                dataSource: s.dataSource,
+                fetchedAt: s.fetchedAt,
+              }))}
+            />
+
+            <details className="rounded-xl border bg-card p-6 text-card-foreground">
+              <summary className="cursor-pointer text-sm font-medium">{t(lang, "how_romc_works")}</summary>
+              <p className="mt-3 text-sm text-muted-foreground leading-6">{t(lang, "how_romc_body")}</p>
+              <p className="mt-3 text-sm text-muted-foreground leading-6">
+                {lang === "ro"
+                  ? "Enrichment v1 folosește doar website-ul companiei (dacă există) pentru a extrage titlu, descriere și linkuri sociale, cu timeout și limite stricte."
+                  : "Enrichment v1 uses only the company website (if present) to extract title, description, and social links, with strict timeouts and limits."}
+              </p>
+              <p className="mt-3 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
+            </details>
+
+            {company.cui ? <PremiumPanel lang={lang} cui={company.cui} /> : null}
+
+            <Placements placements={placements} location="company" showEmptyState />
+
+            {company.cui ? <ForecastPanel lang={lang} cui={company.cui} /> : null}
+
+            {/* Claim CTAs - show if not claimed */}
+            {company.cui && session?.user?.id && !isClaimed ? (
+              <ClaimCtas
+                lang={lang}
+                companySlug={company.slug}
+                companyCui={company.cui}
+                romcScore={company.romcScore}
+                isClaimed={isClaimed}
+                isPremium={session.user.isPremium ?? false}
+              />
+            ) : null}
+
+            {company.cui ? <ClaimSubmitPanel lang={lang} cui={company.cui} /> : null}
+          </div>
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
             <h2 className="text-sm font-medium">{lang === "ro" ? "Linkuri" : "Links"}</h2>
@@ -639,105 +639,105 @@ export default async function CompanyPage({ params }: PageProps) {
 
           <CorrectionRequestForm lang={lang} companyId={company.id} companyCui={company.cui ?? undefined} />
 
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{lang === "ro" ? "Metrici (ultimul an)" : "Metrics (latest year)"}</h2>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
-                <tr>
-                  <th className="py-2">{lang === "ro" ? "An" : "Year"}</th>
-                  <th className="py-2">{lang === "ro" ? "Venituri" : "Revenue"}</th>
-                  <th className="py-2">{lang === "ro" ? "Profit" : "Profit"}</th>
-                  <th className="py-2">{lang === "ro" ? "Angajați" : "Employees"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t">
-                  <td className="py-2">{latestYearly?.year ?? "N/A"}</td>
-                  <td className="py-2">{latestYearly ? formatMoney(latestYearly.revenue, latestYearly.currency, "ro-RO") : "N/A"}</td>
-                  <td className="py-2">{latestYearly ? formatMoney(latestYearly.profit, latestYearly.currency, "ro-RO") : "N/A"}</td>
-                  <td className="py-2">{latestYearly?.employees ?? "N/A"}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{lang === "ro" ? "ROMC v1 (componente)" : "ROMC v1 (components)"}</h2>
-          <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs">
-            {company.romcComponents ? JSON.stringify(company.romcComponents, null, 2) : "N/A"}
-          </pre>
-        </div>
-
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">Scoruri (istoric)</h2>
-          <div className="mt-3 flex items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground">
-              Ultima actualizare metrici:{" "}
-              <span className="font-medium">
-                {metrics?.updatedAt ? metrics.updatedAt.toLocaleDateString("ro-RO") : "N/A"}
-              </span>
-            </div>
-            <div className="text-foreground">
-              <Sparkline values={history.slice().reverse().map((x) => x.romcScore)} />
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">{lang === "ro" ? "Metrici (ultimul an)" : "Metrics (latest year)"}</h2>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs text-muted-foreground">
+                  <tr>
+                    <th className="py-2">{lang === "ro" ? "An" : "Year"}</th>
+                    <th className="py-2">{lang === "ro" ? "Venituri" : "Revenue"}</th>
+                    <th className="py-2">{lang === "ro" ? "Profit" : "Profit"}</th>
+                    <th className="py-2">{lang === "ro" ? "Angajați" : "Employees"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t">
+                    <td className="py-2">{latestYearly?.year ?? "N/A"}</td>
+                    <td className="py-2">{latestYearly ? formatMoney(latestYearly.revenue, latestYearly.currency, "ro-RO") : "N/A"}</td>
+                    <td className="py-2">{latestYearly ? formatMoney(latestYearly.profit, latestYearly.currency, "ro-RO") : "N/A"}</td>
+                    <td className="py-2">{latestYearly?.employees ?? "N/A"}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <ul className="mt-4 space-y-2 text-sm">
-            {history.length === 0 ? (
-              <li className="text-muted-foreground">N/A</li>
-            ) : (
-              history.map((h) => (
-                <li key={h.id} className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{h.asOfDate.toISOString().slice(0, 10)}</span>
-                  <span className="font-medium">
-                    {h.romcScore} / {h.romcAiScore} / {h.confidence}
-                  </span>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{lang === "ro" ? "Overview" : "Overview"}</h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-6">
-            {lang === "en"
-              ? company.descriptionEn ??
-                `This is an informational page for ${company.name}. Data and estimates will improve as sources and models are added.`
-              : company.descriptionRo ??
-                `Aceasta este o pagină informativă pentru ${company.name}. Datele și estimările vor fi îmbunătățite pe măsură ce integrăm surse și modele.`}
-          </p>
-          <div className="mt-4">
-            <a
-              className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-              href={`/claim?company=${encodeURIComponent(company.slug)}`}
-            >
-              Claim this company
-            </a>
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">{lang === "ro" ? "ROMC v1 (componente)" : "ROMC v1 (components)"}</h2>
+            <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs">
+              {company.romcComponents ? JSON.stringify(company.romcComponents, null, 2) : "N/A"}
+            </pre>
           </div>
-        </div>
 
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">Signals</h2>
-          <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-            <li>- Hiring velocity: (placeholder)</li>
-            <li>- Web traffic change: (placeholder)</li>
-            <li>- News mentions: (placeholder)</li>
-          </ul>
-        </div>
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">Scoruri (istoric)</h2>
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <div className="text-sm text-muted-foreground">
+                Ultima actualizare metrici:{" "}
+                <span className="font-medium">
+                  {metrics?.updatedAt ? metrics.updatedAt.toLocaleDateString("ro-RO") : "N/A"}
+                </span>
+              </div>
+              <div className="text-foreground">
+                <Sparkline values={history.slice().reverse().map((x) => x.romcScore)} />
+              </div>
+            </div>
 
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">Valuation model inputs</h2>
-          <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-            <li>- Revenue & profit history (ANAF)</li>
-            <li>- Employee estimates</li>
-            <li>- Web presence & traffic</li>
-            <li>- Press mentions</li>
-            <li>- Government contracts</li>
-          </ul>
-        </div>
+            <ul className="mt-4 space-y-2 text-sm">
+              {history.length === 0 ? (
+                <li className="text-muted-foreground">N/A</li>
+              ) : (
+                history.map((h) => (
+                  <li key={h.id} className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{h.asOfDate.toISOString().slice(0, 10)}</span>
+                    <span className="font-medium">
+                      {h.romcScore} / {h.romcAiScore} / {h.confidence}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">{lang === "ro" ? "Overview" : "Overview"}</h2>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">
+              {lang === "en"
+                ? company.descriptionEn ??
+                  `This is an informational page for ${company.name}. Data and estimates will improve as sources and models are added.`
+                : company.descriptionRo ??
+                  `Aceasta este o pagină informativă pentru ${company.name}. Datele și estimările vor fi îmbunătățite pe măsură ce integrăm surse și modele.`}
+            </p>
+            <div className="mt-4">
+              <a
+                className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                href={`/claim?company=${encodeURIComponent(company.slug)}`}
+              >
+                Claim this company
+              </a>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">Signals</h2>
+            <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+              <li>- Hiring velocity: (placeholder)</li>
+              <li>- Web traffic change: (placeholder)</li>
+              <li>- News mentions: (placeholder)</li>
+            </ul>
+          </div>
+
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">Valuation model inputs</h2>
+            <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+              <li>- Revenue & profit history (ANAF)</li>
+              <li>- Employee estimates</li>
+              <li>- Web presence & traffic</li>
+              <li>- Press mentions</li>
+              <li>- Government contracts</li>
+            </ul>
+          </div>
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
             <h2 className="text-sm font-medium">Disclaimer</h2>
