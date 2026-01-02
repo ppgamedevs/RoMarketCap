@@ -10,7 +10,8 @@
 import { kv } from "@vercel/kv";
 import * as Sentry from "@sentry/nextjs";
 
-const YAHOO_FINANCE_API = "https://query1.finance.yahoo.com/v8/finance/chart";
+const YAHOO_FINANCE_QUOTE_API = "https://query1.finance.yahoo.com/v10/finance/quoteSummary";
+const YAHOO_FINANCE_CHART_API = "https://query1.finance.yahoo.com/v8/finance/chart";
 const RATE_LIMIT_KEY = "bvb:yahoo:rate_limit";
 const RATE_LIMIT_MS = 1000; // 1 second
 const CACHE_TTL_SECONDS = 3600; // 1 hour
@@ -74,7 +75,8 @@ export async function fetchBVBStockPrice(
   await checkRateLimit();
 
   try {
-    const url = `${YAHOO_FINANCE_API}/${ticker}`;
+    // Use quoteSummary API for comprehensive data including market cap
+    const url = `${YAHOO_FINANCE_QUOTE_API}/${ticker}?modules=price,summaryDetail`;
     console.log(`[yahoo-finance] Fetching ${ticker}...`);
 
     const response = await fetch(url, {
@@ -93,27 +95,43 @@ export async function fetchBVBStockPrice(
 
     const data = await response.json();
 
-    // Parse response
-    const result = data?.chart?.result?.[0];
+    // Log raw response for debugging
+    console.log(`[yahoo-finance] Raw response for ${ticker}:`, JSON.stringify(data).substring(0, 500));
+
+    // Parse quoteSummary response
+    const result = data?.quoteSummary?.result?.[0];
     if (!result) {
       console.warn(`[yahoo-finance] No data for ${ticker}`);
+      console.log(`[yahoo-finance] Full response:`, JSON.stringify(data));
       return null;
     }
 
-    const meta = result.meta;
-    if (!meta) {
-      console.warn(`[yahoo-finance] No meta data for ${ticker}`);
+    const priceData = result.price;
+    const summaryDetail = result.summaryDetail;
+
+    if (!priceData) {
+      console.warn(`[yahoo-finance] No price data for ${ticker}`);
+      console.log(`[yahoo-finance] Result keys:`, Object.keys(result));
       return null;
     }
 
-    const price = meta.regularMarketPrice;
-    const previousClose = meta.chartPreviousClose || meta.previousClose;
-    const marketCap = meta.marketCap;
-    const volume = meta.regularMarketVolume || 0;
+    console.log(`[yahoo-finance] Price data keys for ${ticker}:`, Object.keys(priceData));
+    console.log(`[yahoo-finance] Market cap value:`, priceData.marketCap);
 
-    if (typeof price !== "number" || !marketCap) {
-      console.warn(`[yahoo-finance] Incomplete data for ${ticker}`);
+    const price = priceData.regularMarketPrice?.raw;
+    const previousClose = priceData.regularMarketPreviousClose?.raw;
+    const marketCap = priceData.marketCap?.raw;
+    const volume = priceData.regularMarketVolume?.raw || 0;
+    const currency = priceData.currency || "RON";
+
+    if (typeof price !== "number") {
+      console.warn(`[yahoo-finance] No valid price for ${ticker}`);
       return null;
+    }
+
+    // Market cap is optional - we'll store what we have
+    if (!marketCap) {
+      console.warn(`[yahoo-finance] No market cap for ${ticker}, using price only`);
     }
 
     const change = previousClose ? price - previousClose : 0;
@@ -122,8 +140,8 @@ export async function fetchBVBStockPrice(
     const stockPrice: StockPrice = {
       symbol,
       price,
-      marketCap,
-      currency: meta.currency || "RON",
+      marketCap: marketCap || 0, // Store 0 if unavailable
+      currency,
       volume,
       change,
       changePercent,
