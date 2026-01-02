@@ -23,7 +23,7 @@
       "employees": 5000,
       "industry": "Retail"
     },
-    "15348504": {
+    "15348584": {
       "name": "Auchan Romania SA",
       "revenue": 8000000000,
       "employees": 9000,
@@ -35,7 +35,7 @@
       "employees": 15000,
       "industry": "Retail"
     },
-    "11133814": {
+    "11336814": {
       "name": "Profi Rom Food SRL",
       "revenue": 15000000000,
       "employees": 20000,
@@ -71,13 +71,13 @@
       "employees": 4500,
       "industry": "Telecommunications"
     },
-    "4277320": {
+    "427320": {
       "name": "Telekom Romania Communications SA",
       "revenue": 3500000000,
       "employees": 3500,
       "industry": "Telecommunications"
     },
-    "140292": {
+    "120292": {
       "name": "Automobile Dacia SA",
       "revenue": 35000000000,
       "employees": 14000,
@@ -131,7 +131,7 @@
       "employees": 3000,
       "industry": "Banking"
     },
-    "18269263": {
+    "3889263": {
       "name": "Groupama Asigurări SA",
       "revenue": 2500000000,
       "employees": 1500,
@@ -149,13 +149,13 @@
       "employees": 8000,
       "industry": "Logistics"
     },
-    "24547887": {
+    "24547687": {
       "name": "IKEA Romania SA",
       "revenue": 2500000000,
       "employees": 2500,
       "industry": "Retail"
     },
-    "18603171": {
+    "2573900": {
       "name": "Continental Automotive Romania SRL",
       "revenue": 12000000000,
       "employees": 20000,
@@ -173,7 +173,7 @@
       "employees": 5000,
       "industry": "Oil & Gas"
     },
-    "14652668": {
+    "14652669": {
       "name": "Bitdefender SRL",
       "revenue": 1000000000,
       "employees": 1800,
