@@ -168,6 +168,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable ANAF bulk financials ingestion from data.gov.ro (revenue, profit, employees)",
     risky: false,
   },
+  FETCH_LOGOS_CRON_ENABLED: {
+    label: "Logo Fetching Cron",
+    description: "Automatically fetch company logos from Clearbit/Google for companies with websites",
+    risky: false,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",

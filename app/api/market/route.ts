@@ -39,6 +39,7 @@ type MarketRow = {
   name: string;
   legalName: string | null;
   cui: string | null;
+  logoUrl: string | null;
   romcScore: number | null;
   romcAiScore: number | null;
   dataConfidence: number | null;
@@ -179,6 +180,7 @@ export async function GET(req: NextRequest) {
         name: true,
         legalName: true,
         cui: true,
+        logoUrl: true,
         romcScore: true,
         romcAiScore: true,
         dataConfidence: true,
@@ -239,6 +241,7 @@ export async function GET(req: NextRequest) {
         name: company.name,
         legalName: company.legalName,
         cui: company.cui,
+        logoUrl: company.logoUrl,
         romcScore: company.romcScore,
         romcAiScore: company.romcAiScore,
         dataConfidence: company.dataConfidence,

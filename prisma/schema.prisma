@@ -325,6 +325,7 @@ model Company {
   // Web presence
   website String? @map("website")
   domain  String? @map("domain")
+  logoUrl String? @map("logo_url") // Company logo URL from Clearbit/Google
   email   String? @map("email")
   phone   String? @map("phone")
   socials Json?   @map("socials")

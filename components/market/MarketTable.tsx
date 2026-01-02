@@ -20,6 +20,7 @@ type MarketRow = {
   name: string;
   legalName: string | null;
   cui: string | null;
+  logoUrl: string | null;
   romcScore: number | null;
   romcAiScore: number | null;
   dataConfidence: number | null;
@@ -193,9 +194,31 @@ function MarketTableInner({
                   <TD className="font-medium">{row.rank}</TD>
                   <TD>
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold">
-                        {displayName.charAt(0).toUpperCase()}
-                      </div>
+                      {row.logoUrl ? (
+                        <>
+                          <img 
+                            src={row.logoUrl} 
+                            alt={displayName}
+                            className="h-8 w-8 rounded object-contain bg-white"
+                            onError={(e) => {
+                              // Fallback to initial on error
+                              const target = e.currentTarget;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling;
+                              if (fallback) {
+                                fallback.classList.remove('hidden');
+                              }
+                            }}
+                          />
+                          <div className="hidden flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold">
+                            {displayName.charAt(0).toUpperCase()}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold">
+                          {displayName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">{displayName}</div>
                         <div className="text-xs text-muted-foreground">{row.cui || "—"}</div>

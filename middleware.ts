@@ -49,7 +49,10 @@ export default withAuth({
       pathname === "/api/admin/run-anaf-bulk-financials" ||
       pathname === "/api/admin/add-team-members-table" ||
       pathname === "/api/admin/add-company-verification-table" ||
-      pathname === "/api/admin/add-company-change-logs-table") {
+      pathname === "/api/admin/add-company-change-logs-table" ||
+      pathname === "/api/admin/add-logo-url-column" ||
+      pathname === "/api/admin/fetch-logos" ||
+      pathname === "/api/admin/add-financial-data-source-enum") {
     return true;
   }
       

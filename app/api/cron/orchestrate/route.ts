@@ -441,6 +441,36 @@ async function handleOrchestrate(req: Request) {
         stats.scoreSnapshots = { ok: true, duration: 0 }; // Skipped
       }
 
+      // 6b. Logo Fetching (if enabled) - PROMPT 64
+      if (await isFlagEnabled("FETCH_LOGOS_CRON_ENABLED", false)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/fetch-logos`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.fetchLogos = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:fetch-logos", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.fetchLogos = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.fetchLogos = { ok: true, duration: 0 }; // Skipped
+      }
+
       // 7. Weekly Digest (once per week only, if enabled)
       if (await isFlagEnabled("NEWSLETTER_SENDS", true)) {
         const weekStart = getWeekStart(new Date()).toISOString();
