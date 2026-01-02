@@ -71,7 +71,8 @@ export default withAuth({
       pathname === "/api/admin/test-market-api-specific" || // Test market API for specific companies
       pathname === "/api/admin/boost-bvb-companies-confidence" || // Boost BVB companies confidence
       pathname === "/api/admin/check-sif-details" || // Check SIF details
-      pathname === "/api/admin/test-market-query") { // NEW: Test market query directly
+      pathname === "/api/admin/test-market-query" || // Test market query directly
+      pathname === "/api/admin/test-homepage-api") { // NEW: Test homepage API call
     return true;
   }
       
