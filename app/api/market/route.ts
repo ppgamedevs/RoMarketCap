@@ -142,7 +142,13 @@ export async function GET(req: NextRequest) {
     if (sort === "romcScore") {
       orderBy = [{ romcScore: "desc" }, { dataConfidence: "desc" as any }, { lastScoredAt: "desc" }, { cui: "asc" }];
     } else if (sort === "marketCap") {
-      orderBy = [{ marketCap: "desc" }, { valuationRangeHigh: "desc" }, { romcAiScore: "desc" }, { cui: "asc" }];
+      // Sort by market cap with nulls last - companies with actual market caps appear first
+      orderBy = [
+        { marketCap: { sort: "desc", nulls: "last" } } as any,
+        { valuationRangeHigh: { sort: "desc", nulls: "last" } } as any,
+        { romcAiScore: "desc" },
+        { cui: "asc" }
+      ];
     } else if (sort === "confidence") {
       orderBy = [{ dataConfidence: "desc" as any }, { romcAiScore: "desc" }, { lastScoredAt: "desc" }, { cui: "asc" }];
     }

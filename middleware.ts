@@ -55,7 +55,8 @@ export default withAuth({
       pathname === "/api/admin/add-financial-data-source-enum" ||
       pathname === "/api/admin/seed-bvb-market-caps" ||
       pathname === "/api/admin/calculate-market-caps" ||
-      pathname === "/api/admin/check-companies-without-marketcap") {
+      pathname === "/api/admin/check-companies-without-marketcap" ||
+      pathname === "/api/admin/clear-market-cache") {
     return true;
   }
       
