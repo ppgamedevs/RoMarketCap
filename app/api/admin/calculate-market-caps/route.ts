@@ -143,10 +143,10 @@ export async function POST(req: Request) {
       } catch (error) {
         results.errors++;
         const errorMsg = error instanceof Error ? error.message : String(error);
-        results.errorDetails.push({ cui: company.cui, error: errorMsg });
+        results.errorDetails.push({ cui: company.cui || "unknown", error: errorMsg });
         console.error(`[calculate-market-caps] Error processing ${company.cui}:`, error);
         Sentry.captureException(error, {
-          tags: { component: "calculate-market-caps", cui: company.cui },
+          tags: { component: "calculate-market-caps", cui: company.cui || "unknown" },
         });
       }
     }
