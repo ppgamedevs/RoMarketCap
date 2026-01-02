@@ -62,7 +62,8 @@ export default withAuth({
       pathname === "/api/admin/debug-company-status" ||
       pathname === "/api/admin/boost-major-companies-confidence" ||
       pathname === "/api/admin/test-market-api" ||
-      pathname === "/api/admin/clear-market-cache") {
+      pathname === "/api/admin/clear-market-cache" ||
+      pathname === "/api/admin/debug-market-cap-data") { // NEW: Debug market cap data
     return true;
   }
       
