@@ -69,7 +69,8 @@ export default withAuth({
       pathname === "/api/admin/check-top100-coverage" || // Check top100 coverage
       pathname === "/api/admin/debug-bvb-symbols" || // Debug BVB symbols
       pathname === "/api/admin/test-market-api-specific" || // Test market API for specific companies
-      pathname === "/api/admin/boost-bvb-companies-confidence") { // NEW: Boost BVB companies confidence
+      pathname === "/api/admin/boost-bvb-companies-confidence" || // Boost BVB companies confidence
+      pathname === "/api/admin/check-sif-details") { // NEW: Check SIF details
     return true;
   }
       
