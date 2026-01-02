@@ -123,7 +123,7 @@ export async function POST() {
             data: {
               revenueLatest: latestSnapshot.revenue,
               profitLatest: latestSnapshot.profit,
-              employeesLatest: latestSnapshot.employees,
+              employees: latestSnapshot.employees,
             },
           });
           companiesUpdated++;
