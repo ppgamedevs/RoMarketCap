@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ro, enUS } from 'date-fns/locale';
 import type { Lang } from '@/src/lib/i18n';
-import type { CompanyChangeLog } from '@prisma/client';
+import type { CompanyChangeLog, CompanyChangeType } from '@prisma/client';
 
 type ActivityFeedProps = {
   changes: CompanyChangeLog[];
@@ -22,30 +22,52 @@ export function ActivityFeed({ changes, lang }: ActivityFeedProps) {
     );
   }
 
-  const getActivityIcon = (field: string) => {
-    if (field.includes('score') || field.includes('Score')) return '📊';
-    if (field.includes('financial') || field.includes('revenue') || field.includes('profit')) return '💰';
-    if (field.includes('employee')) return '👥';
-    if (field.includes('name') || field.includes('description')) return '✏️';
-    return '🔄';
+  const getActivityIcon = (changeType: CompanyChangeType) => {
+    switch (changeType) {
+      case 'SCORE_CHANGE':
+        return '📊';
+      case 'FINANCIAL_SYNC':
+        return '💰';
+      case 'ENRICHMENT':
+        return '✏️';
+      case 'CLAIM_APPROVED':
+        return '✅';
+      case 'SUBMISSION_APPROVED':
+        return '✓';
+      case 'FORECAST_CHANGE':
+        return '📈';
+      default:
+        return '🔄';
+    }
   };
 
-  const formatFieldName = (field: string): string => {
+  const formatChangeType = (changeType: CompanyChangeType): string => {
     if (lang === 'ro') {
-      const translations: Record<string, string> = {
-        'romcScore': 'ROMC Score',
-        'romcAiScore': 'ROMC AI Score',
-        'dataConfidence': 'Încredere date',
-        'companyIntegrityScore': 'Scor integritate',
-        'revenueLatest': 'Venituri',
-        'profitLatest': 'Profit',
-        'employees': 'Angajați',
-        'name': 'Nume',
-        'description': 'Descriere',
+      const translations: Record<CompanyChangeType, string> = {
+        'SCORE_CHANGE': 'Actualizare scor',
+        'FINANCIAL_SYNC': 'Sincronizare financiară',
+        'ENRICHMENT': 'Îmbogățire date',
+        'CLAIM_APPROVED': 'Revendicare aprobată',
+        'SUBMISSION_APPROVED': 'Contribuție aprobată',
+        'FORECAST_CHANGE': 'Prognoză actualizată',
       };
-      return translations[field] || field;
+      return translations[changeType] || changeType;
     }
-    return field.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+    return changeType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const formatMetadata = (metadata: any): string => {
+    if (!metadata) return '';
+    if (typeof metadata === 'object') {
+      if (metadata.oldValue && metadata.newValue) {
+        return `${metadata.oldValue} → ${metadata.newValue}`;
+      }
+      if (metadata.field) {
+        return metadata.field;
+      }
+      return JSON.stringify(metadata);
+    }
+    return String(metadata);
   };
 
   return (
@@ -57,23 +79,15 @@ export function ActivityFeed({ changes, lang }: ActivityFeedProps) {
         {changes.slice(0, 10).map((change) => (
           <div key={change.id} className="flex gap-3 text-sm">
             <span className="text-lg" aria-hidden="true">
-              {getActivityIcon(change.field)}
+              {getActivityIcon(change.changeType)}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-medium">{formatFieldName(change.field)}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {change.oldValue && change.newValue ? (
-                  <>
-                    {String(change.oldValue)} → {String(change.newValue)}
-                  </>
-                ) : change.newValue ? (
-                  <>
-                    {lang === 'ro' ? 'Actualizat la' : 'Updated to'} {String(change.newValue)}
-                  </>
-                ) : (
-                  lang === 'ro' ? 'Modificat' : 'Changed'
-                )}
-              </p>
+              <p className="font-medium">{formatChangeType(change.changeType)}</p>
+              {change.metadata && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {formatMetadata(change.metadata)}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 {formatDistanceToNow(change.createdAt, {
                   addSuffix: true,
