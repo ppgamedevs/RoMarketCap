@@ -14,9 +14,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { kv } from "@vercel/kv";
 import * as Sentry from "@sentry/nextjs";
+import { Prisma } from "@prisma/client";
 import { BVB_SYMBOL_TO_CUI } from "@/src/lib/ingestion/national/sources/bvbListed";
 import { verifyCompany } from "@/src/lib/connectors/anaf/verifyCompany";
 import { applyPostIngestionHooks } from "@/src/lib/ingestion/postHooks";
+import { fetchBVBStockPrice } from "@/src/lib/connectors/bvb/yahooFinance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,6 +62,7 @@ export async function POST(req: Request) {
       created: 0,
       updated: 0,
       namesUpdated: 0,
+      marketCapUpdated: 0,
       errors: 0,
       errorDetails: [] as Array<{ symbol: string; error: string }>,
     };
@@ -105,6 +108,22 @@ export async function POST(req: Request) {
             }
           }
 
+          // Fetch real-time stock price and market cap
+          let marketCapData: { marketCap: Prisma.Decimal; lastPriceAt: Date } | undefined;
+          try {
+            const stockPrice = await fetchBVBStockPrice(symbol);
+            if (stockPrice && stockPrice.marketCap) {
+              marketCapData = {
+                marketCap: new Prisma.Decimal(stockPrice.marketCap),
+                lastPriceAt: stockPrice.lastUpdated,
+              };
+              results.marketCapUpdated++;
+              console.log(`[sync-bvb] Fetched market cap for ${symbol}: ${stockPrice.marketCap} ${stockPrice.currency}`);
+            }
+          } catch (err) {
+            console.warn(`[sync-bvb] Failed to fetch price for ${symbol}:`, err);
+          }
+
           await prisma.company.update({
             where: { cui },
             data: {
@@ -116,6 +135,10 @@ export async function POST(req: Request) {
                 legalName: officialName,
                 officialName,
                 anafVerifiedAt: new Date(),
+              } : {}),
+              ...(marketCapData ? {
+                marketCap: marketCapData.marketCap,
+                lastPriceAt: marketCapData.lastPriceAt,
               } : {}),
               dataConfidence: Math.max(existing.isListed ? 80 : 70, 70), // Boost confidence for listed companies
               lastSeenAtFromSources: new Date(),
@@ -144,6 +167,22 @@ export async function POST(req: Request) {
             console.warn(`[sync-bvb] ANAF verification failed for new company ${symbol}:`, err);
           }
 
+          // Fetch real-time stock price and market cap for new company
+          let marketCapData: { marketCap: Prisma.Decimal; lastPriceAt: Date } | undefined;
+          try {
+            const stockPrice = await fetchBVBStockPrice(symbol);
+            if (stockPrice && stockPrice.marketCap) {
+              marketCapData = {
+                marketCap: new Prisma.Decimal(stockPrice.marketCap),
+                lastPriceAt: stockPrice.lastUpdated,
+              };
+              results.marketCapUpdated++;
+              console.log(`[sync-bvb] Fetched market cap for new ${symbol}: ${stockPrice.marketCap} ${stockPrice.currency}`);
+            }
+          } catch (err) {
+            console.warn(`[sync-bvb] Failed to fetch price for new ${symbol}:`, err);
+          }
+
           const slug = `${officialName.toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
@@ -168,6 +207,10 @@ export async function POST(req: Request) {
               universeSource: "BVB",
               universeVerified: true,
               lastSeenAtFromSources: new Date(),
+              ...(marketCapData ? {
+                marketCap: marketCapData.marketCap,
+                lastPriceAt: marketCapData.lastPriceAt,
+              } : {}),
             },
           });
 
@@ -201,7 +244,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      message: `Synced ${results.total} BVB companies: ${results.created} created, ${results.updated} updated, ${results.namesUpdated} names updated, ${results.errors} errors`,
+      message: `Synced ${results.total} BVB companies: ${results.created} created, ${results.updated} updated, ${results.namesUpdated} names updated, ${results.marketCapUpdated} market caps updated, ${results.errors} errors`,
       duration,
       results,
     });

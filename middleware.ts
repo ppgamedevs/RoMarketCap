@@ -44,7 +44,8 @@ export default withAuth({
           pathname === "/api/admin/add-bvb-columns" ||
           pathname === "/api/admin/cleanup-placeholder-companies" ||
           pathname === "/api/admin/cleanup-public-entities" ||
-          pathname === "/api/admin/sync-bvb") {
+          pathname === "/api/admin/sync-bvb" ||
+          pathname === "/api/admin/run-anaf-bulk-financials") {
         return true;
       }
       

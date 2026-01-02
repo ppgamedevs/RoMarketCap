@@ -74,15 +74,33 @@ The orchestrator (`/api/cron/orchestrate`) runs jobs in this order:
    - Runs if `CRON_SNAPSHOT` flag is enabled
    - Only runs once per UTC day (tracked in KV)
 
-10. **Weekly Digest** (once per week only)
+10. **Score Snapshots** (once per day only)
+   - Creates daily CompanyScoreHistory records for sparkline visualization
+   - Snapshots current scores for all public companies
+   - Runs if `CRON_SCORE_SNAPSHOTS` flag is enabled (default: true)
+   - Only runs once per UTC day (tracked in KV)
+   - Processes 500 companies per batch with cursor-based pagination
+
+11. **Weekly Digest** (once per week only)
    - Generates and sends weekly newsletter
    - Runs if `NEWSLETTER_SENDS` flag is enabled
    - Only runs once per week (tracked in KV)
 
-11. **Claim Drip** (daily)
+12. **Claim Drip** (daily)
    - Sends claim drip emails (day 2 and day 5 after claim submission)
    - Runs daily to check for claims that need follow-up emails
    - No feature flag (always enabled)
+
+## BVB Sync
+
+In addition to the orchestrator, there's a separate daily BVB sync:
+
+**BVB Sync** (daily at 18:00 Bucharest time)
+- Syncs BVB (Bucharest Stock Exchange) listed companies
+- Fetches real-time stock prices from Yahoo Finance API
+- Updates market cap for all 55 BVB listed companies
+- Runs if `BVB_PRICE_FETCH_ENABLED` flag is enabled (default: true)
+- Schedule: `0 16 * * *` (18:00 EET = 16:00 UTC)
 
 ## Manual Execution
 
@@ -96,6 +114,16 @@ curl -X POST https://your-domain.com/api/cron/recalculate \
 # Or use orchestrator
 curl -X POST https://your-domain.com/api/cron/orchestrate \
   -H "x-cron-secret: YOUR_CRON_SECRET"
+
+# BVB sync (admin endpoint, no secret needed)
+curl -X POST https://your-domain.com/api/admin/sync-bvb
+
+# Score snapshots
+curl -X POST https://your-domain.com/api/cron/score-snapshots \
+  -H "x-cron-secret: YOUR_CRON_SECRET"
+
+# ANAF bulk financials (admin endpoint, no secret needed)
+curl -X POST https://your-domain.com/api/admin/run-anaf-bulk-financials
 ```
 
 ## Monitoring

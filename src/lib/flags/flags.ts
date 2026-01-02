@@ -37,7 +37,10 @@ export type FeatureFlag =
   | "NATIONAL_INGESTION_ENABLED" // PROMPT 61: National ingestion feature
   | "NATIONAL_INGESTION_CRON_ENABLED" // PROMPT 61: National ingestion cron
   | "NATIONAL_INGESTION_ADMIN_ENABLED" // PROMPT 61: National ingestion admin UI
-  | "UPDATE_NAMES_SCORES_CRON_ENABLED"; // Update company names and scores cron
+  | "UPDATE_NAMES_SCORES_CRON_ENABLED" // Update company names and scores cron
+  | "CRON_SCORE_SNAPSHOTS" // Daily score snapshots for sparklines
+  | "BVB_PRICE_FETCH_ENABLED" // BVB stock price fetching
+  | "ANAF_BULK_FINANCIALS_ENABLED"; // ANAF bulk financials ingestion
 
 /**
  * Flags that default to DISABLED (fail-closed) for safety.
@@ -136,6 +139,9 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
     "NATIONAL_INGESTION_CRON_ENABLED",
     "NATIONAL_INGESTION_ADMIN_ENABLED",
     "UPDATE_NAMES_SCORES_CRON_ENABLED",
+    "CRON_SCORE_SNAPSHOTS",
+    "BVB_PRICE_FETCH_ENABLED",
+    "ANAF_BULK_FINANCIALS_ENABLED",
   ];
 
   const results = await Promise.all(flags.map(async (flag) => [flag, await getFlag(flag)] as const));
