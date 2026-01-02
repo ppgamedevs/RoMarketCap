@@ -60,6 +60,7 @@ export default withAuth({
       pathname === "/api/admin/check-companies-without-marketcap" ||
       pathname === "/api/admin/check-revenue-data" ||
       pathname === "/api/admin/debug-company-status" ||
+      pathname === "/api/admin/boost-major-companies-confidence" ||
       pathname === "/api/admin/clear-market-cache") {
     return true;
   }
