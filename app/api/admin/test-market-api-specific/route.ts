@@ -28,6 +28,15 @@ export async function GET(req: Request) {
 
     const data = await response.json();
 
+    // Check if data has companies
+    if (!data.companies || !Array.isArray(data.companies)) {
+      return NextResponse.json({
+        ok: false,
+        error: "No companies in API response",
+        data,
+      });
+    }
+
     // Find SIF companies
     const sifCompanies = data.companies.filter((c: any) => 
       c.name.includes("SIF") || 
