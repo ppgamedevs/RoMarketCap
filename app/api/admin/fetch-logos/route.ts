@@ -28,6 +28,7 @@ async function executeFetchLogos(options: FetchLogosOptions) {
   const dryRun = options.dryRun || false;
   const skipCache = options.skipCache || false;
 
+  try {
     const startTime = Date.now();
 
     // Query companies that need logos
