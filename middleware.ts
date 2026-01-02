@@ -67,7 +67,8 @@ export default withAuth({
       pathname === "/api/admin/check-cui-mismatch" || // Check CUI mismatches
       pathname === "/api/admin/debug-missing-marketcaps" || // Debug missing market caps
       pathname === "/api/admin/check-top100-coverage" || // Check top100 coverage
-      pathname === "/api/admin/debug-bvb-symbols") { // NEW: Debug BVB symbols
+      pathname === "/api/admin/debug-bvb-symbols" || // Debug BVB symbols
+      pathname === "/api/admin/test-market-api-specific") { // NEW: Test market API for specific companies
     return true;
   }
       
