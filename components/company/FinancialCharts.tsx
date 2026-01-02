@@ -107,11 +107,11 @@ export function FinancialCharts({ data, currency, lang }: FinancialChartsProps) 
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem'
               }}
-              formatter={(value: any, name: string) => {
+              formatter={(value: any, name?: string) => {
                 if (name === 'employees') return [formatNumber(value), lang === 'ro' ? 'Angajați' : 'Employees'];
                 if (name === 'revenue') return [formatMoney(value), lang === 'ro' ? 'Venituri' : 'Revenue'];
                 if (name === 'profit') return [formatMoney(value), lang === 'ro' ? 'Profit' : 'Profit'];
-                return [value, name];
+                return [value, name || ''];
               }}
               labelFormatter={(label) => `${lang === 'ro' ? 'An' : 'Year'}: ${label}`}
             />
