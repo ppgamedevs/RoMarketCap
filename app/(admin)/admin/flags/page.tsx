@@ -153,6 +153,21 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable automated cron job to update company names from ANAF and recalculate scores",
     risky: false,
   },
+  CRON_SCORE_SNAPSHOTS: {
+    label: "Cron: Score Snapshots",
+    description: "Enable/disable daily score snapshots for sparkline visualization (creates CompanyScoreHistory records)",
+    risky: false,
+  },
+  BVB_PRICE_FETCH_ENABLED: {
+    label: "BVB: Price Fetch",
+    description: "Enable/disable BVB stock price fetching from Yahoo Finance API for market cap calculation",
+    risky: false,
+  },
+  ANAF_BULK_FINANCIALS_ENABLED: {
+    label: "ANAF: Bulk Financials",
+    description: "Enable/disable ANAF bulk financials ingestion from data.gov.ro (revenue, profit, employees)",
+    risky: false,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",
