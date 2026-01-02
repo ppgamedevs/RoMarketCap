@@ -178,6 +178,54 @@
       "revenue": 1000000000,
       "employees": 1800,
       "industry": "IT & Software"
+    },
+    "3034818": {
+      "name": "Dedeman SRL",
+      "revenue": 7000000000,
+      "employees": 6000,
+      "industry": "Retail"
+    },
+    "33628150": {
+      "name": "Mega Image SRL",
+      "revenue": 10000000000,
+      "employees": 14000,
+      "industry": "Retail"
+    },
+    "27084373": {
+      "name": "Sameday Courier SRL",
+      "revenue": 800000000,
+      "employees": 2500,
+      "industry": "Logistics"
+    },
+    "3111101": {
+      "name": "Ford Romania SA",
+      "revenue": 8000000000,
+      "employees": 5000,
+      "industry": "Automotive"
+    },
+    "30993044": {
+      "name": "UiPath SRL",
+      "revenue": 500000000,
+      "employees": 800,
+      "industry": "IT & Software"
+    },
+    "7889260": {
+      "name": "Regina Maria SRL",
+      "revenue": 1500000000,
+      "employees": 6000,
+      "industry": "Healthcare"
+    },
+    "6861682": {
+      "name": "NN Asigurări de Viață SA",
+      "revenue": 2000000000,
+      "employees": 1000,
+      "industry": "Insurance"
+    },
+    "8951664": {
+      "name": "Metro Cash & Carry Romania SRL",
+      "revenue": 6000000000,
+      "employees": 4000,
+      "industry": "Retail"
     }
   }
 }
