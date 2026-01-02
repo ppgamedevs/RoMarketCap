@@ -143,7 +143,7 @@ export default async function CompanyPage({ params }: PageProps) {
   };
 
   type CachedData = {
-    related: Array<{ slug: string; name: string; romcScore: number | null }>;
+    related: Array<{ slug: string; name: string; romcScore: number | null; industry: string | null }>;
     metrics: Prisma.CompanyMetricsGetPayload<Record<string, never>> | null;
     latestDaily: Prisma.CompanyScoreSnapshotGetPayload<Record<string, never>> | null;
     history: Prisma.CompanyScoreSnapshotGetPayload<Record<string, never>>[];
@@ -169,7 +169,7 @@ export default async function CompanyPage({ params }: PageProps) {
               },
               orderBy: [{ romcScore: "desc" }],
               take: 6,
-              select: { slug: true, name: true, romcScore: true },
+              select: { slug: true, name: true, romcScore: true, industry: true },
             }),
             prisma.companyMetrics.findUnique({ where: { companyId: company.id } }),
             prisma.companyScoreSnapshot.findFirst({
@@ -240,7 +240,7 @@ export default async function CompanyPage({ params }: PageProps) {
     },
     orderBy: [{ romcScore: "desc" }],
     take: 6,
-    select: { slug: true, name: true, romcScore: true },
+    select: { slug: true, name: true, romcScore: true, industry: true },
   }));
   const metrics = cachedData?.metrics ?? (await prisma.companyMetrics.findUnique({ where: { companyId: company.id } }));
   const latestDaily = cachedData?.latestDaily ?? (await prisma.companyScoreSnapshot.findFirst({
