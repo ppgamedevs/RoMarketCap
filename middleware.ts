@@ -53,7 +53,8 @@ export default withAuth({
       pathname === "/api/admin/add-logo-url-column" ||
       pathname === "/api/admin/fetch-logos" ||
       pathname === "/api/admin/add-financial-data-source-enum" ||
-      pathname === "/api/admin/seed-bvb-market-caps") {
+      pathname === "/api/admin/seed-bvb-market-caps" ||
+      pathname === "/api/admin/calculate-market-caps") {
     return true;
   }
       
