@@ -63,7 +63,8 @@ export default withAuth({
       pathname === "/api/admin/boost-major-companies-confidence" ||
       pathname === "/api/admin/test-market-api" ||
       pathname === "/api/admin/clear-market-cache" ||
-      pathname === "/api/admin/debug-market-cap-data") { // NEW: Debug market cap data
+      pathname === "/api/admin/debug-market-cap-data" || // Debug market cap data
+      pathname === "/api/admin/check-cui-mismatch") { // NEW: Check CUI mismatches
     return true;
   }
       
