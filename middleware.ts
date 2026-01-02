@@ -58,6 +58,7 @@ export default withAuth({
       pathname === "/api/admin/seed-major-companies-revenue" ||
       pathname === "/api/admin/calculate-market-caps" ||
       pathname === "/api/admin/check-companies-without-marketcap" ||
+      pathname === "/api/admin/check-revenue-data" ||
       pathname === "/api/admin/clear-market-cache") {
     return true;
   }
