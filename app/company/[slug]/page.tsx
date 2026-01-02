@@ -34,6 +34,12 @@ import { ProgressRing } from "@/components/ui/ProgressRing";
 import type { SourceId } from "@/src/lib/ingestion/types";
 import { FinancialsCard } from "@/components/company/FinancialsCard";
 import { CompanyFinancialDataSource } from "@prisma/client";
+import { FinancialCharts } from "@/components/company/FinancialCharts";
+import { NewsFeed } from "@/components/company/NewsFeed";
+import { ActivityFeed } from "@/components/company/ActivityFeed";
+import { CompetitorsTable } from "@/components/company/CompetitorsTable";
+import { SimilarCompaniesWidget } from "@/components/company/SimilarCompaniesWidget";
+import { SocialStats } from "@/components/company/SocialStats";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -365,8 +371,10 @@ export default async function CompanyPage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 py-10">
       <TrackCompanyView cui={company.cui ?? null} industrySlug={company.industrySlug ?? null} countySlug={company.countySlug ?? null} />
+      
+      {/* Company Header - Full Width */}
       <CompanyHeader
         locale="ro"
         slug={company.slug}
@@ -408,6 +416,7 @@ export default async function CompanyPage({ params }: PageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
+      {/* Key Metrics - Full Width */}
       <section className="mt-6 grid gap-4 rounded-xl border bg-card p-4 shadow-sm sm:grid-cols-4">
         <Metric label="ROMC Score" value={romcScore != null ? `${romcScore}/100` : "N/A"} delta={confidence ? { value: `${confidence}/100`, direction: "up" } : undefined} />
         <Metric label={lang === "ro" ? "Încredere date" : "Data confidence"} value={company.dataConfidence != null ? `${company.dataConfidence}/100` : "N/A"} />
@@ -417,7 +426,12 @@ export default async function CompanyPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-4">
+      {/* Two-Column Layout */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_350px]">
+        {/* Main Content - Left Column (70%) */}
+        <div className="space-y-6">
+          {/* Quick Stats */}
+          <section className="grid gap-4 sm:grid-cols-4">
         <MetricCard
           label={t(lang, "valuation_range")}
           value={
@@ -434,9 +448,59 @@ export default async function CompanyPage({ params }: PageProps) {
         />
         <MetricCard label={t(lang, "confidence")} value={`${(romcConfidence ?? confidence)}/100`} hint="v1" />
         <MetricCard label="Risk flags" value={riskFlags.length ? `${riskFlags.length}` : "0"} />
-      </section>
+          </section>
 
-      <section className="mt-6 grid gap-4">
+          {/* Financial Charts */}
+          <FinancialCharts
+            data={financialSnapshots.map((s) => ({
+              year: s.fiscalYear,
+              revenue: s.revenue ? Number(String(s.revenue)) : null,
+              profit: s.profit ? Number(String(s.profit)) : null,
+              employees: s.employees ?? null,
+            }))}
+            currency={company.currency ?? "EUR"}
+            lang={lang}
+          />
+
+          {/* Score Explanation */}
+          <ScoreExplanation
+            lang={lang}
+            company={{
+              romcScore: company.romcScore,
+              romcAiScore: company.romcAiScore,
+              previousRomcAiScore: company.previousRomcAiScore,
+              revenueLatest: company.revenueLatest ? Number(String(company.revenueLatest)) : null,
+              profitLatest: company.profitLatest ? Number(String(company.profitLatest)) : null,
+              employees: company.employees,
+              enrichVersion: company.enrichVersion,
+              lastEnrichedAt: company.lastEnrichedAt,
+              industrySlug: company.industrySlug,
+              countySlug: company.countySlug,
+            }}
+            isPremium={session?.user?.isPremium ?? false}
+          />
+
+          {/* Competitors Comparison */}
+          <CompetitorsTable
+            company={{
+              name: company.name,
+              romcScore: company.romcScore ?? null,
+              revenue: company.revenueLatest ? Number(String(company.revenueLatest)) : null,
+              employees: company.employees,
+            }}
+            competitors={related.map(r => ({
+              slug: r.slug,
+              name: r.name,
+              romcScore: r.romcScore,
+              revenueLatest: null,
+              employees: null,
+            }))}
+            lang={lang}
+            currency={company.currency ?? "EUR"}
+          />
+
+          {/* Company Overview */}
+          <section className="grid gap-4">
         <div className="rounded-xl border bg-card p-6 text-card-foreground">
           <h2 className="text-sm font-medium">{lang === "ro" ? "Data sources" : "Data sources"}</h2>
           <p className="mt-2 text-sm text-muted-foreground leading-6">
@@ -487,114 +551,93 @@ export default async function CompanyPage({ params }: PageProps) {
           fieldProvenance={company.fieldProvenance ? (company.fieldProvenance as unknown as Record<string, { sourceId: SourceId; sourceRef: string; seenAt: Date; confidence: number }>) : null}
         />
 
-        <FinancialsCard
-          lang={lang}
-          revenueLatest={company.revenueLatest ? Number(String(company.revenueLatest)) : null}
-          profitLatest={company.profitLatest ? Number(String(company.profitLatest)) : null}
-          employees={company.employees}
-          currency={company.currency}
-          lastFinancialSyncAt={company.lastFinancialSyncAt}
-          financialSource={company.financialSource}
-          financialSnapshots={financialSnapshots.map((s) => ({
-            fiscalYear: s.fiscalYear,
-            revenue: s.revenue ? Number(String(s.revenue)) : null,
-            profit: s.profit ? Number(String(s.profit)) : null,
-            employees: s.employees ?? null,
-            currency: s.currency,
-            dataSource: s.dataSource,
-            fetchedAt: s.fetchedAt,
-          }))}
-        />
-
-        <ScoreExplanation
-          lang={lang}
-          company={{
-            romcScore: company.romcScore,
-            romcAiScore: company.romcAiScore,
-            previousRomcAiScore: company.previousRomcAiScore,
-            revenueLatest: company.revenueLatest ? Number(String(company.revenueLatest)) : null,
-            profitLatest: company.profitLatest ? Number(String(company.profitLatest)) : null,
-            employees: company.employees,
-            enrichVersion: company.enrichVersion,
-            lastEnrichedAt: company.lastEnrichedAt,
-            industrySlug: company.industrySlug,
-            countySlug: company.countySlug,
-          }}
-          isPremium={session?.user?.isPremium ?? false}
-        />
-
-        <details className="rounded-xl border bg-card p-6 text-card-foreground">
-          <summary className="cursor-pointer text-sm font-medium">{t(lang, "how_romc_works")}</summary>
-          <p className="mt-3 text-sm text-muted-foreground leading-6">{t(lang, "how_romc_body")}</p>
-          <p className="mt-3 text-sm text-muted-foreground leading-6">
-            {lang === "ro"
-              ? "Enrichment v1 folosește doar website-ul companiei (dacă există) pentru a extrage titlu, descriere și linkuri sociale, cu timeout și limite stricte."
-              : "Enrichment v1 uses only the company website (if present) to extract title, description, and social links, with strict timeouts and limits."}
-          </p>
-          <p className="mt-3 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
-        </details>
-
-        {company.cui ? <PremiumPanel lang={lang} cui={company.cui} /> : null}
-
-        <Placements placements={placements} location="company" showEmptyState />
-
-        {company.cui ? <ForecastPanel lang={lang} cui={company.cui} /> : null}
-
-        {/* Claim CTAs - show if not claimed */}
-        {company.cui && session?.user?.id && !isClaimed ? (
-          <ClaimCtas
+          <FinancialsCard
             lang={lang}
-            companySlug={company.slug}
-            companyCui={company.cui}
-            romcScore={company.romcScore}
-            isClaimed={isClaimed}
-            isPremium={session.user.isPremium ?? false}
+            revenueLatest={company.revenueLatest ? Number(String(company.revenueLatest)) : null}
+            profitLatest={company.profitLatest ? Number(String(company.profitLatest)) : null}
+            employees={company.employees}
+            currency={company.currency}
+            lastFinancialSyncAt={company.lastFinancialSyncAt}
+            financialSource={company.financialSource}
+            financialSnapshots={financialSnapshots.map((s) => ({
+              fiscalYear: s.fiscalYear,
+              revenue: s.revenue ? Number(String(s.revenue)) : null,
+              profit: s.profit ? Number(String(s.profit)) : null,
+              employees: s.employees ?? null,
+              currency: s.currency,
+              dataSource: s.dataSource,
+              fetchedAt: s.fetchedAt,
+            }))}
           />
-        ) : null}
 
-        {company.cui ? <ClaimSubmitPanel lang={lang} cui={company.cui} /> : null}
+          <details className="rounded-xl border bg-card p-6 text-card-foreground">
+            <summary className="cursor-pointer text-sm font-medium">{t(lang, "how_romc_works")}</summary>
+            <p className="mt-3 text-sm text-muted-foreground leading-6">{t(lang, "how_romc_body")}</p>
+            <p className="mt-3 text-sm text-muted-foreground leading-6">
+              {lang === "ro"
+                ? "Enrichment v1 folosește doar website-ul companiei (dacă există) pentru a extrage titlu, descriere și linkuri sociale, cu timeout și limite stricte."
+                : "Enrichment v1 uses only the company website (if present) to extract title, description, and social links, with strict timeouts and limits."}
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">{t(lang, "disclaimer")}</p>
+          </details>
 
-        <RecentChanges lang={lang} changes={recentChanges} />
+          {company.cui ? <PremiumPanel lang={lang} cui={company.cui} /> : null}
 
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{lang === "ro" ? "Linkuri" : "Links"}</h2>
-          <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            {company.industrySlug ? (
-              <Link className="underline underline-offset-4" href={`/industries/${encodeURIComponent(company.industrySlug)}`}>
-                {lang === "ro" ? "Industrie" : "Industry"}: {company.industrySlug}
-              </Link>
-            ) : null}
-            {company.countySlug ? (
-              <Link className="underline underline-offset-4" href={`/counties/${encodeURIComponent(company.countySlug)}`}>
-                {lang === "ro" ? "Județ" : "County"}: {company.countySlug}
-              </Link>
-            ) : null}
-            {company.industrySlug ? (
-              <Link className="underline underline-offset-4" href={`/companies?industry=${encodeURIComponent(company.industrySlug)}`}>
-                {lang === "ro" ? "Director (industria)" : "Directory (industry)"}
-              </Link>
-            ) : null}
-            {company.countySlug ? (
-              <Link className="underline underline-offset-4" href={`/companies?county=${encodeURIComponent(company.countySlug)}`}>
-                {lang === "ro" ? "Director (județ)" : "Directory (county)"}
-              </Link>
-            ) : null}
-            {company.cui ? (
-              <a
-                className="underline underline-offset-4"
-                href={`mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(
-                  `Report issue: ${company.name} (CUI ${company.cui})`,
-                )}`}
-              >
-                {lang === "ro" ? "Raportează o problemă" : "Report an issue"}
-              </a>
-            ) : null}
+          <Placements placements={placements} location="company" showEmptyState />
+
+          {company.cui ? <ForecastPanel lang={lang} cui={company.cui} /> : null}
+
+          {/* Claim CTAs - show if not claimed */}
+          {company.cui && session?.user?.id && !isClaimed ? (
+            <ClaimCtas
+              lang={lang}
+              companySlug={company.slug}
+              companyCui={company.cui}
+              romcScore={company.romcScore}
+              isClaimed={isClaimed}
+              isPremium={session.user.isPremium ?? false}
+            />
+          ) : null}
+
+          {company.cui ? <ClaimSubmitPanel lang={lang} cui={company.cui} /> : null}
+
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">{lang === "ro" ? "Linkuri" : "Links"}</h2>
+            <div className="mt-3 flex flex-wrap gap-3 text-sm">
+              {company.industrySlug ? (
+                <Link className="underline underline-offset-4" href={`/industries/${encodeURIComponent(company.industrySlug)}`}>
+                  {lang === "ro" ? "Industrie" : "Industry"}: {company.industrySlug}
+                </Link>
+              ) : null}
+              {company.countySlug ? (
+                <Link className="underline underline-offset-4" href={`/counties/${encodeURIComponent(company.countySlug)}`}>
+                  {lang === "ro" ? "Județ" : "County"}: {company.countySlug}
+                </Link>
+              ) : null}
+              {company.industrySlug ? (
+                <Link className="underline underline-offset-4" href={`/companies?industry=${encodeURIComponent(company.industrySlug)}`}>
+                  {lang === "ro" ? "Director (industria)" : "Directory (industry)"}
+                </Link>
+              ) : null}
+              {company.countySlug ? (
+                <Link className="underline underline-offset-4" href={`/companies?county=${encodeURIComponent(company.countySlug)}`}>
+                  {lang === "ro" ? "Director (județ)" : "Directory (county)"}
+                </Link>
+              ) : null}
+              {company.cui ? (
+                <a
+                  className="underline underline-offset-4"
+                  href={`mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(
+                    `Report issue: ${company.name} (CUI ${company.cui})`,
+                  )}`}
+                >
+                  {lang === "ro" ? "Raportează o problemă" : "Report an issue"}
+                </a>
+              ) : null}
+            </div>
           </div>
-        </div>
 
-        <CorrectionRequestForm lang={lang} companyId={company.id} companyCui={company.cui ?? undefined} />
-
-        <RelatedCompanies lang={lang} items={related} />
+          <CorrectionRequestForm lang={lang} companyId={company.id} companyCui={company.cui ?? undefined} />
 
         <div className="rounded-xl border bg-card p-6 text-card-foreground">
           <h2 className="text-sm font-medium">{lang === "ro" ? "Metrici (ultimul an)" : "Metrics (latest year)"}</h2>
@@ -696,13 +739,43 @@ export default async function CompanyPage({ params }: PageProps) {
           </ul>
         </div>
 
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">Disclaimer</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Estimările sunt orientative și nu reprezintă consultanță financiară. RoMarketCap nu intermediază tranzacții.
-          </p>
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">Disclaimer</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Estimările sunt orientative și nu reprezintă consultanță financiară. RoMarketCap nu intermediază tranzacții.
+            </p>
+          </div>
         </div>
-      </section>
+
+        {/* Sidebar - Right Column (30%) */}
+        <aside className="space-y-6">
+          {/* News Feed */}
+          {company.cui && (
+            <NewsFeed
+              companyName={company.name}
+              companyCui={company.cui}
+              lang={lang}
+              limit={5}
+            />
+          )}
+
+          {/* Activity Feed */}
+          <ActivityFeed changes={recentChanges} lang={lang} />
+
+          {/* Social Stats */}
+          <SocialStats
+            socials={company.socials ? (company.socials as any) : null}
+            website={company.website}
+            lang={lang}
+          />
+
+          {/* Similar Companies */}
+          <SimilarCompaniesWidget companies={related} lang={lang} />
+
+          {/* Related Companies (legacy) */}
+          <RelatedCompanies lang={lang} items={related} />
+        </aside>
+      </div>
     </main>
   );
 }

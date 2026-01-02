@@ -436,6 +436,7 @@ model Company {
   mergedCompanies    Company[]            @relation("MergedCompanies")
   mergeCandidatesAsSource MergeCandidate[] @relation("SourceCompany")
   mergeCandidatesAsTarget MergeCandidate[] @relation("TargetCompany")
+  teamMembers            CompanyTeamMember[]
 
   // CRM-lite tagging for outreach
   outreachStatus      String?   @map("outreach_status")
@@ -1440,6 +1441,25 @@ model CompanyAlias {
   @@index([companyId])
   @@index([aliasType, aliasValue])
   @@map("company_aliases")
+}
+
+// PROMPT 63: Company Team Members (for enhanced company profiles)
+model CompanyTeamMember {
+  id         String   @id @default(uuid()) @map("id") @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  name       String   @map("name")
+  role       String   @map("role")
+  linkedIn   String?  @map("linkedin_url")
+  photo      String?  @map("photo_url")
+  order      Int      @default(0) @map("order")
+  verifiedAt DateTime? @map("verified_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@index([companyId])
+  @@index([companyId, order])
+  @@map("company_team_members")
 }
 
 // PROMPT 61: National Ingestion Job tracking

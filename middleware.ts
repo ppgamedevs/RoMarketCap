@@ -33,21 +33,23 @@ export default withAuth({
           pathname === "/api/admin/add-missing-company-columns" ||
           pathname === "/api/admin/add-import-jobs-tables" ||
           pathname === "/api/admin/add-company-risk-flags" ||
-          pathname === "/api/admin/add-universe-columns" ||
-          pathname === "/api/admin/add-company-provenance-table" ||
-          pathname === "/api/admin/add-scoring-columns" ||
-          pathname === "/api/admin/fetch-company-names-from-anaf" ||
-          pathname === "/api/admin/debug-anaf-response" ||
-          pathname === "/api/admin/add-ingest-runs-table" ||
-          pathname === "/api/admin/add-financial-snapshots-employees-column" ||
-          pathname === "/api/admin/seed-top100" ||
-          pathname === "/api/admin/add-bvb-columns" ||
-          pathname === "/api/admin/cleanup-placeholder-companies" ||
-          pathname === "/api/admin/cleanup-public-entities" ||
-          pathname === "/api/admin/sync-bvb" ||
-          pathname === "/api/admin/run-anaf-bulk-financials") {
-        return true;
-      }
+      pathname === "/api/admin/add-universe-columns" ||
+      pathname === "/api/admin/add-company-provenance-table" ||
+      pathname === "/api/admin/add-scoring-columns" ||
+      pathname === "/api/admin/fetch-company-names-from-anaf" ||
+      pathname === "/api/admin/debug-anaf-response" ||
+      pathname === "/api/admin/add-ingest-runs-table" ||
+      pathname === "/api/admin/add-financial-snapshots-employees-column" ||
+      pathname === "/api/admin/seed-top100" ||
+      pathname === "/api/admin/add-bvb-columns" ||
+      pathname === "/api/admin/cleanup-placeholder-companies" ||
+      pathname === "/api/admin/cleanup-public-entities" ||
+      pathname === "/api/admin/sync-bvb" ||
+      pathname === "/api/admin/run-anaf-bulk-financials" ||
+      pathname === "/api/admin/add-team-members-table" ||
+      pathname === "/api/admin/add-company-verification-table") {
+    return true;
+  }
       
       const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
       if (!isAdminPath) return true;

@@ -6,8 +6,8 @@ export function SiteFooter({ lang }: { lang: Lang }) {
   const contact = "contact@romarketcap.ro";
 
   return (
-    <footer className="mt-12 border-t">
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-8 text-sm">
+    <footer className="border-t" style={{ minHeight: '400px' }}>
+      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-12 text-sm">
         <div className="max-w-lg">
           <NewsletterCta lang={lang} placement="footer" />
         </div>

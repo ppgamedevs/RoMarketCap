@@ -63,11 +63,14 @@ export async function getLangForCache(): Promise<string> {
 
 /**
  * Standard cache TTLs per page type.
+ * Optimized for better performance and reduced database load.
  */
 export const PAGE_CACHE_TTLS = {
-  company: { ttl: 600, swr: 3600 }, // 10 min fresh, 1h stale
-  list: { ttl: 300, swr: 1800 }, // 5 min fresh, 30 min stale
-  taxonomy: { ttl: 1800, swr: 7200 }, // 30 min fresh, 2h stale
+  company: { ttl: 86400, swr: 172800 }, // 24h fresh, 48h stale - company data changes slowly
+  list: { ttl: 900, swr: 3600 }, // 15 min fresh, 1h stale - market/lists update more frequently
+  taxonomy: { ttl: 3600, swr: 14400 }, // 1h fresh, 4h stale - taxonomies rarely change
+  market: { ttl: 900, swr: 3600 }, // 15 min fresh, 1h stale - market view
+  homepage: { ttl: 900, swr: 3600 }, // 15 min fresh, 1h stale - homepage
 } as const;
 
 /**
