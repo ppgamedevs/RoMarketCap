@@ -11,13 +11,11 @@ import path from "path";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Top100Data = {
-  companies: Array<{
-    cui: string;
-    name: string;
-    industry?: string;
-    isListed?: boolean;
-  }>;
+type Top100Entry = {
+  cui: string;
+  name: string;
+  industry?: string;
+  isListed?: boolean;
 };
 
 export async function GET(req: Request) {
@@ -25,11 +23,11 @@ export async function GET(req: Request) {
     // Read top 100 list
     const dataPath = path.join(process.cwd(), "data", "seeds", "top100-romania.json");
     const fileContent = fs.readFileSync(dataPath, "utf-8");
-    const top100: Top100Data = JSON.parse(fileContent);
+    const top100: Top100Entry[] = JSON.parse(fileContent);
 
     const results = [];
 
-    for (const entry of top100.companies) {
+    for (const entry of top100) {
       const company = await prisma.company.findUnique({
         where: { cui: entry.cui },
         select: {
