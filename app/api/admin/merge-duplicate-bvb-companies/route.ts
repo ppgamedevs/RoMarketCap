@@ -33,6 +33,8 @@ export async function POST(req: Request) {
       ["28721210", "26405652"],
       // SafeTech: keep 37282445 (with marketCap), merge 28239696
       ["28239696", "37282445"],
+      // SIF Muntenia: keep 3168735 (with marketCap: 950M), merge 3209530 (without marketCap)
+      ["3209530", "3168735"],
     ];
 
     const results = {
