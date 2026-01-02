@@ -54,6 +54,7 @@ export default withAuth({
       pathname === "/api/admin/fetch-logos" ||
       pathname === "/api/admin/add-financial-data-source-enum" ||
       pathname === "/api/admin/seed-bvb-market-caps" ||
+      pathname === "/api/admin/seed-all-bvb-companies" ||
       pathname === "/api/admin/seed-major-companies-revenue" ||
       pathname === "/api/admin/calculate-market-caps" ||
       pathname === "/api/admin/check-companies-without-marketcap" ||
