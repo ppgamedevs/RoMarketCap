@@ -40,7 +40,8 @@ export type FeatureFlag =
   | "UPDATE_NAMES_SCORES_CRON_ENABLED" // Update company names and scores cron
   | "CRON_SCORE_SNAPSHOTS" // Daily score snapshots for sparklines
   | "BVB_PRICE_FETCH_ENABLED" // BVB stock price fetching
-  | "ANAF_BULK_FINANCIALS_ENABLED"; // ANAF bulk financials ingestion
+  | "ANAF_BULK_FINANCIALS_ENABLED" // ANAF bulk financials ingestion
+  | "FETCH_LOGOS_CRON_ENABLED"; // Logo fetching cron
 
 /**
  * Flags that default to DISABLED (fail-closed) for safety.
