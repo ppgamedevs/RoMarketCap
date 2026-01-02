@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { buildRankingGuard } from "@/src/lib/ranking/rankingGuard";
 import { isLaunchMode } from "@/src/lib/launch/mode";
+import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
     const guard = buildRankingGuard(launchMode, { minDataConfidence: 0 });
 
     // Build orderBy for marketCap sort
-    const orderBy = [
+    const orderBy: Prisma.CompanyOrderByWithRelationInput[] = [
       { marketCap: "desc" },
       { valuationRangeHigh: "desc" },
       { romcAiScore: "desc" },
