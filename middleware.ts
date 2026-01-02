@@ -52,7 +52,8 @@ export default withAuth({
       pathname === "/api/admin/add-company-change-logs-table" ||
       pathname === "/api/admin/add-logo-url-column" ||
       pathname === "/api/admin/fetch-logos" ||
-      pathname === "/api/admin/add-financial-data-source-enum") {
+      pathname === "/api/admin/add-financial-data-source-enum" ||
+      pathname === "/api/admin/seed-bvb-market-caps") {
     return true;
   }
       
