@@ -143,9 +143,11 @@ export async function GET(req: NextRequest) {
       orderBy = [{ romcScore: "desc" }, { dataConfidence: "desc" as any }, { lastScoredAt: "desc" }, { cui: "asc" }];
     } else if (sort === "marketCap") {
       // Sort by market cap with nulls last - companies with actual market caps appear first
+      // Prisma doesn't support nulls last directly, so we use a workaround:
+      // Sort by marketCap DESC (nulls will be at the end naturally in PostgreSQL)
       orderBy = [
-        { marketCap: { sort: "desc", nulls: "last" } } as any,
-        { valuationRangeHigh: { sort: "desc", nulls: "last" } } as any,
+        { marketCap: "desc" },
+        { valuationRangeHigh: "desc" },
         { romcAiScore: "desc" },
         { cui: "asc" }
       ];

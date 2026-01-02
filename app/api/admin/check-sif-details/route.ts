@@ -28,6 +28,7 @@ export async function GET(req: Request) {
         isPublic: true,
         isSkeleton: true,
         mergedIntoCompanyId: true,
+        visibilityStatus: true,
       },
     });
 
@@ -44,7 +45,8 @@ export async function GET(req: Request) {
         isPublic: c.isPublic,
         isSkeleton: c.isSkeleton,
         mergedIntoCompanyId: c.mergedIntoCompanyId,
-        shouldAppearInRanking: c.isPublic && !c.isSkeleton && !c.mergedIntoCompanyId && c.dataConfidence && c.dataConfidence >= 40,
+        visibilityStatus: c.visibilityStatus,
+        shouldAppearInRanking: c.isPublic && c.visibilityStatus === "PUBLIC" && !c.isSkeleton && !c.mergedIntoCompanyId && c.dataConfidence && c.dataConfidence >= 40,
       })),
     });
 
