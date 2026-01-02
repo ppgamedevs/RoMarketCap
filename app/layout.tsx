@@ -12,6 +12,7 @@ import { CookieConsentBanner } from "@/components/consent/CookieConsentBanner";
 import { ReferralCapture } from "@/components/referrals/ReferralCapture";
 import { ReadOnlyBanner } from "@/components/layout/ReadOnlyBanner";
 import { DemoBanner } from "@/components/layout/DemoBanner";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,15 +61,17 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReferralCapture />
-        <GoogleAnalytics />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
-        <SiteHeader lang={lang} />
-        <ReadOnlyBanner />
-        <DemoBanner />
-        {children}
-        <SiteFooter lang={lang} />
-        <CookieConsentBanner lang={lang} />
+        <SessionProvider>
+          <ReferralCapture />
+          <GoogleAnalytics />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
+          <SiteHeader lang={lang} />
+          <ReadOnlyBanner />
+          <DemoBanner />
+          {children}
+          <SiteFooter lang={lang} />
+          <CookieConsentBanner lang={lang} />
+        </SessionProvider>
       </body>
     </html>
   );
