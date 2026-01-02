@@ -11,8 +11,8 @@ export async function GET(req: Request) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     
-    // Fetch page 2 where SIFs should appear
-    const response = await fetch(`${baseUrl}/api/market?page=2&pageSize=50&lang=ro&sort=marketCap`, {
+    // Fetch page 1 to see what companies appear
+    const response = await fetch(`${baseUrl}/api/market?page=1&pageSize=100&lang=ro&sort=marketCap`, {
       headers: {
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
@@ -28,30 +28,31 @@ export async function GET(req: Request) {
 
     const data = await response.json();
 
-    // Check if data has companies
-    if (!data.companies || !Array.isArray(data.companies)) {
+    // Check if data has rows
+    if (!data.rows || !Array.isArray(data.rows)) {
       return NextResponse.json({
         ok: false,
-        error: "No companies in API response",
+        error: "No rows in API response",
         data,
       });
     }
 
     // Find SIF companies
-    const sifCompanies = data.companies.filter((c: any) => 
-      c.name.includes("SIF") || 
-      c.name.includes("Visual Fan") || 
-      c.name.includes("Norofert") || 
-      c.name.includes("2Performant") || 
-      c.name.includes("SafeTech")
+    const sifCompanies = data.rows.filter((c: any) => 
+      c.name?.includes("SIF") || 
+      c.name?.includes("Visual Fan") || 
+      c.name?.includes("Norofert") || 
+      c.name?.includes("2Performant") || 
+      c.name?.includes("SafeTech")
     );
 
     return NextResponse.json({
       ok: true,
       page: data.page,
-      totalPages: data.totalPages,
       totalCompanies: data.total,
-      companiesOnPage: data.companies.length,
+      companiesOnPage: data.rows.length,
+      freeLimit: data.freeLimit,
+      sifCompaniesFound: sifCompanies.length,
       sifCompanies: sifCompanies.map((c: any) => ({
         rank: c.rank,
         cui: c.cui,
@@ -61,10 +62,12 @@ export async function GET(req: Request) {
         stockSymbol: c.stockSymbol,
         dataConfidence: c.dataConfidence,
       })),
-      allCompaniesRanks: data.companies.map((c: any, idx: number) => ({
-        rank: c.rank || (data.page - 1) * 50 + idx + 1,
+      lastTenCompanies: data.rows.slice(-10).map((c: any, idx: number) => ({
+        rank: data.rows.length - 10 + idx + 1,
+        cui: c.cui,
         name: c.name,
         marketCap: c.marketCap,
+        dataConfidence: c.dataConfidence,
       })),
     });
 
