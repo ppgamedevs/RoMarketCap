@@ -68,7 +68,8 @@ export default withAuth({
       pathname === "/api/admin/debug-missing-marketcaps" || // Debug missing market caps
       pathname === "/api/admin/check-top100-coverage" || // Check top100 coverage
       pathname === "/api/admin/debug-bvb-symbols" || // Debug BVB symbols
-      pathname === "/api/admin/test-market-api-specific") { // NEW: Test market API for specific companies
+      pathname === "/api/admin/test-market-api-specific" || // Test market API for specific companies
+      pathname === "/api/admin/boost-bvb-companies-confidence") { // NEW: Boost BVB companies confidence
     return true;
   }
       

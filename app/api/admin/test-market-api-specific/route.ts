@@ -11,8 +11,8 @@ export async function GET(req: Request) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     
-    // Fetch page 1 to see what companies appear
-    const response = await fetch(`${baseUrl}/api/market?page=1&pageSize=100&lang=ro&sort=marketCap`, {
+    // Fetch page 2 to see SIF companies
+    const response = await fetch(`${baseUrl}/api/market?page=2&pageSize=50&lang=ro&sort=marketCap`, {
       headers: {
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
