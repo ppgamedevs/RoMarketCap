@@ -73,7 +73,8 @@ export default withAuth({
       pathname === "/api/admin/check-sif-details" || // Check SIF details
       pathname === "/api/admin/test-market-query" || // Test market query directly
       pathname === "/api/admin/test-homepage-api" || // Test homepage API call
-      pathname === "/api/admin/test-prisma-marketcap") { // NEW: Test Prisma marketCap query
+      pathname === "/api/admin/test-prisma-marketcap" || // Test Prisma marketCap query
+      pathname === "/api/admin/find-duplicate-companies") { // NEW: Find duplicate companies
     return true;
   }
       
