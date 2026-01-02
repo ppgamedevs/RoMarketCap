@@ -158,7 +158,11 @@ export async function GET(req: NextRequest) {
 
     // Calculate skip/limit
     const skip = (page - 1) * pageSize;
-    const effectiveLimit = isPremium || isAdmin ? pageSize : Math.min(pageSize, FREE_LIMIT - skip);
+    // For free users: allow viewing up to FREE_LIMIT companies total
+    // For premium/admin: no limit
+    const effectiveLimit = isPremium || isAdmin 
+      ? pageSize 
+      : Math.max(0, Math.min(pageSize, FREE_LIMIT - skip));
 
     if (effectiveLimit <= 0) {
       return NextResponse.json({
