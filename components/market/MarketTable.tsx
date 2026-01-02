@@ -257,7 +257,7 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    {row.isListed && row.marketCap !== null ? (
+                    {row.marketCap !== null ? (
                       <div>
                         <div className="text-sm font-medium">
                           {new Intl.NumberFormat(lang === "ro" ? "ro-RO" : "en-US", {
@@ -267,7 +267,9 @@ function MarketTableInner({
                             maximumFractionDigits: 1,
                           }).format(row.marketCap)}
                         </div>
-                        <div className="text-xs text-primary">{row.stockSymbol}</div>
+                        {row.isListed && row.stockSymbol && (
+                          <div className="text-xs text-primary">{row.stockSymbol}</div>
+                        )}
                       </div>
                     ) : row.valuationRangeLow !== null && row.valuationRangeHigh !== null ? (
                       <div className="text-sm">
