@@ -551,6 +551,7 @@ export default async function CompanyPage({ params }: PageProps) {
               fieldProvenance={company.fieldProvenance ? (company.fieldProvenance as unknown as Record<string, { sourceId: SourceId; sourceRef: string; seenAt: Date; confidence: number }>) : null}
             />
 
+            <FinancialsCard
               lang={lang}
               revenueLatest={company.revenueLatest ? Number(String(company.revenueLatest)) : null}
               profitLatest={company.profitLatest ? Number(String(company.profitLatest)) : null}
