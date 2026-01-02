@@ -47,7 +47,8 @@ export default withAuth({
       pathname === "/api/admin/sync-bvb" ||
       pathname === "/api/admin/run-anaf-bulk-financials" ||
       pathname === "/api/admin/add-team-members-table" ||
-      pathname === "/api/admin/add-company-verification-table") {
+      pathname === "/api/admin/add-company-verification-table" ||
+      pathname === "/api/admin/add-company-change-logs-table") {
     return true;
   }
       
