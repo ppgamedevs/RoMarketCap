@@ -72,7 +72,8 @@ export default withAuth({
       pathname === "/api/admin/boost-bvb-companies-confidence" || // Boost BVB companies confidence
       pathname === "/api/admin/check-sif-details" || // Check SIF details
       pathname === "/api/admin/test-market-query" || // Test market query directly
-      pathname === "/api/admin/test-homepage-api") { // NEW: Test homepage API call
+      pathname === "/api/admin/test-homepage-api" || // Test homepage API call
+      pathname === "/api/admin/test-prisma-marketcap") { // NEW: Test Prisma marketCap query
     return true;
   }
       
