@@ -22,42 +22,11 @@ type FetchLogosOptions = {
   skipCache?: boolean;
 };
 
-export async function GET(req: Request) {
-  try {
-    await requireAdminSession().catch(() => null); // Allow browser access
-    
-    const url = new URL(req.url);
-    const batchSize = parseInt(url.searchParams.get("batchSize") || "50");
-    const cursor = url.searchParams.get("cursor") || undefined;
-    const dryRun = url.searchParams.get("dryRun") === "true";
-    const skipCache = url.searchParams.get("skipCache") === "true";
-
-    return await POST(req, { batchSize, cursor, dryRun, skipCache });
-  } catch (error) {
-    console.error("[admin/fetch-logos] GET error:", error);
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request, options?: FetchLogosOptions) {
-  try {
-    await requireAdminSession().catch(() => null); // Allow browser access
-
-    // Parse options from body or use provided options
-    let opts = options;
-    if (!opts) {
-      try {
-        const body = await req.json();
-        opts = body;
-      } catch {
-        opts = {};
-      }
-    }
-
-    const batchSize = opts?.batchSize || 50;
-    const cursor = opts?.cursor;
-    const dryRun = opts?.dryRun || false;
-    const skipCache = opts?.skipCache || false;
+async function executeFetchLogos(options: FetchLogosOptions) {
+  const batchSize = options.batchSize || 50;
+  const cursor = options.cursor;
+  const dryRun = options.dryRun || false;
+  const skipCache = options.skipCache || false;
 
     const startTime = Date.now();
 
@@ -173,14 +142,50 @@ export async function POST(req: Request, options?: FetchLogosOptions) {
 
     console.log(`[fetch-logos] Completed in ${duration}ms:`, response);
 
-    return NextResponse.json(response);
+    return response;
   } catch (error) {
     console.error("[admin/fetch-logos] Fatal error:", error);
     Sentry.captureException(error);
     
-    return NextResponse.json({
-      ok: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }, { status: 500 });
+    throw error;
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    await requireAdminSession().catch(() => null); // Allow browser access
+    
+    const url = new URL(req.url);
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "50");
+    const cursor = url.searchParams.get("cursor") || undefined;
+    const dryRun = url.searchParams.get("dryRun") === "true";
+    const skipCache = url.searchParams.get("skipCache") === "true";
+
+    const result = await executeFetchLogos({ batchSize, cursor, dryRun, skipCache });
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("[admin/fetch-logos] GET error:", error);
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    await requireAdminSession().catch(() => null); // Allow browser access
+
+    // Parse options from body
+    let opts: FetchLogosOptions = {};
+    try {
+      const body = await req.json();
+      opts = body;
+    } catch {
+      // Use defaults if no body
+    }
+
+    const result = await executeFetchLogos(opts);
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("[admin/fetch-logos] POST error:", error);
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }
