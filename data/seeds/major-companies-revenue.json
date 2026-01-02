@@ -1,0 +1,183 @@
+{
+  "$schema": "Estimated revenue data for major Romanian companies",
+  "lastUpdated": "2025-01-02",
+  "source": "Public reports, industry estimates",
+  "currency": "RON",
+  "note": "Revenue figures are estimates based on public sources",
+  "companies": {
+    "15991456": {
+      "name": "Kaufland Romania SCS",
+      "revenue": 25000000000,
+      "employees": 18000,
+      "industry": "Retail"
+    },
+    "11588780": {
+      "name": "Carrefour Romania SA",
+      "revenue": 11000000000,
+      "employees": 12000,
+      "industry": "Retail"
+    },
+    "8614832": {
+      "name": "Selgros Cash & Carry SRL",
+      "revenue": 8500000000,
+      "employees": 5000,
+      "industry": "Retail"
+    },
+    "15348504": {
+      "name": "Auchan Romania SA",
+      "revenue": 8000000000,
+      "employees": 9000,
+      "industry": "Retail"
+    },
+    "15859559": {
+      "name": "Lidl Discount SRL",
+      "revenue": 20000000000,
+      "employees": 15000,
+      "industry": "Retail"
+    },
+    "11133814": {
+      "name": "Profi Rom Food SRL",
+      "revenue": 15000000000,
+      "employees": 20000,
+      "industry": "Retail"
+    },
+    "14399840": {
+      "name": "Dante International SA (eMAG)",
+      "revenue": 6000000000,
+      "employees": 3500,
+      "industry": "E-commerce"
+    },
+    "5765920": {
+      "name": "Penny Market SRL",
+      "revenue": 9000000000,
+      "employees": 12000,
+      "industry": "Retail"
+    },
+    "11268539": {
+      "name": "Cora Romania SRL",
+      "revenue": 3500000000,
+      "employees": 4000,
+      "industry": "Retail"
+    },
+    "11951598": {
+      "name": "Vodafone Romania SA",
+      "revenue": 5000000000,
+      "employees": 3000,
+      "industry": "Telecommunications"
+    },
+    "9010105": {
+      "name": "Orange Romania SA",
+      "revenue": 6500000000,
+      "employees": 4500,
+      "industry": "Telecommunications"
+    },
+    "4277320": {
+      "name": "Telekom Romania Communications SA",
+      "revenue": 3500000000,
+      "employees": 3500,
+      "industry": "Telecommunications"
+    },
+    "140292": {
+      "name": "Automobile Dacia SA",
+      "revenue": 35000000000,
+      "employees": 14000,
+      "industry": "Automotive"
+    },
+    "13093222": {
+      "name": "Engie Romania SA",
+      "revenue": 12000000000,
+      "employees": 3000,
+      "industry": "Energy"
+    },
+    "17983171": {
+      "name": "CEZ Romania SA",
+      "revenue": 8000000000,
+      "employees": 2500,
+      "industry": "Energy"
+    },
+    "18025825": {
+      "name": "E.ON Energie Romania SA",
+      "revenue": 10000000000,
+      "employees": 2000,
+      "industry": "Energy"
+    },
+    "3292522": {
+      "name": "Flanco Retail SA",
+      "revenue": 1200000000,
+      "employees": 2000,
+      "industry": "Retail"
+    },
+    "3772344": {
+      "name": "Altex Romania SRL",
+      "revenue": 4500000000,
+      "employees": 3500,
+      "industry": "Retail"
+    },
+    "361820": {
+      "name": "Raiffeisen Bank SA",
+      "revenue": 4500000000,
+      "employees": 5500,
+      "industry": "Banking"
+    },
+    "3663060": {
+      "name": "UniCredit Bank SA",
+      "revenue": 3500000000,
+      "employees": 5000,
+      "industry": "Banking"
+    },
+    "18031797": {
+      "name": "Garanti BBVA Romania SA",
+      "revenue": 1800000000,
+      "employees": 3000,
+      "industry": "Banking"
+    },
+    "18269263": {
+      "name": "Groupama Asigurări SA",
+      "revenue": 2500000000,
+      "employees": 1500,
+      "industry": "Insurance"
+    },
+    "2449180": {
+      "name": "Allianz-Tiriac Asigurări SA",
+      "revenue": 3500000000,
+      "employees": 2000,
+      "industry": "Insurance"
+    },
+    "14674310": {
+      "name": "FAN Courier Express SRL",
+      "revenue": 1500000000,
+      "employees": 8000,
+      "industry": "Logistics"
+    },
+    "24547887": {
+      "name": "IKEA Romania SA",
+      "revenue": 2500000000,
+      "employees": 2500,
+      "industry": "Retail"
+    },
+    "18603171": {
+      "name": "Continental Automotive Romania SRL",
+      "revenue": 12000000000,
+      "employees": 20000,
+      "industry": "Automotive"
+    },
+    "18263075": {
+      "name": "Leroy Merlin Romania SRL",
+      "revenue": 3500000000,
+      "employees": 4000,
+      "industry": "Retail"
+    },
+    "1860712": {
+      "name": "Rompetrol Rafinare SA",
+      "revenue": 25000000000,
+      "employees": 5000,
+      "industry": "Oil & Gas"
+    },
+    "14652668": {
+      "name": "Bitdefender SRL",
+      "revenue": 1000000000,
+      "employees": 1800,
+      "industry": "IT & Software"
+    }
+  }
+}
