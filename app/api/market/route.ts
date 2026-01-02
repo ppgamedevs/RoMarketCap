@@ -26,7 +26,7 @@ const QuerySchema = z.object({
   integrity: z.coerce.boolean().optional(),
   verified: z.coerce.boolean().optional(),
   fresh: z.coerce.boolean().optional(),
-  sort: z.enum(["romcAiScore", "romcScore", "marketCap", "confidence"]).optional().default("romcAiScore"),
+  sort: z.enum(["romcAiScore", "romcScore", "marketCap", "confidence"]).optional().default("marketCap"),
 });
 
 const CACHE_TTL = 60; // 60 seconds

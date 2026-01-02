@@ -69,7 +69,7 @@ export default async function MarketPage({ searchParams }: { searchParams: Searc
   const integrity = asString(sp.integrity) === "true";
   const verified = asString(sp.verified) === "true";
   const fresh = asString(sp.fresh) === "true";
-  const sort = (asString(sp.sort) as "romcAiScore" | "romcScore" | "marketCap" | "confidence") || "romcAiScore";
+  const sort = (asString(sp.sort) as "romcAiScore" | "romcScore" | "marketCap" | "confidence") || "marketCap";
 
   // Fetch filter options
   const [industries, counties] = await Promise.all([
