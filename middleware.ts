@@ -64,7 +64,8 @@ export default withAuth({
       pathname === "/api/admin/test-market-api" ||
       pathname === "/api/admin/clear-market-cache" ||
       pathname === "/api/admin/debug-market-cap-data" || // Debug market cap data
-      pathname === "/api/admin/check-cui-mismatch") { // NEW: Check CUI mismatches
+      pathname === "/api/admin/check-cui-mismatch" || // Check CUI mismatches
+      pathname === "/api/admin/debug-missing-marketcaps") { // NEW: Debug missing market caps
     return true;
   }
       
