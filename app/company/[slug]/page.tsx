@@ -454,7 +454,6 @@ export default async function CompanyPage({ params }: PageProps) {
     ],
     dateModified: company.lastUpdatedAt.toISOString(),
     datePublished: company.createdAt.toISOString(),
-    ].filter((p) => p !== null),
   };
 
   return (
