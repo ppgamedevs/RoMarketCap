@@ -5,13 +5,14 @@
  * 
  * Strategy (in order):
  * 1. Use foundedYear if available (set to Jan 1 of that year)
- * 2. Use createdAt as fallback (when we first saw the company - not perfect but better than nothing)
- * 3. Set a reasonable default (5 years ago) for companies without any date
+ * 2. Search web (Wikipedia + company website) for actual founding date
+ * 3. Use createdAt as fallback (when we first saw the company - not perfect but better than nothing)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
+import { fetchFoundingDate } from "@/src/lib/connectors/foundingDate/fetchFoundingDate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,55 +27,27 @@ export async function POST(req: NextRequest) {
 
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dryRun") === "true";
-    const strategy = url.searchParams.get("strategy") || "all"; // "all" | "foundedYear" | "createdAt" | "default"
-    const batchSize = parseInt(url.searchParams.get("batchSize") || "100");
+    const useWebSearch = url.searchParams.get("useWebSearch") === "true"; // Enable web search
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "50"); // Reduced to 50 for rate limiting
     const cursor = url.searchParams.get("cursor") || undefined;
 
-    let companies: Array<{ id: string; name: string; foundedYear: number | null; createdAt: Date; cui: string | null }> = [];
-    let whereClause: any = { foundedAt: null };
-
-    // Strategy 1: Companies with foundedYear but no foundedAt
-    if (strategy === "all" || strategy === "foundedYear") {
-      const withYear = await prisma.company.findMany({
-        where: {
-          ...whereClause,
-          foundedYear: { not: null },
-          ...(cursor ? { id: { gt: cursor } } : {}),
-        },
-        select: {
-          id: true,
-          name: true,
-          foundedYear: true,
-          createdAt: true,
-          cui: true,
-        },
-        orderBy: { id: "asc" },
-        take: strategy === "foundedYear" ? batchSize : Math.floor(batchSize / 2),
-      });
-      companies.push(...withYear);
-    }
-
-    // Strategy 2: Companies without foundedYear - use createdAt as fallback
-    if ((strategy === "all" || strategy === "createdAt") && companies.length < batchSize) {
-      const remaining = batchSize - companies.length;
-      const withoutYear = await prisma.company.findMany({
-        where: {
-          ...whereClause,
-          foundedYear: null,
-          ...(cursor && companies.length === 0 ? { id: { gt: cursor } } : {}),
-        },
-        select: {
-          id: true,
-          name: true,
-          foundedYear: true,
-          createdAt: true,
-          cui: true,
-        },
-        orderBy: { id: "asc" },
-        take: remaining,
-      });
-      companies.push(...withoutYear);
-    }
+    // Fetch companies without foundedAt
+    const companies = await prisma.company.findMany({
+      where: {
+        foundedAt: null,
+        ...(cursor ? { id: { gt: cursor } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        website: true,
+        foundedYear: true,
+        createdAt: true,
+        cui: true,
+      },
+      orderBy: { id: "asc" },
+      take: batchSize,
+    });
 
     if (companies.length === 0) {
       return NextResponse.json({
@@ -89,10 +62,7 @@ export async function POST(req: NextRequest) {
 
     let updated = 0;
     const updates: Array<{ id: string; name: string; source: string; foundedAt: string }> = [];
-
-    const now = new Date();
-    const defaultYearsAgo = 5; // Default to 5 years ago if no date available
-    const defaultDate = new Date(now.getFullYear() - defaultYearsAgo, 0, 1);
+    const errors: Array<{ id: string; name: string; error: string }> = [];
 
     for (const company of companies) {
       let foundedAt: Date | null = null;
@@ -100,22 +70,35 @@ export async function POST(req: NextRequest) {
 
       // Strategy 1: Use foundedYear if available
       if (company.foundedYear) {
-        foundedAt = new Date(company.foundedYear, 0, 1); // Jan 1 of that year
+        foundedAt = new Date(company.foundedYear, 0, 1);
         source = "foundedYear";
       }
-      // Strategy 2: Use createdAt as fallback (when we first saw them)
-      else if (strategy === "all" || strategy === "createdAt" || strategy === "default") {
-        // Use createdAt, but subtract a few years to account for when company was actually founded
-        // Most companies existed before we discovered them
+      // Strategy 2: Fetch from web (Wikipedia + company website)
+      else if (useWebSearch) {
+        try {
+          // Rate limit: 1 request per 2 seconds for web searches
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          
+          foundedAt = await fetchFoundingDate(company.name, company.website || null);
+          if (foundedAt) {
+            source = "web_search";
+          }
+        } catch (error) {
+          errors.push({
+            id: company.id,
+            name: company.name,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      }
+      
+      // Strategy 3: Fallback to createdAt estimate
+      if (!foundedAt) {
+        const now = new Date();
         const yearsSinceCreation = now.getFullYear() - company.createdAt.getFullYear();
         const estimatedFoundedYear = company.createdAt.getFullYear() - Math.max(2, Math.min(10, yearsSinceCreation));
         foundedAt = new Date(estimatedFoundedYear, company.createdAt.getMonth(), company.createdAt.getDate());
-        source = "createdAt_estimated";
-      }
-      // Strategy 3: Default fallback
-      else {
-        foundedAt = defaultDate;
-        source = "default";
+        source = source || "createdAt_estimated";
       }
 
       if (!foundedAt) continue;
@@ -142,10 +125,11 @@ export async function POST(req: NextRequest) {
       ok: true,
       message: dryRun ? "Dry run - no changes made" : `Updated ${updated} companies with foundedAt`,
       dryRun,
-      strategy,
+      useWebSearch,
       processed: companies.length,
       updated,
       sample: updates.slice(0, 10),
+      errors: errors.slice(0, 5),
       nextCursor: lastId,
       done: companies.length < batchSize,
     });
