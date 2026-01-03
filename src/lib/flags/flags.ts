@@ -83,7 +83,12 @@ export const getFlag = cache(async (flag: FeatureFlag): Promise<boolean> => {
       return getDefaultValue(flag);
     }
     return value;
-  } catch (error) {
+  } catch (error: any) {
+    // Check if it's an Upstash rate limit error
+    if (error?.message?.includes("max requests limit exceeded")) {
+      // Silently return default when rate limit is hit - don't log to avoid spam
+      return getDefaultValue(flag);
+    }
     console.error(`[flags] Error reading flag ${flag}:`, error);
     // On error, return default (fail-safe)
     return getDefaultValue(flag);
