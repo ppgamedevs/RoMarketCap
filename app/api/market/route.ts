@@ -311,7 +311,7 @@ export async function GET(req: NextRequest) {
       const currentScore = company.romcScore;
       const yesterdayScore = yesterdayScoreByCompany.get(company.id);
       let score24hChangePercent: number | null = null;
-      if (currentScore !== null && yesterdayScore !== null && yesterdayScore !== 0) {
+      if (currentScore !== null && yesterdayScore !== undefined && yesterdayScore !== 0) {
         score24hChangePercent = ((currentScore - yesterdayScore) / yesterdayScore) * 100;
       }
 
