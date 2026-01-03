@@ -37,7 +37,7 @@ export type RankingGuardFilter = {
  * - Companies with excluding risk flags
  * 
  * Ensures deterministic tie-breakers:
- * - romcAiScore desc
+ * - romcScore desc
  * - dataConfidence desc
  * - lastScoredAt desc
  * - CUI asc
@@ -77,7 +77,7 @@ export function buildRankingGuard(
 
   // Deterministic tie-breakers
   const orderBy: Prisma.CompanyOrderByWithRelationInput[] = [
-    { romcAiScore: "desc" },
+    { romcScore: "desc" },
     { dataConfidence: "desc" },
     { lastScoredAt: "desc" },
     { cui: "asc" },

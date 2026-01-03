@@ -26,7 +26,7 @@ const QuerySchema = z.object({
   integrity: z.coerce.boolean().optional(),
   verified: z.coerce.boolean().optional(),
   fresh: z.coerce.boolean().optional(),
-  sort: z.enum(["romcAiScore", "romcScore", "marketCap", "confidence"]).optional().default("marketCap"),
+  sort: z.enum(["romcScore", "marketCap", "confidence"]).optional().default("marketCap"),
 });
 
 const CACHE_TTL = 60; // 60 seconds
@@ -41,7 +41,6 @@ type MarketRow = {
   cui: string | null;
   logoUrl: string | null;
   romcScore: number | null;
-  romcAiScore: number | null;
   dataConfidence: number | null;
   integrityScore: number | null;
   valuationRangeLow: number | null;
@@ -148,13 +147,19 @@ export async function GET(req: NextRequest) {
       orderBy = [
         { marketCap: "desc" },
         { valuationRangeHigh: "desc" },
-        { romcAiScore: "desc" },
+        { romcScore: "desc" },
         { cui: "asc" }
       ];
     } else if (sort === "confidence") {
-      orderBy = [{ dataConfidence: "desc" as any }, { romcAiScore: "desc" }, { lastScoredAt: "desc" }, { cui: "asc" }];
+      orderBy = [{ dataConfidence: "desc" as any }, { romcScore: "desc" }, { lastScoredAt: "desc" }, { cui: "asc" }];
+    } else if (sort === "romcScore") {
+      orderBy = [
+        { romcScore: "desc" },
+        { dataConfidence: "desc" },
+        { lastScoredAt: "desc" },
+        { cui: "asc" }
+      ];
     }
-    // Default is romcAiScore (already in guard.orderBy)
 
     // Calculate skip/limit
     const skip = (page - 1) * pageSize;
@@ -194,7 +199,6 @@ export async function GET(req: NextRequest) {
         cui: true,
         logoUrl: true,
         romcScore: true,
-        romcAiScore: true,
         dataConfidence: true,
         companyIntegrityScore: true,
         valuationRangeLow: true,
@@ -255,7 +259,6 @@ export async function GET(req: NextRequest) {
         cui: company.cui,
         logoUrl: company.logoUrl,
         romcScore: company.romcScore,
-        romcAiScore: company.romcAiScore,
         dataConfidence: company.dataConfidence,
         integrityScore: company.companyIntegrityScore,
         valuationRangeLow: company.valuationRangeLow ? Number(company.valuationRangeLow) : null,

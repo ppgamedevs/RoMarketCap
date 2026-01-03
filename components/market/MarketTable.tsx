@@ -22,7 +22,6 @@ type MarketRow = {
   cui: string | null;
   logoUrl: string | null;
   romcScore: number | null;
-  romcAiScore: number | null;
   dataConfidence: number | null;
   integrityScore: number | null;
   valuationRangeLow: number | null;
@@ -48,7 +47,7 @@ type MarketTableProps = {
   integrity?: boolean;
   verified?: boolean;
   fresh?: boolean;
-  sort: "romcAiScore" | "romcScore" | "marketCap" | "confidence";
+  sort: "romcScore" | "marketCap" | "confidence";
 };
 
 function isPlaceholderDisplayName(name: string): boolean {
@@ -176,11 +175,40 @@ function MarketTableInner({
             <TR>
               <TH className="w-16">#</TH>
               <TH>{lang === "ro" ? "Companie" : "Company"}</TH>
-              <TH className="w-24">{lang === "ro" ? "Scor ROMC" : "ROMC Score"}</TH>
+              <TH className="w-24">
+                <div className="flex items-center gap-1">
+                  {lang === "ro" ? "Scor ROMC" : "ROMC Score"}
+                  <AITooltip
+                    question={lang === "ro" ? "Ce este scorul ROMC?" : "What is ROMC score?"}
+                    lang={lang}
+                    variant="icon"
+                    className="opacity-50"
+                  />
+                </div>
+              </TH>
               <TH className="w-32">{lang === "ro" ? "Tendință 7d" : "7d Trend"}</TH>
-              <TH className="w-24">{lang === "ro" ? "ROMC AI" : "ROMC AI"}</TH>
-              <TH className="w-28">{lang === "ro" ? "Confidență" : "Confidence"}</TH>
-              <TH className="w-36">{lang === "ro" ? "Market Cap" : "Market Cap"}</TH>
+              <TH className="w-28">
+                <div className="flex items-center gap-1">
+                  {lang === "ro" ? "Confidență" : "Confidence"}
+                  <AITooltip
+                    question={lang === "ro" ? "Ce înseamnă confidența datelor?" : "What does data confidence mean?"}
+                    lang={lang}
+                    variant="icon"
+                    className="opacity-50"
+                  />
+                </div>
+              </TH>
+              <TH className="w-36">
+                <div className="flex items-center gap-1">
+                  {lang === "ro" ? "Market Cap" : "Market Cap"}
+                  <AITooltip
+                    question={lang === "ro" ? "Cum se calculează market cap?" : "How is market cap calculated?"}
+                    lang={lang}
+                    variant="icon"
+                    className="opacity-50"
+                  />
+                </div>
+              </TH>
               <TH className="w-20">{lang === "ro" ? "24h" : "24h"}</TH>
               <TH className="w-24">{lang === "ro" ? "Acțiuni" : "Actions"}</TH>
             </TR>
@@ -236,13 +264,6 @@ function MarketTableInner({
                   </TD>
                   <TD>
                     <Sparkline data={row.sparklineData} />
-                  </TD>
-                  <TD>
-                    {row.romcAiScore !== null ? (
-                      <span className="text-sm font-medium">{row.romcAiScore}</span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
                   </TD>
                   <TD>
                     {row.dataConfidence !== null ? (

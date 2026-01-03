@@ -10,6 +10,7 @@ import { getSiteUrl } from "@/lib/seo/site";
 import { MarketTable } from "@/components/market/MarketTable";
 import { MarketFilters } from "@/components/market/MarketFilters";
 import { listIndustrySlugsWithCounts, listCountySlugsWithCounts } from "@/src/lib/db/companyQueries";
+import { ROMCAIAssistant } from "@/components/ai/ROMCAIAssistant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export default async function MarketPage({ searchParams }: { searchParams: Searc
   const integrity = asString(sp.integrity) === "true";
   const verified = asString(sp.verified) === "true";
   const fresh = asString(sp.fresh) === "true";
-  const sort = (asString(sp.sort) as "romcAiScore" | "romcScore" | "marketCap" | "confidence") || "marketCap";
+  const sort = (asString(sp.sort) as "romcScore" | "marketCap" | "confidence") || "marketCap";
 
   // Fetch filter options
   const [industries, counties] = await Promise.all([
@@ -135,6 +136,14 @@ export default async function MarketPage({ searchParams }: { searchParams: Searc
           sort={sort}
         />
       </main>
+      <ROMCAIAssistant
+        lang={lang}
+        context={{
+          page: "market",
+          industrySlug: industry || undefined,
+          countySlug: county || undefined,
+        }}
+      />
     </>
   );
 }

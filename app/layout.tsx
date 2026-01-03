@@ -13,6 +13,7 @@ import { ReferralCapture } from "@/components/referrals/ReferralCapture";
 import { ReadOnlyBanner } from "@/components/layout/ReadOnlyBanner";
 import { DemoBanner } from "@/components/layout/DemoBanner";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { ROMCAIAssistant } from "@/components/ai/ROMCAIAssistant";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,6 +72,7 @@ export default async function RootLayout({
           {children}
           <SiteFooter lang={lang} />
           <CookieConsentBanner lang={lang} />
+          <ROMCAIAssistant lang={lang} />
         </SessionProvider>
       </body>
     </html>

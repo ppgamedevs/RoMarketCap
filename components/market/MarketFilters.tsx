@@ -25,7 +25,7 @@ type MarketFiltersProps = {
   initialIntegrity: boolean;
   initialVerified: boolean;
   initialFresh: boolean;
-  initialSort: "romcAiScore" | "romcScore" | "marketCap" | "confidence";
+  initialSort: "romcScore" | "marketCap" | "confidence";
 };
 
 export function MarketFilters({
@@ -64,7 +64,7 @@ export function MarketFilters({
       if (integrity) params.set("integrity", "true");
       if (verified) params.set("verified", "true");
       if (fresh) params.set("fresh", "true");
-      if (sort && sort !== "romcAiScore") params.set("sort", sort);
+      if (sort) params.set("sort", sort);
       params.set("page", "1"); // Reset to first page
       router.push(`/market?${params.toString()}`);
     });
@@ -78,7 +78,7 @@ export function MarketFilters({
     setIntegrity(false);
     setVerified(false);
     setFresh(false);
-    setSort("romcAiScore");
+    setSort("marketCap");
     startTransition(() => {
       router.push("/market");
     });
@@ -200,7 +200,6 @@ export function MarketFilters({
           value={sort}
           onChange={(e) => setSort(e.target.value as typeof sort)}
         >
-          <option value="romcAiScore">{lang === "ro" ? "Scor ROMC AI" : "ROMC AI Score"}</option>
           <option value="romcScore">{lang === "ro" ? "Scor ROMC" : "ROMC Score"}</option>
           <option value="marketCap">{lang === "ro" ? "Market Cap" : "Market Cap"}</option>
           <option value="confidence">{lang === "ro" ? "Confidență" : "Confidence"}</option>

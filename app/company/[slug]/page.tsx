@@ -48,6 +48,8 @@ import {
   generateKeyInsights,
 } from "@/src/lib/ai/contentGeneration";
 import { generateCompanyFAQs, generateFAQSchema } from "@/src/lib/seo/generateCompanyFAQs";
+import { ROMCAIAssistant } from "@/components/ai/ROMCAIAssistant";
+import { AITooltip } from "@/components/ai/AITooltip";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -438,7 +440,6 @@ export default async function CompanyPage({ params }: PageProps) {
     additionalProperty: [
       { "@type": "PropertyValue", name: "ROMC (v1)", value: typeof romcScore === "number" ? romcScore : 0 },
       { "@type": "PropertyValue", name: "Confidence (v1)", value: typeof romcConfidence === "number" ? romcConfidence : 0 },
-      { "@type": "PropertyValue", name: "ROMC AI", value: typeof company.romcAiScore === "number" ? company.romcAiScore : 0 },
       ...(typeof company.companyIntegrityScore === "number"
         ? [{ "@type": "PropertyValue", name: "Integrity Score", value: company.companyIntegrityScore }]
         : []),
@@ -509,12 +510,31 @@ export default async function CompanyPage({ params }: PageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Key Metrics - Full Width */}
-      <section className="mt-6 grid gap-4 rounded-xl border bg-card p-4 shadow-sm sm:grid-cols-4">
-        <Metric label="ROMC Score" value={romcScore != null ? `${romcScore}/100` : "N/A"} delta={confidence ? { value: `${confidence}/100`, direction: "up" } : undefined} />
-        <Metric label={lang === "ro" ? "Încredere date" : "Data confidence"} value={company.dataConfidence != null ? `${company.dataConfidence}/100` : "N/A"} />
-        <Metric label={lang === "ro" ? "Integritate" : "Integrity"} value={company.companyIntegrityScore != null ? `${company.companyIntegrityScore}/100` : "N/A"} />
-        <div className="flex items-center justify-center">
-          <ProgressRing value={company.romcAiScore ?? romcScore ?? 0} label={lang === "ro" ? "ROMC AI" : "ROMC AI"} />
+      <section className="mt-6 grid gap-4 rounded-xl border bg-card p-4 shadow-sm sm:grid-cols-3">
+        <div className="flex items-center gap-2">
+          <Metric label="ROMC Score" value={romcScore != null ? `${romcScore}/100` : "N/A"} delta={confidence ? { value: `${confidence}/100`, direction: "up" } : undefined} />
+          <AITooltip
+            question={lang === "ro" ? "Ce este scorul ROMC?" : "What is ROMC score?"}
+            context={lang === "ro" ? `Pentru ${company.name}` : `For ${company.name}`}
+            lang={lang}
+            variant="icon"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Metric label={lang === "ro" ? "Încredere date" : "Data confidence"} value={company.dataConfidence != null ? `${company.dataConfidence}/100` : "N/A"} />
+          <AITooltip
+            question={lang === "ro" ? "Ce înseamnă confidența datelor?" : "What does data confidence mean?"}
+            lang={lang}
+            variant="icon"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Metric label={lang === "ro" ? "Integritate" : "Integrity"} value={company.companyIntegrityScore != null ? `${company.companyIntegrityScore}/100` : "N/A"} />
+          <AITooltip
+            question={lang === "ro" ? "Ce înseamnă scorul de integritate?" : "What does integrity score mean?"}
+            lang={lang}
+            variant="icon"
+          />
         </div>
       </section>
 
@@ -559,8 +579,8 @@ export default async function CompanyPage({ params }: PageProps) {
             lang={lang}
             company={{
               romcScore: company.romcScore,
-              romcAiScore: company.romcAiScore,
-              previousRomcAiScore: company.previousRomcAiScore,
+              romcAiScore: null, // Removed - no longer displayed
+              previousRomcAiScore: null, // Removed - no longer displayed
               revenueLatest: company.revenueLatest ? Number(String(company.revenueLatest)) : null,
               profitLatest: company.profitLatest ? Number(String(company.profitLatest)) : null,
               employees: company.employees,
@@ -785,7 +805,7 @@ export default async function CompanyPage({ params }: PageProps) {
                   <li key={h.id} className="flex items-center justify-between">
                     <span className="text-muted-foreground">{h.asOfDate.toISOString().slice(0, 10)}</span>
                     <span className="font-medium">
-                      {h.romcScore} / {h.romcAiScore} / {h.confidence}
+                      {h.romcScore} / {h.confidence}
                     </span>
                   </li>
                 ))
@@ -962,6 +982,16 @@ export default async function CompanyPage({ params }: PageProps) {
           <RelatedCompanies lang={lang} items={related} />
         </aside>
       </div>
+      <ROMCAIAssistant
+        lang={lang}
+        context={{
+          page: "company",
+          companySlug: company.slug,
+          companyName: company.name,
+          industrySlug: company.industrySlug || undefined,
+          countySlug: company.countySlug || undefined,
+        }}
+      />
     </main>
   );
 }

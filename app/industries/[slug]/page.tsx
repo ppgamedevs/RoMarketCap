@@ -15,6 +15,7 @@ import {
   generateRegionalDistribution,
   generateGrowthOpportunities,
 } from "@/src/lib/ai/generateIndustryContent";
+import { ROMCAIAssistant } from "@/components/ai/ROMCAIAssistant";
 import { prisma } from "@/src/lib/db";
 
 export const runtime = "nodejs";
@@ -303,6 +304,13 @@ export default async function IndustryLandingPage({ params, searchParams }: Page
         </section>
         <Faq items={faqs} />
       </div>
+      <ROMCAIAssistant
+        lang={lang}
+        context={{
+          page: "industry",
+          industrySlug: slug,
+        }}
+      />
     </main>
   );
 }

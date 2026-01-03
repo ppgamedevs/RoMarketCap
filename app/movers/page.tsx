@@ -44,7 +44,7 @@ export default async function MoversPage() {
   type CachedMoversData = {
     topUp: Mover[];
     topDown: Mover[];
-    fallbackAi: Array<{ slug: string; name: string; romcAiScore: number | null }>;
+    fallbackAi: Array<{ slug: string; name: string; romcScore: number | null }>;
     newlyScored: Array<{ slug: string; name: string; romcScore: number | null }>;
   };
 
@@ -93,14 +93,14 @@ export default async function MoversPage() {
         where: { 
           isPublic: true, 
           visibilityStatus: "PUBLIC", 
-          romcAiScore: { not: null }, 
+          romcScore: { not: null }, 
           isSkeleton: false,
           mergedIntoCompanyId: null, // PROMPT 60: Exclude merged companies
           ...(launchMode ? { isDemo: false } : {}), // PROMPT 60: Exclude demo in launch mode
         },
-        orderBy: [{ romcAiScore: "desc" }],
+        orderBy: [{ romcScore: "desc" }],
         take: 10,
-        select: { slug: true, name: true, romcAiScore: true },
+        select: { slug: true, name: true, romcScore: true },
       }),
       prisma.company.findMany({
         where: { 
@@ -274,7 +274,7 @@ export default async function MoversPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h2 className="text-sm font-medium">{lang === "ro" ? "Fallback: ROMC AI ridicat" : "Fallback: highest ROMC AI"}</h2>
+          <h2 className="text-sm font-medium">{lang === "ro" ? "Fallback: Scor ROMC ridicat" : "Fallback: highest ROMC Score"}</h2>
           <div className="mt-4 flex flex-col gap-2 text-sm">
             {fallbackAi.length === 0 ? (
               <p className="text-sm text-muted-foreground">N/A</p>
@@ -282,7 +282,7 @@ export default async function MoversPage() {
               fallbackAi.map((c) => (
                 <Link key={c.slug} className="flex items-center justify-between underline underline-offset-4" href={`/company/${c.slug}`}>
                   <span>{c.name}</span>
-                  <span className="text-muted-foreground">{c.romcAiScore}/100</span>
+                  <span className="text-muted-foreground">{c.romcScore}/100</span>
                 </Link>
               ))
             )}

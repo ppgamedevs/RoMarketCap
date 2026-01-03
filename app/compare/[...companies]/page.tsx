@@ -231,11 +231,6 @@ export default async function CompareCompaniesPage({ params }: PageProps) {
                 <td className="py-3 px-4 text-center">{company2.romcScore ?? "N/A"}</td>
               </tr>
               <tr className="border-t">
-                <td className="py-3 pr-4 font-medium">{lang === "ro" ? "ROMC AI Score" : "ROMC AI Score"}</td>
-                <td className="py-3 px-4 text-center">{company1.romcAiScore ?? "N/A"}</td>
-                <td className="py-3 px-4 text-center">{company2.romcAiScore ?? "N/A"}</td>
-              </tr>
-              <tr className="border-t">
                 <td className="py-3 pr-4 font-medium">{lang === "ro" ? "Încredere date" : "Data Confidence"}</td>
                 <td className="py-3 px-4 text-center">{company1.dataConfidence ?? "N/A"}</td>
                 <td className="py-3 px-4 text-center">{company2.dataConfidence ?? "N/A"}</td>

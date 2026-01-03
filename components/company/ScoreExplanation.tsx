@@ -2,6 +2,7 @@
 
 import type { Lang } from "@/src/lib/i18n/shared";
 import { explainRomcChangeShort, explainRomcChangeDetailed } from "@/src/lib/integrity/explain";
+import { AITooltip } from "@/components/ai/AITooltip";
 
 type ScoreExplanationProps = {
   lang: Lang;
@@ -51,7 +52,14 @@ export function ScoreExplanation({ lang, company, isPremium }: ScoreExplanationP
 
   return (
     <div className="mt-4 space-y-2 rounded-lg border bg-card p-4">
-      <h3 className="text-sm font-medium">{lang === "ro" ? "Explicație scor" : "Score explanation"}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">{lang === "ro" ? "Explicație scor" : "Score explanation"}</h3>
+        <AITooltip
+          question={lang === "ro" ? "Explică-mi mai detaliat cum se calculează scorul ROMC" : "Explain in detail how ROMC score is calculated"}
+          lang={lang}
+          variant="button"
+        />
+      </div>
       <p className="text-sm text-muted-foreground">{shortExplanation}</p>
       {detailedExplanation && (
         <div className="mt-3 rounded-md bg-muted p-3">
