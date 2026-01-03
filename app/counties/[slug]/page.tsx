@@ -59,7 +59,9 @@ export default async function CountyLandingPage({ params, searchParams }: PagePr
   const page = Math.max(Number(asString(sp.page) || "1"), 1);
   const label = countyLabel(slug, lang);
 
-  const result = isAdmin
+  // Skip caching for high page numbers (likely bots or edge cases)
+  const shouldCache = !isAdmin && page <= 100;
+  const result = isAdmin || !shouldCache
     ? await listCompanies({ county: slug, sort: "romc_desc", page, pageSize: 25 })
     : await getOrSetPageCache(
         { page: "counties", params: { slug, page }, lang: langForCache },

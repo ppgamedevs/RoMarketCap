@@ -61,8 +61,9 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Se
   const sort = (asString(sp.sort) as CompanySort) || "romc_desc";
   const page = Math.max(Number(asString(sp.page) || "1"), 1);
 
-  // Cache only when no search query (search results are dynamic)
-  const shouldCache = !q && !isAdmin;
+  // Cache only when no search query (search results are dynamic) and page is reasonable
+  // Skip caching for high page numbers (likely bots or edge cases)
+  const shouldCache = !q && !isAdmin && page <= 100;
   const result = shouldCache
     ? await getOrSetPageCache(
         { page: "companies", params: { industry: industry || null, county: county || null, sort, page }, lang: langForCache },

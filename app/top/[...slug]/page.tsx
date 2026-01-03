@@ -139,7 +139,9 @@ export default async function TopFilteredPage({ params, searchParams }: PageProp
 
   const label = isIndustry ? industryLabel(segment, lang) : countyLabel(segment, lang);
 
-  const result = isAdmin
+  // Skip caching for high page numbers (likely bots or edge cases)
+  const shouldCache = !isAdmin && page <= 100;
+  const result = isAdmin || !shouldCache
     ? await listCompanies({
         ...(isIndustry ? { industry: segment } : { county: segment }),
         sort: "romc_desc",

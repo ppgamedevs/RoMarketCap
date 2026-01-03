@@ -43,12 +43,19 @@ export async function setPageCache<T>(key: PageCacheKey, data: T, options?: Cach
 
 /**
  * Get cached page data or compute and cache it.
+ * Skips caching for edge cases (high page numbers, etc.)
  */
 export async function getOrSetPageCache<T>(
   key: PageCacheKey,
   compute: () => Promise<T>,
   options?: CacheOptions,
 ): Promise<T> {
+  // Skip caching for pages beyond reasonable limits (likely bots or edge cases)
+  if (key.params?.page && typeof key.params.page === "number" && key.params.page > 100) {
+    // Don't cache high page numbers - just compute and return
+    return compute();
+  }
+
   const cacheKey = generateCacheKey(key);
   return getOrSetCache(cacheKey, compute, options);
 }

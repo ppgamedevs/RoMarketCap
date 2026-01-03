@@ -21,13 +21,18 @@ export async function getCache<T>(key: string, version?: string): Promise<T | nu
 
     const now = Date.now();
     if (cached.expiresAt < now) {
-      // Expired - delete and return null
+      // Expired - delete and return null (skip delete if rate limit hit to save requests)
       await kv.del(cacheKey).catch(() => null);
       return null;
     }
 
     return cached.data;
-  } catch (error) {
+  } catch (error: any) {
+    // Check if it's an Upstash rate limit error
+    if (error?.message?.includes("max requests limit exceeded")) {
+      // Silently return null when rate limit is hit
+      return null;
+    }
     console.error(`[cache] Error getting key ${key}:`, error);
     return null;
   }
@@ -35,6 +40,7 @@ export async function getCache<T>(key: string, version?: string): Promise<T | nu
 
 /**
  * Set cached value in KV with TTL and stale-while-revalidate.
+ * Gracefully handles Upstash rate limit errors.
  */
 export async function setCache<T>(
   key: string,
@@ -58,7 +64,12 @@ export async function setCache<T>(
         ex: ttl + swr, // Store for TTL + SWR duration
       },
     );
-  } catch (error) {
+  } catch (error: any) {
+    // Check if it's an Upstash rate limit error
+    if (error?.message?.includes("max requests limit exceeded")) {
+      // Silently skip caching when rate limit is hit - don't log to avoid spam
+      return;
+    }
     console.error(`[cache] Error setting key ${key}:`, error);
     // Don't throw - caching is best effort
   }
@@ -85,15 +96,24 @@ export async function getOrSetCache<T>(
         return cached.data;
       } else if (cached.staleAt >= now) {
         // Stale but usable - return stale data and revalidate in background
+        // Skip background revalidation if rate limit is hit to avoid wasting requests
         compute()
           .then((fresh) => setCache(key, fresh, options))
-          .catch((err) => console.error(`[cache] Background revalidation failed for ${key}:`, err));
+          .catch(() => {
+            // Silently fail background revalidation - don't log to avoid spam
+          });
         return cached.data;
       }
       // Expired - delete and compute fresh
       await kv.del(cacheKey).catch(() => null);
     }
-  } catch (error) {
+  } catch (error: any) {
+    // Check if it's an Upstash rate limit error
+    if (error?.message?.includes("max requests limit exceeded")) {
+      // Skip cache reads when rate limit is hit - just compute fresh
+      const fresh = await compute();
+      return fresh;
+    }
     console.error(`[cache] Error checking cache for ${key}:`, error);
   }
 

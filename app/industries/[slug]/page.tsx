@@ -68,7 +68,9 @@ export default async function IndustryLandingPage({ params, searchParams }: Page
   const page = Math.max(Number(asString(sp.page) || "1"), 1);
   const label = industryLabel(slug, lang);
 
-  const result = isAdmin
+  // Skip caching for high page numbers (likely bots or edge cases)
+  const shouldCache = !isAdmin && page <= 100;
+  const result = isAdmin || !shouldCache
     ? await listCompanies({ industry: slug, sort: "romc_desc", page, pageSize: 25 })
     : await getOrSetPageCache(
         { page: "industries", params: { slug, page }, lang: langForCache },
