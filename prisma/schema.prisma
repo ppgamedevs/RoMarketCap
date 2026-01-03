@@ -1517,10 +1517,10 @@ model CompanyContentCache {
   id        String   @id @default(cuid()) @map("id")
   companyId String   @unique @map("company_id") @db.Uuid
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  marketPosition Text? @map("market_position") @db.Text
-  growthAnalysis Text? @map("growth_analysis") @db.Text
-  competitiveLandscape Text? @map("competitive_landscape") @db.Text
-  industryContext Text? @map("industry_context") @db.Text
+  marketPosition String? @map("market_position") @db.Text
+  growthAnalysis String? @map("growth_analysis") @db.Text
+  competitiveLandscape String? @map("competitive_landscape") @db.Text
+  industryContext String? @map("industry_context") @db.Text
   keyInsights Json? @map("key_insights")
   faqs       Json? @map("faqs")
   generatedAt DateTime @default(now()) @map("generated_at")
@@ -1534,11 +1534,11 @@ model CompanyContentCache {
 model IndustryContentCache {
   id        String   @id @default(cuid()) @map("id")
   industrySlug String @unique @map("industry_slug")
-  marketOverview Text? @map("market_overview") @db.Text
-  keyTrends Text? @map("key_trends") @db.Text
-  topPerformersAnalysis Text? @map("top_performers_analysis") @db.Text
-  regionalDistribution Text? @map("regional_distribution") @db.Text
-  growthOpportunities Text? @map("growth_opportunities") @db.Text
+  marketOverview String? @map("market_overview") @db.Text
+  keyTrends String? @map("key_trends") @db.Text
+  topPerformersAnalysis String? @map("top_performers_analysis") @db.Text
+  regionalDistribution String? @map("regional_distribution") @db.Text
+  growthOpportunities String? @map("growth_opportunities") @db.Text
   faqs       Json? @map("faqs")
   generatedAt DateTime @default(now()) @map("generated_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
