@@ -275,8 +275,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fetch watchlist status if user is authenticated
-    const session = await getServerSession(authOptions);
+    // Fetch watchlist status if user is authenticated (session already fetched above)
     const userId = session?.user?.id;
     const watchlistCompanyIds = userId
       ? await prisma.watchlistItem.findMany({

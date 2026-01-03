@@ -7,15 +7,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { kv } from "@vercel/kv";
-import { requireCronSecret } from "@/src/lib/security/cronGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const guard = requireCronSecret(req);
-  if (!guard.ok) {
-    return NextResponse.json({ ok: false, error: guard.error }, { status: guard.status });
+  // Check cron secret
+  const secret = process.env.CRON_SECRET;
+  const got = req.headers.get("x-cron-secret");
+  if (!secret || got !== secret) {
+    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
   try {
