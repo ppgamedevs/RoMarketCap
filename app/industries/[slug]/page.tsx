@@ -15,6 +15,7 @@ import {
   generateRegionalDistribution,
   generateGrowthOpportunities,
 } from "@/src/lib/ai/generateIndustryContent";
+import { prisma } from "@/src/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
