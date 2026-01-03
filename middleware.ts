@@ -78,7 +78,8 @@ export default withAuth({
       pathname === "/api/admin/merge-duplicate-bvb-companies" || // Merge duplicate BVB companies
       pathname === "/api/admin/add-content-cache-tables" || // Add content cache tables for SEO
       pathname === "/api/admin/update-company-ages" || // Update company ages (populate foundedAt from foundedYear)
-      pathname === "/api/admin/check-company-ages") { // Check company ages status
+      pathname === "/api/admin/check-company-ages" || // Check company ages status
+      pathname === "/api/admin/test-founding-date") { // Test founding date fetching
     return true;
   }
       

@@ -203,24 +203,31 @@ export async function fetchFoundingDate(
     }
   }
   
+  console.log(`[founding-date] Starting search for "${companyName}" (website: ${website || "none"})`);
+  
   // Try Wikipedia first (most reliable)
   let foundedAt = await fetchFromWikipedia(companyName);
   console.log(`[founding-date] Wikipedia result for "${companyName}":`, foundedAt ? foundedAt.toISOString() : "not found");
   
   // Fallback to website if Wikipedia didn't work
   if (!foundedAt && website) {
+    console.log(`[founding-date] Trying website for "${companyName}": ${website}`);
     foundedAt = await fetchFromWebsite(website);
     console.log(`[founding-date] Website result for "${companyName}" (${website}):`, foundedAt ? foundedAt.toISOString() : "not found");
   }
   
   // Cache result (even if null, to avoid repeated lookups)
   if (foundedAt) {
-    await kv.set(cacheKey, foundedAt.toISOString(), { ex: CACHE_TTL_SECONDS }).catch(() => null);
-    console.log(`[founding-date] Cached founding date for "${companyName}":`, foundedAt.toISOString());
+    await kv.set(cacheKey, foundedAt.toISOString(), { ex: CACHE_TTL_SECONDS }).catch((err) => {
+      console.error(`[founding-date] Failed to cache result for "${companyName}":`, err);
+    });
+    console.log(`[founding-date] ✅ Cached founding date for "${companyName}": ${foundedAt.toISOString()}`);
   } else {
     // Cache null for 30 days to avoid repeated failed lookups
-    await kv.set(cacheKey, "null", { ex: NULL_CACHE_TTL_SECONDS }).catch(() => null);
-    console.log(`[founding-date] No founding date found for "${companyName}", cached null`);
+    await kv.set(cacheKey, "null", { ex: NULL_CACHE_TTL_SECONDS }).catch((err) => {
+      console.error(`[founding-date] Failed to cache null for "${companyName}":`, err);
+    });
+    console.log(`[founding-date] ❌ No founding date found for "${companyName}", cached null`);
   }
   
   return foundedAt;
