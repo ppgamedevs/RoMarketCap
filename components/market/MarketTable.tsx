@@ -12,6 +12,7 @@ import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Sparkline } from "./Sparkline";
 import { Button } from "@/components/ui/button";
+import { AITooltip } from "@/components/ai/AITooltip";
 
 type MarketRow = {
   rank: number;
