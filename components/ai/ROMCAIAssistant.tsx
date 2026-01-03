@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Send, Minimize2, Maximize2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -74,7 +74,7 @@ export function ROMCAIAssistant({ context, lang = "ro" }: ROMCAIAssistantProps) 
     }
   }, [isOpen, isMinimized]);
 
-  const handleSend = async (question?: string) => {
+  const handleSend = useCallback(async (question?: string) => {
     const messageToSend = question || input.trim();
     if (!messageToSend || isLoading) return;
 
@@ -128,63 +128,24 @@ export function ROMCAIAssistant({ context, lang = "ro" }: ROMCAIAssistantProps) 
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading, context, lang, messages]);
 
-  const handleSend = async (question?: string) => {
-    const messageToSend = question || input.trim();
-    if (!messageToSend || isLoading) return;
-
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: messageToSend,
-      timestamp: new Date(),
+  // Listen for custom events to open chat with pre-filled question
+  useEffect(() => {
+    const handleOpenChat = (event: CustomEvent<{ question: string }>) => {
+      setIsOpen(true);
+      setIsMinimized(false);
+      // Auto-send the question after opening
+      setTimeout(() => {
+        handleSend(event.detail.question);
+      }, 300);
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: messageToSend,
-          context,
-          lang,
-          history: messages.slice(-5), // Last 5 messages for context
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get AI response");
-      }
-
-      const data = await response.json();
-
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: data.response || data.error || "Sorry, I couldn't generate a response.",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: lang === "ro" 
-          ? "Scuze, am întâmpinat o eroare. Te rugăm să încerci din nou."
-          : "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    window.addEventListener("open-ai-chat", handleOpenChat as EventListener);
+    return () => {
+      window.removeEventListener("open-ai-chat", handleOpenChat as EventListener);
+    };
+  }, [handleSend]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
