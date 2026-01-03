@@ -9,6 +9,7 @@ import { Placements } from "@/components/placements/Placements";
 import { NewsletterCta } from "@/components/newsletter/NewsletterCta";
 import { getOrSetPageCache, getLangForCache, isAdminForCache, PAGE_CACHE_TTLS } from "@/src/lib/cache/pageCache";
 import { generateBreadcrumbJsonLd } from "@/src/lib/seo/breadcrumbs";
+import { generateIndustryKeyTrends } from "@/src/lib/ai/generateIndustryContent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -123,6 +124,56 @@ export default async function MoversPage() {
     ? await computeMoversData()
     : await getOrSetPageCache<CachedMoversData>({ page: "movers", lang: langForCache }, computeMoversData, PAGE_CACHE_TTLS.list);
 
+  // Analyze industry-level trends
+  const industryTrends = await prisma.companyScoreHistory.groupBy({
+    by: ["companyId"],
+    where: { recordedAt: { gte: since } },
+    _avg: { romcScore: true },
+    _count: true,
+  });
+
+  // Get companies with their industries
+  const companyIndustries = await prisma.company.findMany({
+    where: {
+      id: { in: industryTrends.map((t) => t.companyId) },
+      industrySlug: { not: null },
+    },
+    select: {
+      id: true,
+      industrySlug: true,
+    },
+  });
+
+  const industryMap = new Map(companyIndustries.map((c) => [c.id, c.industrySlug]));
+  
+  // Calculate average delta by industry
+  const industryDeltas = new Map<string, { total: number; count: number }>();
+  for (const mover of [...topUp, ...topDown]) {
+    const company = await prisma.company.findUnique({
+      where: { slug: mover.slug },
+      select: { industrySlug: true },
+    });
+    if (company?.industrySlug) {
+      const existing = industryDeltas.get(company.industrySlug) ?? { total: 0, count: 0 };
+      industryDeltas.set(company.industrySlug, {
+        total: existing.total + Math.abs(mover.delta),
+        count: existing.count + 1,
+      });
+    }
+  }
+
+  // Generate trend analysis for top industry
+  const topIndustry = Array.from(industryDeltas.entries())
+    .sort((a, b) => b[1].total - a[1].total)[0];
+
+  const industryTrendAnalysis = topIndustry
+    ? await generateIndustryKeyTrends(topIndustry[0], {
+        growingCompanies: topUp.length,
+        decliningCompanies: topDown.length,
+        avgScoreChange: topIndustry[1].total / topIndustry[1].count,
+      }).catch(() => null)
+    : null;
+
   // ItemList schema: include both top increases and decreases (limit to reasonable number)
   const allMovers = [...topUp.slice(0, 10), ...topDown.slice(0, 10)];
   const jsonLd = {
@@ -174,6 +225,14 @@ export default async function MoversPage() {
           incentives={lang === "ro" ? ["Alertă timpurie despre companii noi", "Ranking-uri exclusive"] : ["Early alerts on new companies", "Exclusive rankings"]}
         />
       </div>
+
+      {/* Trend Analysis */}
+      {industryTrendAnalysis && (
+        <section className="mt-6 rounded-xl border bg-card p-6 text-card-foreground">
+          <h2 className="text-lg font-semibold">{lang === "ro" ? "Analiză tendințe" : "Trend Analysis"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-6">{industryTrendAnalysis}</p>
+        </section>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border bg-card p-6 text-card-foreground">

@@ -438,6 +438,7 @@ model Company {
   mergeCandidatesAsSource MergeCandidate[] @relation("SourceCompany")
   mergeCandidatesAsTarget MergeCandidate[] @relation("TargetCompany")
   teamMembers            CompanyTeamMember[]
+  contentCache           CompanyContentCache?
 
   // CRM-lite tagging for outreach
   outreachStatus      String?   @map("outreach_status")
@@ -1509,4 +1510,40 @@ model NationalIngestError {
   @@index([sourceType])
   @@index([createdAt])
   @@map("national_ingest_errors")
+}
+
+// SEO Content Cache (PROMPT: SEO Quality Boost)
+model CompanyContentCache {
+  id        String   @id @default(cuid()) @map("id")
+  companyId String   @unique @map("company_id") @db.Uuid
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  marketPosition Text? @map("market_position") @db.Text
+  growthAnalysis Text? @map("growth_analysis") @db.Text
+  competitiveLandscape Text? @map("competitive_landscape") @db.Text
+  industryContext Text? @map("industry_context") @db.Text
+  keyInsights Json? @map("key_insights")
+  faqs       Json? @map("faqs")
+  generatedAt DateTime @default(now()) @map("generated_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@index([companyId])
+  @@index([generatedAt])
+  @@map("company_content_cache")
+}
+
+model IndustryContentCache {
+  id        String   @id @default(cuid()) @map("id")
+  industrySlug String @unique @map("industry_slug")
+  marketOverview Text? @map("market_overview") @db.Text
+  keyTrends Text? @map("key_trends") @db.Text
+  topPerformersAnalysis Text? @map("top_performers_analysis") @db.Text
+  regionalDistribution Text? @map("regional_distribution") @db.Text
+  growthOpportunities Text? @map("growth_opportunities") @db.Text
+  faqs       Json? @map("faqs")
+  generatedAt DateTime @default(now()) @map("generated_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@index([industrySlug])
+  @@index([generatedAt])
+  @@map("industry_content_cache")
 }

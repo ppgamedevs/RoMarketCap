@@ -40,6 +40,14 @@ import { ActivityFeed } from "@/components/company/ActivityFeed";
 import { CompetitorsTable } from "@/components/company/CompetitorsTable";
 import { SimilarCompaniesWidget } from "@/components/company/SimilarCompaniesWidget";
 import { SocialStats } from "@/components/company/SocialStats";
+import {
+  generateCompanyMarketPosition,
+  generateGrowthAnalysis,
+  generateCompetitiveLandscape,
+  generateIndustryContext,
+  generateKeyInsights,
+} from "@/src/lib/ai/contentGeneration";
+import { generateCompanyFAQs, generateFAQSchema } from "@/src/lib/seo/generateCompanyFAQs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -299,6 +307,72 @@ export default async function CompanyPage({ params }: PageProps) {
   const romcScore = company.romcScore ?? null;
   const romcConfidence = company.romcConfidence ?? null;
 
+  // Fetch industry stats and competitors for SEO content generation
+  let industryStats: { avgScore: number; totalCompanies: number; topScore: number } | undefined;
+  let competitors: Array<{ name: string; romcScore: number | null; marketCap: number | null }> = [];
+  
+  if (company.industrySlug) {
+    // Get industry stats
+    const industryCompanies = await prisma.company.findMany({
+      where: {
+        industrySlug: company.industrySlug,
+        isPublic: true,
+        visibilityStatus: "PUBLIC",
+        romcScore: { not: null },
+      },
+      select: { romcScore: true },
+      take: 100,
+    });
+
+    if (industryCompanies.length > 0) {
+      const scores = industryCompanies.map((c) => c.romcScore ?? 0).filter((s) => s > 0);
+      const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+      const topScore = Math.max(...scores, 0);
+      industryStats = {
+        avgScore: Math.round(avgScore),
+        totalCompanies: industryCompanies.length,
+        topScore,
+      };
+    }
+
+    // Get top competitors (excluding current company)
+    competitors = await prisma.company.findMany({
+      where: {
+        industrySlug: company.industrySlug,
+        id: { not: company.id },
+        isPublic: true,
+        visibilityStatus: "PUBLIC",
+      },
+      orderBy: [{ romcScore: "desc" }],
+      take: 5,
+      select: {
+        name: true,
+        romcScore: true,
+        marketCap: true,
+      },
+    });
+  }
+
+  // Generate SEO content (cached, async - don't block page render)
+  const [marketPosition, growthAnalysis, competitiveLandscape, industryContext, keyInsights] = await Promise.all([
+    generateCompanyMarketPosition(company, industryStats).catch(() => null),
+    generateGrowthAnalysis(
+      company,
+      history.map((h) => ({ score: h.romcScore, date: h.asOfDate }))
+    ).catch(() => null),
+    generateCompetitiveLandscape(company, competitors).catch(() => null),
+    generateIndustryContext(company, industryStats ? {
+      totalCompanies: industryStats.totalCompanies,
+      avgScore: industryStats.avgScore,
+      topCompanies: competitors.slice(0, 3).map((c) => ({ name: c.name, score: c.romcScore ?? 0 })),
+    } : undefined).catch(() => null),
+    generateKeyInsights(company).catch(() => []),
+  ]);
+
+  // Generate FAQs
+  const faqs = generateCompanyFAQs(company, lang);
+  const faqSchema = generateFAQSchema(faqs, company.name);
+
   const baseUrl = getSiteUrl();
   // canonicalSlug already declared above in redirect check
   const canonical = `${baseUrl}/company/${encodeURIComponent(canonicalSlug)}`;
@@ -324,11 +398,21 @@ export default async function CompanyPage({ params }: PageProps) {
       : `https://${company.website.replace(/^https?:\/\//, "")}`
     : canonical;
 
+  // Add aggregateRating with ROMC score
+  const aggregateRating = company.romcScore !== null ? {
+    "@type": "AggregateRating",
+    ratingValue: company.romcScore,
+    bestRating: 100,
+    worstRating: 0,
+    ratingCount: 1,
+  } : undefined;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: company.name,
     url: websiteUrl,
+    aggregateRating,
     sameAs:
       company.socials && typeof company.socials === "object"
         ? Object.values(company.socials as Record<string, unknown>)
@@ -367,6 +451,9 @@ export default async function CompanyPage({ params }: PageProps) {
       { "@type": "PropertyValue", name: "Last scored", value: company.lastScoredAt?.toISOString().slice(0, 10) ?? "N/A" },
       { "@type": "PropertyValue", name: "Last enriched", value: company.lastEnrichedAt?.toISOString().slice(0, 10) ?? "N/A" },
       { "@type": "PropertyValue", name: "Last updated", value: company.lastUpdatedAt.toISOString().slice(0, 10) },
+    ],
+    dateModified: company.lastUpdatedAt.toISOString(),
+    datePublished: company.createdAt.toISOString(),
     ].filter((p) => p !== null),
   };
 
@@ -415,6 +502,7 @@ export default async function CompanyPage({ params }: PageProps) {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Key Metrics - Full Width */}
       <section className="mt-6 grid gap-4 rounded-xl border bg-card p-4 shadow-sm sm:grid-cols-4">
@@ -699,6 +787,99 @@ export default async function CompanyPage({ params }: PageProps) {
                 ))
               )}
             </ul>
+          </div>
+
+          {/* Market Position Analysis */}
+          {marketPosition && (
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Poziție pe piață" : "Market Position"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-6">{marketPosition}</p>
+            </div>
+          )}
+
+          {/* Growth Trends */}
+          {growthAnalysis && (
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Tendințe de creștere" : "Growth Trends"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-6">{growthAnalysis}</p>
+            </div>
+          )}
+
+          {/* Competitive Landscape */}
+          {competitiveLandscape && (
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Peisaj competitiv" : "Competitive Landscape"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-6">{competitiveLandscape}</p>
+            </div>
+          )}
+
+          {/* Industry Context */}
+          {industryContext && (
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Context industrie" : "Industry Context"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-6">{industryContext}</p>
+            </div>
+          )}
+
+          {/* Key Insights */}
+          {keyInsights && keyInsights.length > 0 && (
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Insight-uri cheie" : "Key Insights"}</h2>
+              <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+                {keyInsights.map((insight, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>{insight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* FAQ Section */}
+          {faqs.length > 0 && (
+            <div className="rounded-xl border bg-card p-6 text-card-foreground">
+              <h2 className="text-sm font-medium">{lang === "ro" ? "Întrebări frecvente" : "Frequently Asked Questions"}</h2>
+              <div className="mt-4 space-y-4">
+                {faqs.map((faq, idx) => (
+                  <details key={idx} className="rounded-md border p-4">
+                    <summary className="cursor-pointer text-sm font-medium">{faq.question}</summary>
+                    <p className="mt-2 text-sm text-muted-foreground leading-6">{faq.answer}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Last Updated Date */}
+          <div className="rounded-xl border bg-card p-6 text-card-foreground">
+            <h2 className="text-sm font-medium">{lang === "ro" ? "Actualizare date" : "Data Update"}</h2>
+            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+              {company.lastScoredAt && (
+                <p>
+                  {lang === "ro" ? "Ultima calculare scor:" : "Last score calculation:"}{" "}
+                  <span className="font-medium text-foreground">
+                    {company.lastScoredAt.toLocaleDateString(lang === "ro" ? "ro-RO" : "en-GB")}
+                  </span>
+                </p>
+              )}
+              {company.lastEnrichedAt && (
+                <p>
+                  {lang === "ro" ? "Ultima actualizare date:" : "Last data update:"}{" "}
+                  <span className="font-medium text-foreground">
+                    {company.lastEnrichedAt.toLocaleDateString(lang === "ro" ? "ro-RO" : "en-GB")}
+                  </span>
+                </p>
+              )}
+              {company.lastUpdatedAt && (
+                <p>
+                  {lang === "ro" ? "Ultima modificare:" : "Last modified:"}{" "}
+                  <span className="font-medium text-foreground">
+                    {company.lastUpdatedAt.toLocaleDateString(lang === "ro" ? "ro-RO" : "en-GB")}
+                  </span>
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">

@@ -8,6 +8,13 @@ import { Faq, type FaqItem } from "@/components/seo/Faq";
 import { industryLabel } from "@/src/lib/taxonomy/industries";
 import { getOrSetPageCache, PAGE_CACHE_TTLS, isAdminForCache, getLangForCache } from "@/src/lib/cache/pageCache";
 import { generateBreadcrumbJsonLd } from "@/src/lib/seo/breadcrumbs";
+import {
+  generateIndustryMarketOverview,
+  generateIndustryKeyTrends,
+  generateTopPerformersAnalysis,
+  generateRegionalDistribution,
+  generateGrowthOpportunities,
+} from "@/src/lib/ai/generateIndustryContent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +87,86 @@ export default async function IndustryLandingPage({ params, searchParams }: Page
       name: c.name,
     })),
   };
+
+  // Fetch industry stats for content generation
+  const industryStats = await prisma.company.aggregate({
+    where: {
+      industrySlug: slug,
+      isPublic: true,
+      visibilityStatus: "PUBLIC",
+      romcScore: { not: null },
+    },
+    _avg: { romcScore: true },
+    _count: true,
+    _sum: { revenueLatest: true },
+  });
+
+  const topCompanies = await prisma.company.findMany({
+    where: {
+      industrySlug: slug,
+      isPublic: true,
+      visibilityStatus: "PUBLIC",
+    },
+    orderBy: [{ romcScore: "desc" }],
+    take: 3,
+    select: {
+      name: true,
+      romcScore: true,
+      revenueLatest: true,
+      marketCap: true,
+    },
+  });
+
+  // Generate SEO content
+  const industryData = {
+    totalCompanies: industryStats._count,
+    avgScore: Math.round(industryStats._avg.romcScore ?? 0),
+    totalRevenue: Number(industryStats._sum.revenueLatest ?? 0),
+    topCompanies: topCompanies.map((c) => ({
+      name: c.name,
+      score: c.romcScore ?? 0,
+      revenue: c.revenueLatest ? Number(c.revenueLatest) : null,
+    })),
+  };
+
+  const [marketOverview, topPerformersAnalysis] = await Promise.all([
+    generateIndustryMarketOverview(slug, industryData).catch(() => null),
+    generateTopPerformersAnalysis(
+      slug,
+      topCompanies.map((c) => ({
+        name: c.name,
+        score: c.romcScore ?? 0,
+        revenue: c.revenueLatest ? Number(c.revenueLatest) : null,
+        marketCap: c.marketCap ? Number(c.marketCap) : null,
+      }))
+    ).catch(() => null),
+  ]);
+
+  // Get regional distribution
+  const countyDistribution = await prisma.company.groupBy({
+    by: ["county"],
+    where: {
+      industrySlug: slug,
+      isPublic: true,
+      visibilityStatus: "PUBLIC",
+      county: { not: null },
+    },
+    _count: true,
+    _avg: { romcScore: true },
+  });
+
+  const regionalDistribution = await generateRegionalDistribution(
+    slug,
+    countyDistribution
+      .filter((d) => d.county)
+      .map((d) => ({
+        county: d.county!,
+        count: d._count,
+        avgScore: Math.round(d._avg.romcScore ?? 0),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+  ).catch(() => null);
 
   const faqs: FaqItem[] =
     lang === "ro"
@@ -178,6 +265,30 @@ export default async function IndustryLandingPage({ params, searchParams }: Page
           {lang === "ro" ? "Înainte" : "Next"}
         </Link>
       </nav>
+
+      {/* Market Overview */}
+      {marketOverview && (
+        <section className="mt-10 rounded-xl border bg-card p-6 text-card-foreground">
+          <h2 className="text-lg font-semibold">{lang === "ro" ? "Prezentare generală piață" : "Market Overview"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-6">{marketOverview}</p>
+        </section>
+      )}
+
+      {/* Top Performers Analysis */}
+      {topPerformersAnalysis && (
+        <section className="mt-6 rounded-xl border bg-card p-6 text-card-foreground">
+          <h2 className="text-lg font-semibold">{lang === "ro" ? "Analiza liderilor" : "Top Performers Analysis"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-6">{topPerformersAnalysis}</p>
+        </section>
+      )}
+
+      {/* Regional Distribution */}
+      {regionalDistribution && (
+        <section className="mt-6 rounded-xl border bg-card p-6 text-card-foreground">
+          <h2 className="text-lg font-semibold">{lang === "ro" ? "Distribuție regională" : "Regional Distribution"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-6">{regionalDistribution}</p>
+        </section>
+      )}
 
       <div className="mt-10 grid gap-6">
         <section className="rounded-xl border bg-card p-6 text-card-foreground">

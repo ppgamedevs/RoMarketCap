@@ -75,7 +75,8 @@ export default withAuth({
       pathname === "/api/admin/test-homepage-api" || // Test homepage API call
       pathname === "/api/admin/test-prisma-marketcap" || // Test Prisma marketCap query
       pathname === "/api/admin/find-duplicate-companies" || // Find duplicate companies
-      pathname === "/api/admin/merge-duplicate-bvb-companies") { // NEW: Merge duplicate BVB companies
+      pathname === "/api/admin/merge-duplicate-bvb-companies" || // Merge duplicate BVB companies
+      pathname === "/api/admin/add-content-cache-tables") { // Add content cache tables for SEO
     return true;
   }
       
