@@ -294,7 +294,7 @@ export function ROMCAIAssistant({ context, lang = "ro" }: ROMCAIAssistantProps) 
                 disabled={isLoading}
               />
               <Button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
                 size="sm"
                 className="h-10 w-10 p-0"
