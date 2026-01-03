@@ -62,14 +62,20 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
     }
     
     // Look for Romanian patterns: "înființat", "fondat", "înființată"
+    // Patterns must handle: "fondată ... în anul 1996", "fondată în 1996", "înființată în 1996", etc.
     const roPatterns = [
-      /înființat(?:ă)?[\s\w,]*(\d{4})/i,
-      /fondat(?:ă)?[\s\w,]*(\d{4})/i,
-      /creat(?:ă)?[\s\w,]*(\d{4})/i,
-      /(\d{4})[\s\w,]*înființat/i,
-      /(\d{4})[\s\w,]*fondat/i,
-      /înființată în (\d{4})/i,
-      /fondată în (\d{4})/i,
+      /înființat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "înființată în anul 1996"
+      /înființat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "înființată în 1996"
+      /înființat(?:ă)?[\s\w,]*(\d{4})/i, // "înființată 1996"
+      /fondat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "fondată în anul 1996"
+      /fondat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "fondată în 1996"
+      /fondat(?:ă)?[\s\w,]*(\d{4})/i, // "fondată 1996"
+      /creat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "creată în anul 1996"
+      /creat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "creată în 1996"
+      /creat(?:ă)?[\s\w,]*(\d{4})/i, // "creată 1996"
+      /(\d{4})[\s\w,]*înființat/i, // "1996 ... înființat"
+      /(\d{4})[\s\w,]*fondat/i, // "1996 ... fondat"
+      /în\s+anul\s+(\d{4})[\s\w,]*fondat/i, // "în anul 1996 ... fondat"
     ];
     
     for (const pattern of roPatterns) {
@@ -217,17 +223,33 @@ export async function fetchFoundingDate(
   }
   
   // Cache result (even if null, to avoid repeated lookups)
+  // Skip caching if Upstash rate limit is hit
   if (foundedAt) {
-    await kv.set(cacheKey, foundedAt.toISOString(), { ex: CACHE_TTL_SECONDS }).catch((err) => {
-      console.error(`[founding-date] Failed to cache result for "${companyName}":`, err);
-    });
-    console.log(`[founding-date] ✅ Cached founding date for "${companyName}": ${foundedAt.toISOString()}`);
+    try {
+      await kv.set(cacheKey, foundedAt.toISOString(), { ex: CACHE_TTL_SECONDS });
+      console.log(`[founding-date] ✅ Cached founding date for "${companyName}": ${foundedAt.toISOString()}`);
+    } catch (err: any) {
+      // Suppress Upstash rate limit errors
+      if (err?.message?.includes("max requests limit exceeded")) {
+        console.warn(`[founding-date] Upstash rate limit hit, skipping cache for "${companyName}"`);
+      } else {
+        console.error(`[founding-date] Failed to cache result for "${companyName}":`, err);
+      }
+    }
   } else {
     // Cache null for 30 days to avoid repeated failed lookups
-    await kv.set(cacheKey, "null", { ex: NULL_CACHE_TTL_SECONDS }).catch((err) => {
-      console.error(`[founding-date] Failed to cache null for "${companyName}":`, err);
-    });
-    console.log(`[founding-date] ❌ No founding date found for "${companyName}", cached null`);
+    // Skip caching if Upstash rate limit is hit
+    try {
+      await kv.set(cacheKey, "null", { ex: NULL_CACHE_TTL_SECONDS });
+      console.log(`[founding-date] ❌ No founding date found for "${companyName}", cached null`);
+    } catch (err: any) {
+      // Suppress Upstash rate limit errors
+      if (err?.message?.includes("max requests limit exceeded")) {
+        console.warn(`[founding-date] Upstash rate limit hit, skipping null cache for "${companyName}"`);
+      } else {
+        console.error(`[founding-date] Failed to cache null for "${companyName}":`, err);
+      }
+    }
   }
   
   return foundedAt;
