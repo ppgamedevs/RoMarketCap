@@ -15,8 +15,15 @@ const NULL_CACHE_TTL_SECONDS = 60 * 60 * 24 * 30; // Cache null results for 30 d
  */
 async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
   try {
+    // Clean company name - remove common suffixes and legal forms
+    const cleanName = companyName
+      .replace(/\s+(SA|SCS|SRL|PFA|SNC|SCA|INC|LTD|LLC)$/i, "") // Remove legal form
+      .trim();
+    
     // Wikipedia API: Search for company page (Romanian Wikipedia first)
-    const searchUrl = `https://ro.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(companyName)}`;
+    const searchUrl = `https://ro.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`;
+    
+    console.log(`[founding-date] Searching Wikipedia: ${searchUrl}`);
     
     const response = await fetch(searchUrl, {
       headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
@@ -26,21 +33,30 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
     let data: any = null;
     let extract = "";
 
+    console.log(`[founding-date] Wikipedia RO response status: ${response.status}`);
+
     if (response.ok) {
       data = await response.json();
       extract = data.extract || "";
+      console.log(`[founding-date] Wikipedia RO extract length: ${extract.length} chars`);
     } else {
       // Try English Wikipedia as fallback
-      const enUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(companyName)}`;
+      const enUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`;
+      console.log(`[founding-date] Trying English Wikipedia: ${enUrl}`);
+      
       const enResponse = await fetch(enUrl, {
         headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
         signal: AbortSignal.timeout(5000),
       });
       
+      console.log(`[founding-date] Wikipedia EN response status: ${enResponse.status}`);
+      
       if (enResponse.ok) {
         data = await enResponse.json();
         extract = data.extract || "";
+        console.log(`[founding-date] Wikipedia EN extract length: ${extract.length} chars`);
       } else {
+        console.log(`[founding-date] No Wikipedia page found for "${companyName}" (cleaned: "${cleanName}")`);
         return null;
       }
     }
@@ -52,6 +68,8 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
       /creat(?:ă)?[\s\w,]*(\d{4})/i,
       /(\d{4})[\s\w,]*înființat/i,
       /(\d{4})[\s\w,]*fondat/i,
+      /înființată în (\d{4})/i,
+      /fondată în (\d{4})/i,
     ];
     
     for (const pattern of roPatterns) {
@@ -59,6 +77,7 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
       if (match) {
         const year = parseInt(match[1]);
         if (year >= 1800 && year <= new Date().getFullYear()) {
+          console.log(`[founding-date] Found year ${year} using pattern: ${pattern}`);
           return new Date(year, 0, 1);
         }
       }
@@ -69,6 +88,8 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
       /(?:founded|established|created)[\s\w,]*(\d{4})/i,
       /(\d{4})[\s\w,]*founded/i,
       /(\d{4})[\s\w,]*established/i,
+      /founded in (\d{4})/i,
+      /established in (\d{4})/i,
     ];
     
     for (const pattern of enPatterns) {
@@ -76,11 +97,13 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
       if (match) {
         const year = parseInt(match[1]);
         if (year >= 1800 && year <= new Date().getFullYear()) {
+          console.log(`[founding-date] Found year ${year} using pattern: ${pattern}`);
           return new Date(year, 0, 1);
         }
       }
     }
     
+    console.log(`[founding-date] No founding date pattern found in extract (first 200 chars: ${extract.substring(0, 200)})`);
     return null;
   } catch (error) {
     console.error(`[founding-date] Wikipedia error for ${companyName}:`, error);
@@ -182,18 +205,22 @@ export async function fetchFoundingDate(
   
   // Try Wikipedia first (most reliable)
   let foundedAt = await fetchFromWikipedia(companyName);
+  console.log(`[founding-date] Wikipedia result for "${companyName}":`, foundedAt ? foundedAt.toISOString() : "not found");
   
   // Fallback to website if Wikipedia didn't work
   if (!foundedAt && website) {
     foundedAt = await fetchFromWebsite(website);
+    console.log(`[founding-date] Website result for "${companyName}" (${website}):`, foundedAt ? foundedAt.toISOString() : "not found");
   }
   
   // Cache result (even if null, to avoid repeated lookups)
   if (foundedAt) {
     await kv.set(cacheKey, foundedAt.toISOString(), { ex: CACHE_TTL_SECONDS }).catch(() => null);
+    console.log(`[founding-date] Cached founding date for "${companyName}":`, foundedAt.toISOString());
   } else {
     // Cache null for 30 days to avoid repeated failed lookups
     await kv.set(cacheKey, "null", { ex: NULL_CACHE_TTL_SECONDS }).catch(() => null);
+    console.log(`[founding-date] No founding date found for "${companyName}", cached null`);
   }
   
   return foundedAt;

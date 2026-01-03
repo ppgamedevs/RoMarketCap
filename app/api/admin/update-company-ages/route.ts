@@ -76,14 +76,20 @@ export async function POST(req: NextRequest) {
       // Strategy 2: Fetch from web (Wikipedia + company website)
       else if (useWebSearch) {
         try {
+          console.log(`[update-ages] Searching web for "${company.name}" (website: ${company.website || "none"})`);
+          
           // Rate limit: 1 request per 2 seconds for web searches
           await new Promise((resolve) => setTimeout(resolve, 2000));
           
           foundedAt = await fetchFoundingDate(company.name, company.website || null);
           if (foundedAt) {
             source = "web_search";
+            console.log(`[update-ages] Found founding date for "${company.name}": ${foundedAt.toISOString()}`);
+          } else {
+            console.log(`[update-ages] No founding date found for "${company.name}" via web search`);
           }
         } catch (error) {
+          console.error(`[update-ages] Error searching web for "${company.name}":`, error);
           errors.push({
             id: company.id,
             name: company.name,
