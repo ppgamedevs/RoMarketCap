@@ -114,8 +114,8 @@ export function MarketCapGraph({ lang = "ro" }: MarketCapGraphProps) {
               strokeOpacity={0.2}
             />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label) => formatDate(label)}
+              formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ""}
+              labelFormatter={(label) => formatDate(String(label))}
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
