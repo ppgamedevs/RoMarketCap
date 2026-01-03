@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Sparkline } from "./Sparkline";
 import { Button } from "@/components/ui/button";
 import { AITooltip } from "@/components/ai/AITooltip";
+import { WatchlistStar } from "./WatchlistStar";
 
 type MarketRow = {
   rank: number;
