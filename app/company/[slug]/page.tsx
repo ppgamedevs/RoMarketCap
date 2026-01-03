@@ -336,7 +336,7 @@ export default async function CompanyPage({ params }: PageProps) {
     }
 
     // Get top competitors (excluding current company)
-    competitors = await prisma.company.findMany({
+    const competitorsRaw = await prisma.company.findMany({
       where: {
         industrySlug: company.industrySlug,
         id: { not: company.id },
@@ -351,6 +351,11 @@ export default async function CompanyPage({ params }: PageProps) {
         marketCap: true,
       },
     });
+    competitors = competitorsRaw.map((c) => ({
+      name: c.name,
+      romcScore: c.romcScore,
+      marketCap: c.marketCap ? Number(c.marketCap) : null,
+    }));
   }
 
   // Generate SEO content (cached, async - don't block page render)
