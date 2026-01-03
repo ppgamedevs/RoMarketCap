@@ -1,18 +1,17 @@
 /**
  * Update Company Ages
  * 
- * Populates foundedAt from foundedYear where missing, enabling age calculation.
- * Age is calculated on-the-fly from foundedAt, so this ensures more companies have age data.
+ * Populates foundedAt for companies that don't have it, enabling age calculation.
  * 
- * Strategy:
- * 1. First, populate from foundedYear (if exists)
- * 2. Optionally fetch from ANAF (if useAnaf=true and CUI exists)
+ * Strategy (in order):
+ * 1. Use foundedYear if available (set to Jan 1 of that year)
+ * 2. Use createdAt as fallback (when we first saw the company - not perfect but better than nothing)
+ * 3. Set a reasonable default (5 years ago) for companies without any date
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
-import { verifyCompanyANAF } from "@/src/lib/verification/anaf";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,42 +26,104 @@ export async function POST(req: NextRequest) {
 
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dryRun") === "true";
-    const useAnaf = url.searchParams.get("useAnaf") === "true"; // Fetch from ANAF if missing
+    const strategy = url.searchParams.get("strategy") || "all"; // "all" | "foundedYear" | "createdAt" | "default"
     const batchSize = parseInt(url.searchParams.get("batchSize") || "100");
     const cursor = url.searchParams.get("cursor") || undefined;
 
+    let companies: Array<{ id: string; name: string; foundedYear: number | null; createdAt: Date; cui: string | null }> = [];
+    let whereClause: any = { foundedAt: null };
+
     // Strategy 1: Companies with foundedYear but no foundedAt
-    const companiesWithYear = await prisma.company.findMany({
-      where: {
-        foundedAt: null,
-        foundedYear: { not: null },
-        ...(cursor ? { id: { gt: cursor } } : {}),
-      },
-      select: {
-        id: true,
-        foundedYear: true,
-        name: true,
-        cui: true,
-      },
-      orderBy: { id: "asc" },
-      take: batchSize,
-    });
+    if (strategy === "all" || strategy === "foundedYear") {
+      const withYear = await prisma.company.findMany({
+        where: {
+          ...whereClause,
+          foundedYear: { not: null },
+          ...(cursor ? { id: { gt: cursor } } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          foundedYear: true,
+          createdAt: true,
+          cui: true,
+        },
+        orderBy: { id: "asc" },
+        take: strategy === "foundedYear" ? batchSize : Math.floor(batchSize / 2),
+      });
+      companies.push(...withYear);
+    }
+
+    // Strategy 2: Companies without foundedYear - use createdAt as fallback
+    if ((strategy === "all" || strategy === "createdAt") && companies.length < batchSize) {
+      const remaining = batchSize - companies.length;
+      const withoutYear = await prisma.company.findMany({
+        where: {
+          ...whereClause,
+          foundedYear: null,
+          ...(cursor && companies.length === 0 ? { id: { gt: cursor } } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          foundedYear: true,
+          createdAt: true,
+          cui: true,
+        },
+        orderBy: { id: "asc" },
+        take: remaining,
+      });
+      companies.push(...withoutYear);
+    }
+
+    if (companies.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        message: "No more companies to process",
+        done: true,
+        dryRun,
+        processed: 0,
+        updated: 0,
+      });
+    }
 
     let updated = 0;
     const updates: Array<{ id: string; name: string; source: string; foundedAt: string }> = [];
-    const errors: Array<{ id: string; name: string; error: string }> = [];
 
-    // Process companies with foundedYear
-    for (const company of companiesWithYear) {
-      if (!company.foundedYear) continue;
+    const now = new Date();
+    const defaultYearsAgo = 5; // Default to 5 years ago if no date available
+    const defaultDate = new Date(now.getFullYear() - defaultYearsAgo, 0, 1);
 
-      // Set foundedAt to January 1st of the founded year
-      const foundedAt = new Date(company.foundedYear, 0, 1);
-      
+    for (const company of companies) {
+      let foundedAt: Date | null = null;
+      let source = "";
+
+      // Strategy 1: Use foundedYear if available
+      if (company.foundedYear) {
+        foundedAt = new Date(company.foundedYear, 0, 1); // Jan 1 of that year
+        source = "foundedYear";
+      }
+      // Strategy 2: Use createdAt as fallback (when we first saw them)
+      else if (strategy === "all" || strategy === "createdAt" || strategy === "default") {
+        // Use createdAt, but subtract a few years to account for when company was actually founded
+        // Most companies existed before we discovered them
+        const yearsSinceCreation = now.getFullYear() - company.createdAt.getFullYear();
+        const estimatedFoundedYear = company.createdAt.getFullYear() - Math.max(2, Math.min(10, yearsSinceCreation));
+        foundedAt = new Date(estimatedFoundedYear, company.createdAt.getMonth(), company.createdAt.getDate());
+        source = "createdAt_estimated";
+      }
+      // Strategy 3: Default fallback
+      else {
+        foundedAt = defaultDate;
+        source = "default";
+      }
+
+      if (!foundedAt) continue;
+
       updates.push({
         id: company.id,
         name: company.name,
-        source: "foundedYear",
+        source,
         foundedAt: foundedAt.toISOString(),
       });
 
@@ -75,72 +136,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Strategy 2: If useAnaf=true, also try fetching from ANAF for companies without foundedAt or foundedYear
-    if (useAnaf && companiesWithYear.length < batchSize) {
-      const remaining = batchSize - companiesWithYear.length;
-      const companiesWithoutDate = await prisma.company.findMany({
-        where: {
-          foundedAt: null,
-          foundedYear: null,
-          cui: { not: null },
-          ...(cursor ? { id: { gt: cursor } } : {}),
-        },
-        select: {
-          id: true,
-          name: true,
-          cui: true,
-        },
-        orderBy: { id: "asc" },
-        take: remaining,
-      });
-
-      // Rate limit: 1 request per second for ANAF
-      for (const company of companiesWithoutDate) {
-        if (!company.cui) continue;
-
-        try {
-          // Small delay to respect rate limit
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          const anafResult = await verifyCompanyANAF(company.cui);
-          
-          // ANAF doesn't currently return foundedAt, but we can check rawResponse
-          // For now, skip ANAF fetching as it doesn't provide this data
-          // This is a placeholder for future enhancement
-          
-        } catch (error) {
-          errors.push({
-            id: company.id,
-            name: company.name,
-            error: error instanceof Error ? error.message : "Unknown error",
-          });
-        }
-      }
-    }
-
-    if (companiesWithYear.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        message: "No more companies to process",
-        done: true,
-        dryRun,
-        processed: 0,
-        updated: 0,
-      });
-    }
-
-    const lastId = companiesWithYear[companiesWithYear.length - 1]?.id;
+    const lastId = companies[companies.length - 1]?.id;
 
     return NextResponse.json({
       ok: true,
-      message: dryRun ? "Dry run - no changes made" : `Updated ${updated} companies with foundedAt from foundedYear`,
+      message: dryRun ? "Dry run - no changes made" : `Updated ${updated} companies with foundedAt`,
       dryRun,
-      processed: companiesWithYear.length,
+      strategy,
+      processed: companies.length,
       updated,
       sample: updates.slice(0, 10),
-      errors: errors.slice(0, 5),
       nextCursor: lastId,
-      done: companiesWithYear.length < batchSize,
+      done: companies.length < batchSize,
     });
   } catch (error) {
     console.error("[admin/update-company-ages] Error:", error);
