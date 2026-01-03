@@ -2,10 +2,12 @@ export function Sparkline({
   values,
   width = 160,
   height = 36,
+  trend,
 }: {
   values: number[];
   width?: number;
   height?: number;
+  trend?: "up" | "down" | "neutral";
 }) {
   if (!values.length) return <span className="text-xs text-muted-foreground">N/A</span>;
 
@@ -21,9 +23,17 @@ export function Sparkline({
     })
     .join(" ");
 
+  // Determine color based on trend
+  let strokeColor = "currentColor";
+  if (trend === "up") {
+    strokeColor = "#16a34a"; // green-600
+  } else if (trend === "down") {
+    strokeColor = "#dc2626"; // red-600
+  }
+
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-label="sparkline">
-      <polyline fill="none" stroke="currentColor" strokeWidth="2" points={points} opacity="0.9" />
+      <polyline fill="none" stroke={strokeColor} strokeWidth="2" points={points} opacity="0.9" />
     </svg>
   );
 }

@@ -10,6 +10,7 @@ import { getLangFromRequest } from "@/src/lib/i18n";
 import { getSiteUrl } from "@/lib/seo/site";
 import { MarketTable } from "@/components/market/MarketTable";
 import { MarketFilters } from "@/components/market/MarketFilters";
+import { MarketCapGraph } from "@/components/market/MarketCapGraph";
 import { listIndustrySlugsWithCounts, listCountySlugsWithCounts } from "@/src/lib/db/companyQueries";
 
 export const metadata: Metadata = getDefaultMetadata({ locale: "ro" });
@@ -72,6 +73,11 @@ export default async function RoHomePage({ searchParams }: { searchParams: Searc
               ? "Clasament complet al companiilor românești după scor ROMC, tendințe și confidență"
               : "Complete ranking of Romanian companies by ROMC score, trends, and confidence"}
           </p>
+        </div>
+
+        {/* Market Cap Graph */}
+        <div className="mb-6">
+          <MarketCapGraph lang={lang} />
         </div>
 
         <MarketFilters

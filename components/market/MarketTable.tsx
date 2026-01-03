@@ -34,7 +34,11 @@ type MarketRow = {
   countySlug: string | null;
   lastScoredAt: Date | null;
   sparklineData: Array<{ date: string; score: number }>;
+  sparklineTrend: "up" | "down" | "neutral";
   rankDelta: number | null;
+  score24hChangePercent: number | null;
+  ageYears: number | null;
+  isWatched: boolean;
 };
 
 type MarketTableProps = {
@@ -174,6 +178,7 @@ function MarketTableInner({
         <Table stickyHeader>
           <THead>
             <TR>
+              <TH className="w-12"></TH>
               <TH className="w-16">#</TH>
               <TH>{lang === "ro" ? "Companie" : "Company"}</TH>
               <TH className="w-24">
@@ -211,6 +216,7 @@ function MarketTableInner({
                 </div>
               </TH>
               <TH className="w-20">{lang === "ro" ? "24h" : "24h"}</TH>
+              <TH className="w-16">{lang === "ro" ? "Vârstă" : "Age"}</TH>
               <TH className="w-24">{lang === "ro" ? "Acțiuni" : "Actions"}</TH>
             </TR>
           </THead>
@@ -220,6 +226,9 @@ function MarketTableInner({
               const displayName = formatCompanyDisplayName(lang, row.name, row.cui);
               return (
                 <TR key={row.companyId} className={isBlurred ? "opacity-50 blur-sm" : ""}>
+                  <TD>
+                    <WatchlistStar companyId={row.companyId} initialWatched={row.isWatched} />
+                  </TD>
                   <TD className="font-medium">{row.rank}</TD>
                   <TD>
                     <div className="flex items-center gap-2">
@@ -264,7 +273,10 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    <Sparkline data={row.sparklineData} />
+                    <Sparkline 
+                      values={row.sparklineData.map(d => d.score)} 
+                      trend={row.sparklineTrend}
+                    />
                   </TD>
                   <TD>
                     {row.dataConfidence !== null ? (
@@ -307,10 +319,25 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    {row.rankDelta !== null ? (
-                      <div className={`text-sm font-medium ${row.rankDelta > 0 ? "text-green-600" : row.rankDelta < 0 ? "text-red-600" : ""}`}>
-                        {row.rankDelta > 0 ? "▲" : row.rankDelta < 0 ? "▼" : "—"} {Math.abs(row.rankDelta)}
+                    {row.score24hChangePercent !== null ? (
+                      <div className={`text-sm font-medium ${
+                        row.score24hChangePercent > 0 
+                          ? "text-green-600" 
+                          : row.score24hChangePercent < 0 
+                          ? "text-red-600" 
+                          : ""
+                      }`}>
+                        {row.score24hChangePercent > 0 ? "▲" : row.score24hChangePercent < 0 ? "▼" : ""}
+                        {row.score24hChangePercent > 0 ? "+" : ""}
+                        {row.score24hChangePercent.toFixed(2)}%
                       </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TD>
+                  <TD>
+                    {row.ageYears !== null ? (
+                      <span className="text-sm text-muted-foreground">{row.ageYears}y</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}

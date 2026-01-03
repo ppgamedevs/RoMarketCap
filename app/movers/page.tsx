@@ -257,16 +257,21 @@ export default async function MoversPage() {
           <h2 className="text-sm font-medium">{lang === "ro" ? "Top scăderi (30 zile)" : "Top decreases (30 days)"}</h2>
           <div className="mt-4 flex flex-col gap-2 text-sm">
             {topDown.length === 0 ? (
-              <p className="text-sm text-muted-foreground">N/A</p>
+              <p className="text-sm text-muted-foreground">
+                {lang === "ro" ? "Nu există date disponibile" : "No data available"}
+              </p>
             ) : (
-              topDown.map((m) => (
-                <Link key={m.slug} className="flex items-center justify-between underline underline-offset-4" href={`/company/${m.slug}`}>
-                  <span>{m.name}</span>
-                  <span className="text-muted-foreground">
-                    {m.delta.toFixed(1)} ({m.from.toFixed(1)}→{m.to.toFixed(1)})
-                  </span>
-                </Link>
-              ))
+              topDown.map((m) => {
+                const percentChange = m.from > 0 ? ((m.delta / m.from) * 100).toFixed(2) : "0.00";
+                return (
+                  <Link key={m.slug} className="flex items-center justify-between underline underline-offset-4 hover:text-primary" href={`/company/${m.slug}`}>
+                    <span>{m.name}</span>
+                    <span className="text-red-600 font-medium">
+                      {m.delta.toFixed(1)} ({m.from.toFixed(1)}→{m.to.toFixed(1)}) {percentChange}%
+                    </span>
+                  </Link>
+                );
+              })
             )}
           </div>
         </section>

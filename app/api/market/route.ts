@@ -52,7 +52,11 @@ type MarketRow = {
   countySlug: string | null;
   lastScoredAt: Date | null;
   sparklineData: Array<{ date: string; score: number }>; // Last 7 days
+  sparklineTrend: "up" | "down" | "neutral"; // 7-day trend direction
   rankDelta: number | null; // 24h position change
+  score24hChangePercent: number | null; // 24h score percentage change
+  ageYears: number | null; // Company age in years
+  isWatched: boolean; // Is in user's watchlist
 };
 
 export async function GET(req: NextRequest) {
@@ -209,6 +213,7 @@ export async function GET(req: NextRequest) {
         industrySlug: true,
         countySlug: true,
         lastScoredAt: true,
+        foundedAt: true,
       },
     });
 
@@ -241,14 +246,81 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Fetch 24h ago scores for all companies
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const yesterdayWindowStart = new Date(yesterday.getTime() - 2 * 60 * 60 * 1000); // ±2h window
+    const yesterdayWindowEnd = new Date(yesterday.getTime() + 2 * 60 * 60 * 1000);
+    
+    const yesterdayScores = await prisma.companyScoreHistory.findMany({
+      where: {
+        companyId: { in: companyIds },
+        recordedAt: {
+          gte: yesterdayWindowStart,
+          lte: yesterdayWindowEnd,
+        },
+      },
+      select: {
+        companyId: true,
+        recordedAt: true,
+        romcScore: true,
+      },
+      orderBy: { recordedAt: "desc" },
+    });
+
+    // Group yesterday scores by company (take most recent per company)
+    const yesterdayScoreByCompany = new Map<string, number>();
+    for (const record of yesterdayScores) {
+      if (!yesterdayScoreByCompany.has(record.companyId)) {
+        yesterdayScoreByCompany.set(record.companyId, Number(record.romcScore));
+      }
+    }
+
+    // Fetch watchlist status if user is authenticated
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+    const watchlistCompanyIds = userId
+      ? await prisma.watchlistItem.findMany({
+          where: {
+            userId,
+            companyId: { in: companyIds },
+          },
+          select: { companyId: true },
+        })
+      : [];
+    const watchedCompanyIds = new Set(watchlistCompanyIds.map((w) => w.companyId));
+
     // Calculate rank deltas (compare with yesterday's rank)
     // For now, return null (will be implemented with KV cache of previous day's ranks)
     const rankDeltaMap: Record<string, number> = {};
 
     // Build rows
+    const now = new Date();
     const rows: MarketRow[] = companies.map((company, index) => {
       const globalRank = skip + index + 1;
       const sparkline = historyByCompany.get(company.id) || [];
+      
+      // Calculate 7-day trend
+      let sparklineTrend: "up" | "down" | "neutral" = "neutral";
+      if (sparkline.length >= 2) {
+        const first = sparkline[0]!.score;
+        const last = sparkline[sparkline.length - 1]!.score;
+        if (last > first) sparklineTrend = "up";
+        else if (last < first) sparklineTrend = "down";
+      }
+
+      // Calculate 24h score change
+      const currentScore = company.romcScore;
+      const yesterdayScore = yesterdayScoreByCompany.get(company.id);
+      let score24hChangePercent: number | null = null;
+      if (currentScore !== null && yesterdayScore !== null && yesterdayScore !== 0) {
+        score24hChangePercent = ((currentScore - yesterdayScore) / yesterdayScore) * 100;
+      }
+
+      // Calculate company age
+      let ageYears: number | null = null;
+      if (company.foundedAt) {
+        ageYears = Math.floor((now.getTime() - company.foundedAt.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      }
 
       return {
         rank: globalRank,
@@ -270,7 +342,11 @@ export async function GET(req: NextRequest) {
         countySlug: company.countySlug,
         lastScoredAt: company.lastScoredAt,
         sparklineData: sparkline,
+        sparklineTrend,
         rankDelta: rankDeltaMap[company.id] ?? null,
+        score24hChangePercent,
+        ageYears,
+        isWatched: watchedCompanyIds.has(company.id),
       };
     });
 

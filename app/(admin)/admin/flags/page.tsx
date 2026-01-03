@@ -173,6 +173,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Automatically fetch company logos from Clearbit/Google for companies with websites",
     risky: false,
   },
+  MARKET_CAP_SNAPSHOT_ENABLED: {
+    label: "Market Cap Snapshot: Cron",
+    description: "Enable/disable daily market cap snapshot for historical tracking",
+    risky: false,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",

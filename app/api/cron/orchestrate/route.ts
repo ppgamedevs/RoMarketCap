@@ -471,7 +471,37 @@ async function handleOrchestrate(req: Request) {
         stats.fetchLogos = { ok: true, duration: 0 }; // Skipped
       }
 
-      // 7. Weekly Digest (once per week only, if enabled)
+      // 7. Market Cap Snapshot (if enabled)
+      if (await isFlagEnabled("MARKET_CAP_SNAPSHOT_ENABLED", true)) {
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/market-cap-snapshot`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.marketCapSnapshot = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:market-cap-snapshot", new Date().toISOString());
+          }
+        } catch (error) {
+          stats.marketCapSnapshot = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
+        }
+      } else {
+        stats.marketCapSnapshot = { ok: true, duration: 0 }; // Skipped
+      }
+
+      // 8. Weekly Digest (once per week only, if enabled)
       if (await isFlagEnabled("NEWSLETTER_SENDS", true)) {
         const weekStart = getWeekStart(new Date()).toISOString();
         const lastDigestWeek = await kv.get<string>("cron:last:weekly-digest:week");

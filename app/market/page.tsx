@@ -9,6 +9,7 @@ import { getLangFromRequest } from "@/src/lib/i18n";
 import { getSiteUrl } from "@/lib/seo/site";
 import { MarketTable } from "@/components/market/MarketTable";
 import { MarketFilters } from "@/components/market/MarketFilters";
+import { MarketCapGraph } from "@/components/market/MarketCapGraph";
 import { listIndustrySlugsWithCounts, listCountySlugsWithCounts } from "@/src/lib/db/companyQueries";
 import { ROMCAIAssistant } from "@/components/ai/ROMCAIAssistant";
 

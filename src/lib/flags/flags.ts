@@ -41,7 +41,8 @@ export type FeatureFlag =
   | "CRON_SCORE_SNAPSHOTS" // Daily score snapshots for sparklines
   | "BVB_PRICE_FETCH_ENABLED" // BVB stock price fetching
   | "ANAF_BULK_FINANCIALS_ENABLED" // ANAF bulk financials ingestion
-  | "FETCH_LOGOS_CRON_ENABLED"; // Logo fetching cron
+  | "FETCH_LOGOS_CRON_ENABLED" // Logo fetching cron
+  | "MARKET_CAP_SNAPSHOT_ENABLED"; // Market cap snapshot cron
 
 /**
  * Flags that default to DISABLED (fail-closed) for safety.
@@ -144,6 +145,7 @@ export async function getAllFlags(): Promise<Record<FeatureFlag, boolean>> {
   "BVB_PRICE_FETCH_ENABLED",
   "ANAF_BULK_FINANCIALS_ENABLED",
   "FETCH_LOGOS_CRON_ENABLED",
+  "MARKET_CAP_SNAPSHOT_ENABLED",
 ];
 
   const results = await Promise.all(flags.map(async (flag) => [flag, await getFlag(flag)] as const));
