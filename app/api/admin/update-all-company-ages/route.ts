@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     const batchSize = parseInt(url.searchParams.get("batchSize") || "10");
     const maxBatches = parseInt(url.searchParams.get("maxBatches") || "20"); // Increased to 20 batches per call
     const useWebSearch = url.searchParams.get("useWebSearch") !== "false"; // Default true
+    const reprocessSuspect = url.searchParams.get("reprocessSuspect") === "true"; // Also process companies with 2020+ dates
     const startCursor = url.searchParams.get("cursor") || undefined; // Allow resuming from cursor
 
     let cursor: string | undefined = startCursor;
@@ -32,6 +33,9 @@ export async function GET(req: NextRequest) {
       const apiUrl = new URL(`${baseUrl}/api/admin/update-company-ages`);
       apiUrl.searchParams.set("useWebSearch", useWebSearch ? "true" : "false");
       apiUrl.searchParams.set("batchSize", batchSize.toString());
+      if (reprocessSuspect) {
+        apiUrl.searchParams.set("reprocessSuspect", "true");
+      }
       if (cursor) {
         apiUrl.searchParams.set("cursor", cursor);
       }
@@ -90,7 +94,7 @@ export async function GET(req: NextRequest) {
       nextCursor: cursor,
       done: allDone,
       continueUrl: !allDone && cursor
-        ? `${baseUrl}/api/admin/update-all-company-ages?batchSize=${batchSize}&maxBatches=${maxBatches}&useWebSearch=${useWebSearch}&cursor=${cursor}`
+        ? `${baseUrl}/api/admin/update-all-company-ages?batchSize=${batchSize}&maxBatches=${maxBatches}&useWebSearch=${useWebSearch}&reprocessSuspect=${reprocessSuspect}&cursor=${cursor}`
         : null,
     });
   } catch (error) {

@@ -30,13 +30,38 @@ export async function POST(req: NextRequest) {
     const useWebSearch = url.searchParams.get("useWebSearch") === "true"; // Enable web search
     const batchSize = parseInt(url.searchParams.get("batchSize") || "10"); // Reduced to 10 to avoid timeout (each takes ~2-3s)
     const cursor = url.searchParams.get("cursor") || undefined;
+    const reprocessSuspect = url.searchParams.get("reprocessSuspect") === "true"; // Also process companies with 2020+ dates (likely wrong)
 
-    // Fetch companies without foundedAt
+    // Fetch companies without foundedAt, or with suspect dates (2020+) if reprocessSuspect is true
+    const currentYear = new Date().getFullYear();
+    const whereClause: any = {
+      ...(cursor ? { id: { gt: cursor } } : {}),
+    };
+
+    if (reprocessSuspect) {
+      // Process companies with null foundedAt OR with foundedAt >= 2020 (likely wrong)
+      whereClause.OR = [
+        { foundedAt: null },
+        {
+          foundedAt: {
+            gte: new Date(2020, 0, 1), // >= 2020-01-01
+          },
+          // But exclude if they have a real foundedYear < 2020
+          foundedYear: {
+            OR: [
+              null,
+              { gte: 2020 }, // foundedYear is also >= 2020, so it's suspect
+            ],
+          },
+        },
+      ];
+    } else {
+      // Only process companies without foundedAt
+      whereClause.foundedAt = null;
+    }
+
     const companies = await prisma.company.findMany({
-      where: {
-        foundedAt: null,
-        ...(cursor ? { id: { gt: cursor } } : {}),
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -102,9 +127,26 @@ export async function POST(req: NextRequest) {
       // createdAt_estimated is unreliable - better to leave it null than show wrong data
       // We'll only set it if we have at least foundedYear or web search result
       if (!foundedAt) {
-        // Don't set foundedAt - leave it null so UI shows "—" instead of wrong year
-        // This is better than showing incorrect data
-        source = source || "no_data";
+        // If we're reprocessing suspect dates and didn't find real data, clear the wrong date
+        if (reprocessSuspect && company.foundedAt) {
+          const existingYear = company.foundedAt.getFullYear();
+          // Only clear if it's 2020+ (suspect)
+          if (existingYear >= 2020) {
+            if (!dryRun) {
+              await prisma.company.update({
+                where: { id: company.id },
+                data: { foundedAt: null },
+              });
+              updated++;
+            }
+            updates.push({
+              id: company.id,
+              name: company.name,
+              source: "cleared_suspect",
+              foundedAt: "null",
+            });
+          }
+        }
         // Skip this company - don't update it
         continue;
       }
@@ -132,6 +174,7 @@ export async function POST(req: NextRequest) {
       message: dryRun ? "Dry run - no changes made" : `Updated ${updated} companies with foundedAt`,
       dryRun,
       useWebSearch,
+      reprocessSuspect,
       processed: companies.length,
       updated,
       sample: updates.slice(0, 10),
