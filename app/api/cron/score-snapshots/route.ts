@@ -94,8 +94,32 @@ async function executeSnapshot() {
   }
 
   // Get today's date (normalized to midnight UTC)
+  // Use the same date for all snapshots in this batch to ensure consistency
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
+  
+  // Check if we already have snapshots for today (to avoid duplicates)
+  const existingTodayCount = await prisma.companyScoreHistory.count({
+    where: {
+      recordedAt: {
+        gte: today,
+        lt: new Date(today.getTime() + 24 * 60 * 60 * 1000), // Next day
+      },
+    },
+  });
+  
+  // If we already have snapshots for today and no cursor, we're done
+  if (existingTodayCount > 0 && !cursor) {
+    console.log(`[cron:score-snapshots] Already have ${existingTodayCount} snapshots for today, skipping`);
+    await kv.del(CURSOR_KEY).catch(() => null);
+    return NextResponse.json({
+      ok: true,
+      message: `Already have ${existingTodayCount} snapshots for today`,
+      snapshotted: 0,
+      errors: 0,
+      done: true,
+    });
+  }
 
   // Find all public companies with scores
   const companies = await prisma.company.findMany({

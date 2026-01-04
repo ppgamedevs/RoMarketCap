@@ -405,37 +405,36 @@ async function handleOrchestrate(req: Request) {
       }
 
       // 6.5. Score Snapshots (daily, after recalculate)
+      // Run multiple times per day if needed to process all companies
       if (await isFlagEnabled("CRON_SCORE_SNAPSHOTS", true)) {
-        const today = new Date().toISOString().split("T")[0];
-        const lastSnapshotDate = await kv.get<string>("cron:last:score-snapshots:date");
-        if (lastSnapshotDate !== today) {
-          try {
-            const stepStart = Date.now();
-            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-            const res = await fetch(`${baseUrl}/api/cron/score-snapshots`, {
-              method: "POST",
-              headers: { "x-cron-secret": secret },
-            });
-            const data = await res.json().catch(() => ({ ok: false }));
-            stats.scoreSnapshots = {
-              ok: data.ok === true,
-              duration: Date.now() - stepStart,
-              error: data.ok === false ? data.error : undefined,
-            };
-            if (data.ok) {
-              await kv.set("cron:last:score-snapshots", new Date().toISOString());
+        try {
+          const stepStart = Date.now();
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const res = await fetch(`${baseUrl}/api/cron/score-snapshots`, {
+            method: "POST",
+            headers: { "x-cron-secret": secret },
+          });
+          const data = await res.json().catch(() => ({ ok: false }));
+          stats.scoreSnapshots = {
+            ok: data.ok === true,
+            duration: Date.now() - stepStart,
+            error: data.ok === false ? data.error : undefined,
+          };
+          if (data.ok) {
+            await kv.set("cron:last:score-snapshots", new Date().toISOString());
+            // Only mark date as complete if all companies are processed (done: true)
+            if (data.done) {
+              const today = new Date().toISOString().split("T")[0];
               await kv.set("cron:last:score-snapshots:date", today);
             }
-          } catch (error) {
-            stats.scoreSnapshots = {
-              ok: false,
-              duration: Date.now() - Date.now(),
-              error: error instanceof Error ? error.message : "Unknown error",
-            };
-            Sentry.captureException(error);
           }
-        } else {
-          stats.scoreSnapshots = { ok: true, duration: 0 }; // Already ran today
+        } catch (error) {
+          stats.scoreSnapshots = {
+            ok: false,
+            duration: Date.now() - Date.now(),
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+          Sentry.captureException(error);
         }
       } else {
         stats.scoreSnapshots = { ok: true, duration: 0 }; // Skipped

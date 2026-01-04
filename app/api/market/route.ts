@@ -248,16 +248,21 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch 24h ago scores for all companies
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const yesterdayWindowStart = new Date(yesterday.getTime() - 2 * 60 * 60 * 1000); // ±2h window
-    const yesterdayWindowEnd = new Date(yesterday.getTime() + 2 * 60 * 60 * 1000);
+    // Look for snapshot from yesterday (00:00 UTC) or closest to 24h ago
+    const nowFor24h = new Date();
+    const yesterday = new Date(nowFor24h);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    yesterday.setUTCHours(0, 0, 0, 0);
+    
+    // Also check for any snapshot in the last 30 hours (to catch late snapshots)
+    const thirtyHoursAgo = new Date(nowFor24h.getTime() - 30 * 60 * 60 * 1000);
     
     const yesterdayScores = await prisma.companyScoreHistory.findMany({
       where: {
         companyId: { in: companyIds },
         recordedAt: {
-          gte: yesterdayWindowStart,
-          lte: yesterdayWindowEnd,
+          gte: thirtyHoursAgo, // Last 30 hours
+          lt: nowFor24h, // But not future
         },
       },
       select: {
@@ -269,7 +274,24 @@ export async function GET(req: NextRequest) {
     });
 
     // Group yesterday scores by company (take most recent per company)
+    // Prefer yesterday's snapshot (00:00 UTC), but fallback to most recent in last 30h
     const yesterdayScoreByCompany = new Map<string, number>();
+    const yesterdayMidnight = new Date(yesterday);
+    
+    // First pass: prefer exact yesterday snapshot
+    for (const record of yesterdayScores) {
+      const recordDate = new Date(record.recordedAt);
+      recordDate.setUTCHours(0, 0, 0, 0);
+      
+      // If this is exactly yesterday's snapshot, use it
+      if (recordDate.getTime() === yesterdayMidnight.getTime()) {
+        if (!yesterdayScoreByCompany.has(record.companyId)) {
+          yesterdayScoreByCompany.set(record.companyId, Number(record.romcScore));
+        }
+      }
+    }
+    
+    // Second pass: fill in missing companies with most recent snapshot
     for (const record of yesterdayScores) {
       if (!yesterdayScoreByCompany.has(record.companyId)) {
         yesterdayScoreByCompany.set(record.companyId, Number(record.romcScore));

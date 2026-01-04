@@ -16,49 +16,74 @@ const NULL_CACHE_TTL_SECONDS = 60 * 60 * 24 * 30; // Cache null results for 30 d
 async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
   try {
     // Clean company name - remove common suffixes and legal forms
-    const cleanName = companyName
-      .replace(/\s+(SA|SCS|SRL|PFA|SNC|SCA|INC|LTD|LLC)$/i, "") // Remove legal form
+    // Also remove parenthetical content like "(Allview)" or "PLC"
+    let cleanName = companyName
+      .replace(/\s*\([^)]*\)/g, "") // Remove parenthetical content like "(Allview)"
+      .replace(/\s+(SA|SCS|SRL|PFA|SNC|SCA|INC|LTD|LLC|PLC)$/i, "") // Remove legal form
+      .replace(/\s+(Romania|România)$/i, "") // Remove "Romania" suffix
       .trim();
     
-    // Wikipedia API: Search for company page (Romanian Wikipedia first)
-    const searchUrl = `https://ro.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`;
+    // Generate search variants
+    const searchVariants: string[] = [cleanName];
     
-    console.log(`[founding-date] Searching Wikipedia: ${searchUrl}`);
+    // If name is long, try shorter versions
+    const words = cleanName.split(/\s+/);
+    if (words.length > 2) {
+      // Try first 2 words (brand name)
+      searchVariants.push(words.slice(0, 2).join(" "));
+      // Try first word only (if it's a known brand)
+      if (words.length > 1) {
+        searchVariants.push(words[0]!);
+      }
+    }
     
-    const response = await fetch(searchUrl, {
-      headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
-      signal: AbortSignal.timeout(3000), // 3 second timeout (reduced to speed up)
-    });
-
+    // Try each variant until we find a match
     let data: any = null;
     let extract = "";
-
-    console.log(`[founding-date] Wikipedia RO response status: ${response.status}`);
-
-    if (response.ok) {
-      data = await response.json();
-      extract = data.extract || "";
-      console.log(`[founding-date] Wikipedia RO extract length: ${extract.length} chars`);
-    } else {
-      // Try English Wikipedia as fallback
-      const enUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`;
-      console.log(`[founding-date] Trying English Wikipedia: ${enUrl}`);
+    
+    for (const variant of searchVariants) {
+      // Wikipedia API: Search for company page (Romanian Wikipedia first)
+      const searchUrl = `https://ro.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(variant)}`;
       
-      const enResponse = await fetch(enUrl, {
+      console.log(`[founding-date] Searching Wikipedia: ${searchUrl}`);
+      
+      const response = await fetch(searchUrl, {
         headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
         signal: AbortSignal.timeout(3000), // 3 second timeout (reduced to speed up)
       });
-      
-      console.log(`[founding-date] Wikipedia EN response status: ${enResponse.status}`);
-      
-      if (enResponse.ok) {
-        data = await enResponse.json();
+
+      console.log(`[founding-date] Wikipedia RO response status: ${response.status}`);
+
+      if (response.ok) {
+        data = await response.json();
         extract = data.extract || "";
-        console.log(`[founding-date] Wikipedia EN extract length: ${extract.length} chars`);
+        console.log(`[founding-date] Wikipedia RO extract length: ${extract.length} chars`);
+        break; // Found a page - stop trying variants
       } else {
-        console.log(`[founding-date] No Wikipedia page found for "${companyName}" (cleaned: "${cleanName}")`);
-        return null;
+        // Try English Wikipedia as fallback for this variant
+        const enUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(variant)}`;
+        console.log(`[founding-date] Trying English Wikipedia: ${enUrl}`);
+        
+        const enResponse = await fetch(enUrl, {
+          headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
+          signal: AbortSignal.timeout(3000), // 3 second timeout (reduced to speed up)
+        });
+        
+        console.log(`[founding-date] Wikipedia EN response status: ${enResponse.status}`);
+        
+        if (enResponse.ok) {
+          data = await enResponse.json();
+          extract = data.extract || "";
+          console.log(`[founding-date] Wikipedia EN extract length: ${extract.length} chars`);
+          break; // Found a page - stop trying variants
+        }
       }
+    }
+    
+    // If we didn't find any Wikipedia page, return null
+    if (!extract) {
+      console.log(`[founding-date] No Wikipedia page found for "${companyName}" (tried variants: ${searchVariants.join(", ")})`);
+      return null;
     }
     
     // Look for Romanian patterns: "înființat", "fondat", "înființată"
