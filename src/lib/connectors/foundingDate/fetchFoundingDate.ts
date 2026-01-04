@@ -27,7 +27,7 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
     
     const response = await fetch(searchUrl, {
       headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
-      signal: AbortSignal.timeout(5000), // 5 second timeout
+      signal: AbortSignal.timeout(3000), // 3 second timeout (reduced to speed up)
     });
 
     let data: any = null;
@@ -46,7 +46,7 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
       
       const enResponse = await fetch(enUrl, {
         headers: { "User-Agent": "RoMarketCap/1.0 (contact@romarketcap.ro)" },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(3000), // 3 second timeout (reduced to speed up)
       });
       
       console.log(`[founding-date] Wikipedia EN response status: ${enResponse.status}`);
@@ -152,7 +152,7 @@ async function fetchFromWebsite(website: string): Promise<Date | null> {
         const url = `${baseUrl.replace(/\/$/, "")}${path}`;
         const response = await fetch(url, {
           headers: { "User-Agent": "Mozilla/5.0 (compatible; RoMarketCap/1.0; +https://romarketcap.ro)" },
-          signal: AbortSignal.timeout(5000), // 5 second timeout
+          signal: AbortSignal.timeout(3000), // 3 second timeout (reduced to speed up)
         });
         
         if (!response.ok) continue;

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dryRun") === "true";
     const useWebSearch = url.searchParams.get("useWebSearch") === "true"; // Enable web search
-    const batchSize = parseInt(url.searchParams.get("batchSize") || "5"); // Reduced to 5 to avoid timeout (each takes ~5-7s with web search)
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "3"); // Reduced to 3 to avoid timeout (each takes ~5-7s with web search)
     const cursor = url.searchParams.get("cursor") || undefined;
     const reprocessSuspect = url.searchParams.get("reprocessSuspect") === "true"; // Also process companies with 2020+ dates (likely wrong)
 
