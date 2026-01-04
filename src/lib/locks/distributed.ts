@@ -68,7 +68,11 @@ export async function isLockHeld(lockKey: string): Promise<boolean> {
   try {
     const value = await kv.get<string>(kvKey);
     return value != null;
-  } catch (error) {
+  } catch (error: any) {
+    // If Upstash is at rate limit, silently return false (don't log to avoid spam)
+    if (error?.message?.includes("max requests limit exceeded")) {
+      return false;
+    }
     console.error(`[lock] Error checking lock ${lockKey}:`, error);
     return false;
   }

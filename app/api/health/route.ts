@@ -44,19 +44,36 @@ export async function GET() {
     cacheOk = false;
   }
 
-  const cron = {
-    recalculate: (await kv.get<string>("cron:last:recalculate").catch(() => null)) ?? null,
-    enrich: (await kv.get<string>("cron:last:enrich").catch(() => null)) ?? null,
-    weeklyDigest: (await kv.get<string>("cron:last:weekly-digest").catch(() => null)) ?? null,
-    watchlistAlerts: (await kv.get<string>("cron:last:watchlist-alerts").catch(() => null)) ?? null,
-    billing: (await kv.get<string>("cron:last:billing").catch(() => null)) ?? null,
-  };
+  // Fetch cron last run times (with error handling for rate limits)
+  const cron: Record<string, string | null> = {};
+  const cronKeys = ["recalculate", "enrich", "weekly-digest", "watchlist-alerts", "billing"];
+  
+  for (const key of cronKeys) {
+    try {
+      cron[key] = (await kv.get<string>(`cron:last:${key}`)) ?? null;
+    } catch (error: any) {
+      // If Upstash is at rate limit, skip this check
+      if (error?.message?.includes("max requests limit exceeded")) {
+        cron[key] = null;
+      } else {
+        cron[key] = null;
+      }
+    }
+  }
 
-  const billingStats = await kv.get<string>("cron:stats:billing").catch(() => null);
-  const billingStatsParsed = billingStats ? JSON.parse(billingStats) : null;
+  let billingStatsParsed = null;
+  try {
+    const billingStats = await kv.get<string>("cron:stats:billing");
+    billingStatsParsed = billingStats ? JSON.parse(billingStats) : null;
+  } catch (error: any) {
+    // Skip if rate limit hit
+    if (!error?.message?.includes("max requests limit exceeded")) {
+      console.error("[health] Error fetching billing stats:", error);
+    }
+  }
 
   // Check if billing is degraded (reconcile not run in 72h or recent errors)
-  const billingLastRun = cron.billing ? new Date(cron.billing).getTime() : null;
+  const billingLastRun = cron["billing"] ? new Date(cron["billing"]).getTime() : null;
   const hoursSinceBilling = billingLastRun ? (Date.now() - billingLastRun) / (1000 * 60 * 60) : null;
   const billingDegraded = hoursSinceBilling != null && hoursSinceBilling > 72;
 
@@ -66,7 +83,8 @@ export async function GET() {
   // Check cron health and stuck detection
   const cronHealth: Record<string, { lastRun: string | null; healthy: boolean; stuck: boolean }> = {};
   const now = Date.now();
-  for (const [key, value] of Object.entries(cron)) {
+  for (const key of cronKeys) {
+    const value = cron[key];
     if (value) {
       const lastRun = new Date(value).getTime();
       const hoursSince = (now - lastRun) / (1000 * 60 * 60);
@@ -77,12 +95,34 @@ export async function GET() {
       cronHealth[key] = { lastRun: null, healthy: false, stuck: false };
     }
   }
+  
+  // Map cron keys to expected format for response
+  const cronResponse = {
+    recalculate: cron["recalculate"],
+    enrich: cron["enrich"],
+    weeklyDigest: cron["weekly-digest"],
+    watchlistAlerts: cron["watchlist-alerts"],
+    billing: cron["billing"],
+  };
 
-  // Check lock status for all cron routes
+  // Check lock status for all cron routes (skip if Upstash is at limit)
   const lockStatus: Record<string, boolean> = {};
   const lockKeys = ["cron:recalculate", "cron:enrich", "cron:weekly-digest", "cron:watchlist-alerts", "cron:billing-reconcile"];
   for (const lockKey of lockKeys) {
-    lockStatus[lockKey] = await isLockHeld(lockKey);
+    try {
+      lockStatus[lockKey] = await isLockHeld(lockKey);
+    } catch (error: any) {
+      // If Upstash is at rate limit, set all locks to false (unknown status)
+      if (error?.message?.includes("max requests limit exceeded")) {
+        lockStatus[lockKey] = false;
+        // Skip remaining locks to save requests
+        for (const remainingKey of lockKeys.slice(lockKeys.indexOf(lockKey) + 1)) {
+          lockStatus[remainingKey] = false;
+        }
+        break;
+      }
+      lockStatus[lockKey] = false;
+    }
   }
 
   const res = NextResponse.json({
@@ -105,10 +145,10 @@ export async function GET() {
       stripe: stripeConfigured,
       resend: resendConfigured,
     },
-    cron,
+    cron: cronResponse,
     cronHealth,
     billing: {
-      lastReconcile: cron.billing,
+      lastReconcile: cron["billing"],
       stats: billingStatsParsed,
       degraded: billingDegraded,
     },
