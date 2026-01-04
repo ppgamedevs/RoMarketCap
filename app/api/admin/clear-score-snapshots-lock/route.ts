@@ -17,13 +17,33 @@ export async function GET(req: NextRequest) {
 
     const lockKey = "lock:cron:score-snapshots";
     
+    // Check if lock exists first
+    let lockExists = false;
+    let lockValue: string | null = null;
+    try {
+      lockValue = await kv.get<string>(lockKey);
+      lockExists = lockValue !== null;
+    } catch (error: any) {
+      if (!error?.message?.includes("max requests limit exceeded")) {
+        console.warn("[admin/clear-score-snapshots-lock] Error checking lock:", error);
+      }
+    }
+    
     // Try to delete the lock
     try {
       await kv.del(lockKey);
+      
+      // Verify it was deleted
+      const verifyValue = await kv.get<string>(lockKey).catch(() => null);
+      const wasDeleted = verifyValue === null;
+      
       return NextResponse.json({
         ok: true,
-        message: "Lock cleared successfully",
+        message: wasDeleted ? "Lock cleared successfully" : "Lock delete attempted (may still exist)",
         lockKey,
+        lockExisted: lockExists,
+        lockValue: lockValue || null,
+        wasDeleted,
       });
     } catch (error: any) {
       // If Upstash is at rate limit, still return success (lock might be cleared)
@@ -33,6 +53,7 @@ export async function GET(req: NextRequest) {
           message: "Lock clear attempted (Upstash rate limit hit, but lock may be cleared)",
           lockKey,
           warning: "Upstash rate limit exceeded",
+          lockExisted: lockExists,
         });
       }
       throw error;

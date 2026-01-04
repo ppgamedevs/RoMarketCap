@@ -37,12 +37,24 @@ export async function POST(req: NextRequest) {
       }, { status: 503 });
     }
 
-    // Acquire lock
-    const lockId = await acquireLockWithRetry("cron:score-snapshots", { ttl: 1800, maxRetries: 0 });
+    // Acquire lock (with retry to handle race conditions)
+    // Use maxRetries: 1 to allow one retry after a short delay
+    const lockId = await acquireLockWithRetry("cron:score-snapshots", { 
+      ttl: 1800, // 30 minutes
+      maxRetries: 1, // Allow one retry
+      retryDelay: 500, // 500ms delay between retries
+    });
     if (!lockId) {
+      // Check if lock actually exists (might be a false positive)
+      const { isLockHeld } = await import("@/src/lib/locks/distributed");
+      const lockHeld = await isLockHeld("cron:score-snapshots");
+      
       return NextResponse.json({ 
         ok: false, 
-        message: "Another snapshot process is already running" 
+        message: lockHeld 
+          ? "Another snapshot process is already running (lock is held)" 
+          : "Failed to acquire lock (may be a race condition, try again)",
+        lockHeld,
       }, { status: 202 });
     }
 
