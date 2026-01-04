@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     let cursor: string | undefined = startCursor;
     let totalProcessed = 0;
     let totalUpdated = 0;
-    const batches: Array<{ batch: number; processed: number; updated: number; cursor?: string }> = [];
+    const batches: Array<{ batch: number; processed: number; updated: number; cursor?: string; debug?: any }> = [];
     let allDone = false;
 
     for (let batch = 1; batch <= maxBatches; batch++) {
