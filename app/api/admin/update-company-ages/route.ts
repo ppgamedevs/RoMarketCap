@@ -40,19 +40,23 @@ export async function POST(req: NextRequest) {
 
     if (reprocessSuspect) {
       // Process companies with null foundedAt OR with foundedAt >= 2020 (likely wrong)
+      // But exclude if they have a real foundedYear < 2020
       whereClause.OR = [
         { foundedAt: null },
         {
-          foundedAt: {
-            gte: new Date(2020, 0, 1), // >= 2020-01-01
-          },
-          // But exclude if they have a real foundedYear < 2020
-          foundedYear: {
-            OR: [
-              null,
-              { gte: 2020 }, // foundedYear is also >= 2020, so it's suspect
-            ],
-          },
+          AND: [
+            {
+              foundedAt: {
+                gte: new Date(2020, 0, 1), // >= 2020-01-01
+              },
+            },
+            {
+              OR: [
+                { foundedYear: null },
+                { foundedYear: { gte: 2020 } }, // foundedYear is also >= 2020, so it's suspect
+              ],
+            },
+          ],
         },
       ];
     } else {
