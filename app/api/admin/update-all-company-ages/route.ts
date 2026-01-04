@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const batchSize = parseInt(url.searchParams.get("batchSize") || "10");
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "5"); // Reduced to 5 to avoid Vercel timeout
     const maxBatches = parseInt(url.searchParams.get("maxBatches") || "20"); // Increased to 20 batches per call
     const useWebSearch = url.searchParams.get("useWebSearch") !== "false"; // Default true
     const reprocessSuspect = url.searchParams.get("reprocessSuspect") === "true"; // Also process companies with 2020+ dates

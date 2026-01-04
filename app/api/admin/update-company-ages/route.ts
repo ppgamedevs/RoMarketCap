@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dryRun") === "true";
     const useWebSearch = url.searchParams.get("useWebSearch") === "true"; // Enable web search
-    const batchSize = parseInt(url.searchParams.get("batchSize") || "10"); // Reduced to 10 to avoid timeout (each takes ~2-3s)
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "5"); // Reduced to 5 to avoid timeout (each takes ~5-7s with web search)
     const cursor = url.searchParams.get("cursor") || undefined;
     const reprocessSuspect = url.searchParams.get("reprocessSuspect") === "true"; // Also process companies with 2020+ dates (likely wrong)
 
@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
         try {
           console.log(`[update-ages] Searching web for "${company.name}" (website: ${company.website || "none"})`);
           
-          // Rate limit: 1 request per second for web searches (Wikipedia is generally fast)
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // Rate limit: 0.8 seconds between requests (slightly faster to avoid timeout)
+          await new Promise((resolve) => setTimeout(resolve, 800));
           
           foundedAt = await fetchFoundingDate(company.name, company.website || null);
           if (foundedAt) {

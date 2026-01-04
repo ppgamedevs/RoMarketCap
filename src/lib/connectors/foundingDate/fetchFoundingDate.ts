@@ -219,11 +219,17 @@ export async function fetchFoundingDate(
   let foundedAt = await fetchFromWikipedia(companyName);
   console.log(`[founding-date] Wikipedia result for "${companyName}":`, foundedAt ? foundedAt.toISOString() : "not found");
   
-  // Fallback to website if Wikipedia didn't work
+  // Fallback to website if Wikipedia didn't work (skip if we found something on Wikipedia)
+  // This saves time and reduces timeout risk
   if (!foundedAt && website) {
     console.log(`[founding-date] Trying website for "${companyName}": ${website}`);
-    foundedAt = await fetchFromWebsite(website);
-    console.log(`[founding-date] Website result for "${companyName}" (${website}):`, foundedAt ? foundedAt.toISOString() : "not found");
+    try {
+      foundedAt = await fetchFromWebsite(website);
+      console.log(`[founding-date] Website result for "${companyName}" (${website}):`, foundedAt ? foundedAt.toISOString() : "not found");
+    } catch (error) {
+      // If website fetch fails, don't retry - just log and continue
+      console.log(`[founding-date] Website fetch failed for "${companyName}":`, error instanceof Error ? error.message : "Unknown error");
+    }
   }
   
   // Cache result (even if null, to avoid repeated lookups)
