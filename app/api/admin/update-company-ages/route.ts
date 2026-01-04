@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
         name: true,
         website: true,
         foundedYear: true,
+        foundedAt: true, // Need this for reprocessSuspect logic
         createdAt: true,
         cui: true,
       },
