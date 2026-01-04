@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
       if (company.foundedYear) {
         foundedAt = new Date(company.foundedYear, 0, 1);
         source = "foundedYear";
+        console.log(`[update-ages] ✅ Using foundedYear for "${company.name}": ${company.foundedYear}`);
       }
       // Strategy 2: Fetch from web (Wikipedia + company website)
       else if (useWebSearch) {
