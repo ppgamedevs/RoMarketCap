@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dryRun") === "true";
     const useWebSearch = url.searchParams.get("useWebSearch") === "true"; // Enable web search
-    const batchSize = parseInt(url.searchParams.get("batchSize") || "50"); // Reduced to 50 for rate limiting
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "10"); // Reduced to 10 to avoid timeout (each takes ~2-3s)
     const cursor = url.searchParams.get("cursor") || undefined;
 
     // Fetch companies without foundedAt
@@ -78,15 +78,15 @@ export async function POST(req: NextRequest) {
         try {
           console.log(`[update-ages] Searching web for "${company.name}" (website: ${company.website || "none"})`);
           
-          // Rate limit: 1 request per 2 seconds for web searches
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Rate limit: 1 request per second for web searches (Wikipedia is generally fast)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           
           foundedAt = await fetchFoundingDate(company.name, company.website || null);
           if (foundedAt) {
             source = "web_search";
-            console.log(`[update-ages] Found founding date for "${company.name}": ${foundedAt.toISOString()}`);
+            console.log(`[update-ages] ✅ Found founding date for "${company.name}": ${foundedAt.toISOString()}`);
           } else {
-            console.log(`[update-ages] No founding date found for "${company.name}" via web search`);
+            console.log(`[update-ages] ❌ No founding date found for "${company.name}" via web search`);
           }
         } catch (error) {
           console.error(`[update-ages] Error searching web for "${company.name}":`, error);

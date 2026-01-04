@@ -91,11 +91,13 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
     
     // Fallback: English patterns
     const enPatterns = [
-      /(?:founded|established|created)[\s\w,]*(\d{4})/i,
-      /(\d{4})[\s\w,]*founded/i,
-      /(\d{4})[\s\w,]*established/i,
+      /(?:founded|established|created|launched)[\s\w,]*in\s+(\d{4})/i, // "founded in 1997", "launched in April 1997"
+      /(?:founded|established|created|launched)[\s\w,]*(\d{4})/i, // "founded 1997"
+      /(\d{4})[\s\w,]*founded/i, // "1997 ... founded"
+      /(\d{4})[\s\w,]*established/i, // "1997 ... established"
       /founded in (\d{4})/i,
       /established in (\d{4})/i,
+      /launched in [\w\s,]*(\d{4})/i, // "launched in April 1997"
     ];
     
     for (const pattern of enPatterns) {
