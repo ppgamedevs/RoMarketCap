@@ -68,6 +68,7 @@ export async function GET(req: NextRequest) {
         processed: data.processed || 0,
         updated: data.updated || 0,
         cursor,
+        debug: data.debug, // Include debug info from individual batch
       });
 
       console.log(`[update-all-ages] Batch ${batch} complete: ${data.processed} processed, ${data.updated} updated`);
@@ -82,6 +83,25 @@ export async function GET(req: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
+    // Aggregate debug info from all batches
+    const debugSummary = {
+      totalWithFoundedYear: 0,
+      totalWithFoundedAt: 0,
+      totalSuspectDates: 0,
+      totalNoData: 0,
+      sampleBatches: batches.filter((b: any) => b.debug).slice(0, 3).map((b: any) => b.debug),
+    };
+    
+    for (const batch of batches) {
+      const batchDebug = (batch as any).debug;
+      if (batchDebug?.summary) {
+        debugSummary.totalWithFoundedYear += batchDebug.summary.withFoundedYear || 0;
+        debugSummary.totalWithFoundedAt += batchDebug.summary.withFoundedAt || 0;
+        debugSummary.totalSuspectDates += batchDebug.summary.suspectDates || 0;
+        debugSummary.totalNoData += batchDebug.summary.noData || 0;
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       message: allDone
@@ -91,6 +111,7 @@ export async function GET(req: NextRequest) {
       totalUpdated,
       batchesProcessed: batches.length,
       batches,
+      debug: debugSummary,
       nextCursor: cursor,
       done: allDone,
       continueUrl: !allDone && cursor
