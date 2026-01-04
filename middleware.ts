@@ -80,7 +80,8 @@ export default withAuth({
       pathname === "/api/admin/update-company-ages" || // Update company ages (populate foundedAt from foundedYear)
       pathname === "/api/admin/check-company-ages" || // Check company ages status
       pathname === "/api/admin/test-founding-date" || // Test founding date fetching
-      pathname === "/api/admin/update-all-company-ages") { // Update all company ages (automated batches)
+      pathname === "/api/admin/update-all-company-ages" || // Update all company ages (automated batches)
+      pathname === "/api/admin/cleanup-wrong-founding-dates") { // Cleanup wrong founding dates (2020+)
     return true;
   }
       

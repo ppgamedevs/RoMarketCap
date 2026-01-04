@@ -98,16 +98,16 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Strategy 3: Fallback to createdAt estimate
+      // Strategy 3: Don't set foundedAt if we don't have real data
+      // createdAt_estimated is unreliable - better to leave it null than show wrong data
+      // We'll only set it if we have at least foundedYear or web search result
       if (!foundedAt) {
-        const now = new Date();
-        const yearsSinceCreation = now.getFullYear() - company.createdAt.getFullYear();
-        const estimatedFoundedYear = company.createdAt.getFullYear() - Math.max(2, Math.min(10, yearsSinceCreation));
-        foundedAt = new Date(estimatedFoundedYear, company.createdAt.getMonth(), company.createdAt.getDate());
-        source = source || "createdAt_estimated";
+        // Don't set foundedAt - leave it null so UI shows "—" instead of wrong year
+        // This is better than showing incorrect data
+        source = source || "no_data";
+        // Skip this company - don't update it
+        continue;
       }
-
-      if (!foundedAt) continue;
 
       updates.push({
         id: company.id,

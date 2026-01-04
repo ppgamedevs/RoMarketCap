@@ -316,12 +316,25 @@ export async function GET(req: NextRequest) {
         score24hChangePercent = ((currentScore - yesterdayScore) / yesterdayScore) * 100;
       }
 
-      // Get founding year
+      // Get founding year - filter out unreliable estimates
+      // Only show years that are clearly real (before 2020, or if foundedYear exists and is older)
       let foundedYear: number | null = null;
       if (company.foundedAt) {
-        foundedYear = company.foundedAt.getFullYear();
+        const year = company.foundedAt.getFullYear();
+        // Only trust years before 2020 (to avoid showing createdAt_estimated dates from 2024)
+        if (year < 2020) {
+          foundedYear = year;
+        } else if (company.foundedYear) {
+          // If foundedAt is 2020+, prefer foundedYear if it exists and is older
+          if (company.foundedYear < year && company.foundedYear < 2020) {
+            foundedYear = company.foundedYear;
+          }
+        }
       } else if (company.foundedYear) {
-        foundedYear = company.foundedYear;
+        // Only use foundedYear if it's reasonable (before 2020)
+        if (company.foundedYear < 2020) {
+          foundedYear = company.foundedYear;
+        }
       }
 
       return {
