@@ -1,0 +1,98 @@
+/**
+ * Update All Company Ages (Automated)
+ * 
+ * Processes all companies in batches using cursor pagination.
+ * This endpoint will continue until all companies are processed.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  try {
+    await requireAdminSession();
+
+    const url = new URL(req.url);
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const batchSize = parseInt(url.searchParams.get("batchSize") || "10");
+    const maxBatches = parseInt(url.searchParams.get("maxBatches") || "10"); // Limit to 10 batches per call
+    const useWebSearch = url.searchParams.get("useWebSearch") !== "false"; // Default true
+
+    let cursor: string | undefined = undefined;
+    let totalProcessed = 0;
+    let totalUpdated = 0;
+    const batches: Array<{ batch: number; processed: number; updated: number; cursor?: string }> = [];
+
+    for (let batch = 1; batch <= maxBatches; batch++) {
+      const apiUrl = new URL(`${baseUrl}/api/admin/update-company-ages`);
+      apiUrl.searchParams.set("useWebSearch", useWebSearch ? "true" : "false");
+      apiUrl.searchParams.set("batchSize", batchSize.toString());
+      if (cursor) {
+        apiUrl.searchParams.set("cursor", cursor);
+      }
+
+      console.log(`[update-all-ages] Batch ${batch}: Processing with cursor ${cursor || "none"}`);
+
+      const response = await fetch(apiUrl.toString(), {
+        headers: {
+          "Cookie": req.headers.get("cookie") || "",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Batch ${batch} failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.ok) {
+        throw new Error(`Batch ${batch} error: ${data.error}`);
+      }
+
+      totalProcessed += data.processed || 0;
+      totalUpdated += data.updated || 0;
+      cursor = data.nextCursor;
+      const done = data.done;
+
+      batches.push({
+        batch,
+        processed: data.processed || 0,
+        updated: data.updated || 0,
+        cursor,
+      });
+
+      console.log(`[update-all-ages] Batch ${batch} complete: ${data.processed} processed, ${data.updated} updated`);
+
+      if (done || !cursor) {
+        console.log(`[update-all-ages] All companies processed`);
+        break;
+      }
+
+      // Small delay between batches
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    return NextResponse.json({
+      ok: true,
+      message: `Processed ${totalProcessed} companies, updated ${totalUpdated}`,
+      totalProcessed,
+      totalUpdated,
+      batchesProcessed: batches.length,
+      batches,
+      nextCursor: cursor,
+      done: !cursor,
+      continueUrl: cursor
+        ? `${baseUrl}/api/admin/update-all-company-ages?batchSize=${batchSize}&maxBatches=${maxBatches}&useWebSearch=${useWebSearch}&cursor=${cursor}`
+        : null,
+    });
+  } catch (error) {
+    console.error("[update-all-ages] Error:", error);
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}

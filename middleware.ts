@@ -79,7 +79,8 @@ export default withAuth({
       pathname === "/api/admin/add-content-cache-tables" || // Add content cache tables for SEO
       pathname === "/api/admin/update-company-ages" || // Update company ages (populate foundedAt from foundedYear)
       pathname === "/api/admin/check-company-ages" || // Check company ages status
-      pathname === "/api/admin/test-founding-date") { // Test founding date fetching
+      pathname === "/api/admin/test-founding-date" || // Test founding date fetching
+      pathname === "/api/admin/update-all-company-ages") { // Update all company ages (automated batches)
     return true;
   }
       
