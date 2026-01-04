@@ -18,14 +18,16 @@ export async function GET(req: NextRequest) {
     const cacheKey = "market:stats";
     
     // Try cache first (but skip if Upstash is at limit to avoid errors)
-    let cached: {
+    type CachedStats = {
       currentTotal: number;
       changePercent: number;
       history: Array<{ date: string; totalMarketCap: number }>;
-    } | null = null;
+    };
+    
+    let cached: CachedStats | null = null;
     
     try {
-      cached = await kv.get<typeof cached>(cacheKey);
+      cached = await kv.get<CachedStats>(cacheKey);
     } catch (error: any) {
       // If Upstash is at limit, skip cache and compute fresh
       if (error?.message?.includes("max requests limit exceeded")) {
