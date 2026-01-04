@@ -138,6 +138,7 @@ export async function POST(req: NextRequest) {
           const existingYear = company.foundedAt.getFullYear();
           // Only clear if it's 2020+ (suspect)
           if (existingYear >= 2020) {
+            console.log(`[update-ages] Clearing suspect foundedAt for "${company.name}" (year: ${existingYear})`);
             if (!dryRun) {
               await prisma.company.update({
                 where: { id: company.id },
@@ -151,7 +152,12 @@ export async function POST(req: NextRequest) {
               source: "cleared_suspect",
               foundedAt: "null",
             });
+            continue; // Skip to next company after clearing
+          } else {
+            console.log(`[update-ages] Keeping non-suspect foundedAt for "${company.name}" (year: ${existingYear}) as no new data found`);
           }
+        } else {
+          console.log(`[update-ages] Skipping "${company.name}" - no real founding date found.`);
         }
         // Skip this company - don't update it
         continue;

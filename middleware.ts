@@ -82,7 +82,8 @@ export default withAuth({
       pathname === "/api/admin/test-founding-date" || // Test founding date fetching
       pathname === "/api/admin/update-all-company-ages" || // Update all company ages (automated batches)
       pathname === "/api/admin/cleanup-wrong-founding-dates" || // Cleanup wrong founding dates (2020+)
-      pathname === "/api/admin/score-snapshots") { // Admin endpoint for score snapshots
+      pathname === "/api/admin/score-snapshots" || // Admin endpoint for score snapshots
+      pathname === "/api/admin/check-score-snapshots") { // Check score snapshots status
     return true;
   }
       
