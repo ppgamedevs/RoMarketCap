@@ -214,6 +214,7 @@ export async function GET(req: NextRequest) {
         countySlug: true,
         lastScoredAt: true,
         foundedAt: true,
+        foundedYear: true,
       },
     });
 
