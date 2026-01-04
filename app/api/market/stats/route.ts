@@ -36,7 +36,12 @@ export async function GET(req: NextRequest) {
     }
     
     if (cached) {
-      return NextResponse.json({ ok: true, ...cached });
+      return NextResponse.json({
+        ok: true,
+        currentTotal: cached.currentTotal,
+        changePercent: cached.changePercent,
+        history: cached.history,
+      });
     }
 
     // Calculate current total market cap
