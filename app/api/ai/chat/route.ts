@@ -267,6 +267,44 @@ To see top companies, check the industry page or use filters on the main page.`;
     }
   }
 
+  // Comparison questions
+  if (lowerMessage.includes("compar") || lowerMessage.includes("compare")) {
+    // Try to extract company names from the message
+    const companyMatches = message.match(/(?:kaufland|lidl|emag|dacia|banca transilvania|omv|petrom|romgaz|orange|vodafone|digi|telekom|cez|engie|eon|profi|carrefour|mega image|penny|selgros|metro|dedeman|sameday|ford|uipath|regina maria|nn|medlife|teraplast|purcari|visual fan|allview|2performant|garanti|bbva|premier energy|transport trade|cemacon)/gi);
+    
+    if (companyMatches && companyMatches.length >= 2) {
+      return lang === "ro"
+        ? `Pentru a compara companiile ${companyMatches.slice(0, 2).join(" și ")}, folosește funcția de comparație de pe site sau accesează direct pagina de comparație.
+
+Poți compara companiile pe baza:
+• Scor ROMC
+• Market Cap
+• Venituri
+• Număr de angajați
+• Confidență date
+
+Folosește butonul "Compară" de pe paginile companiilor sau accesează /compare/[companie1]/[companie2]`
+        : `To compare companies ${companyMatches.slice(0, 2).join(" and ")}, use the comparison feature on the site or access the comparison page directly.
+
+You can compare companies based on:
+• ROMC Score
+• Market Cap
+• Revenue
+• Number of employees
+• Data Confidence
+
+Use the "Compare" button on company pages or access /compare/[company1]/[company2]`;
+    }
+    
+    return lang === "ro"
+      ? `Pentru a compara companiile, folosește funcția de comparație de pe site. Poți accesa pagina de comparație direct sau folosi butonul "Compară" de pe paginile companiilor.
+
+Poți compara companiile pe baza scorului ROMC, market cap, venituri, număr de angajați și confidență date.`
+      : `To compare companies, use the comparison feature on the site. You can access the comparison page directly or use the "Compare" button on company pages.
+
+You can compare companies based on ROMC score, market cap, revenue, number of employees, and data confidence.`;
+  }
+
   // Default response
   return lang === "ro"
     ? `Bună! Sunt ROMC AI, asistentul tău pentru a înțelege site-ul RoMarketCap și companiile românești.

@@ -316,24 +316,45 @@ export async function GET(req: NextRequest) {
         score24hChangePercent = ((currentScore - yesterdayScore) / yesterdayScore) * 100;
       }
 
-      // Get founding year - filter out unreliable estimates
-      // Only show years that are clearly real (before 2020, or if foundedYear exists and is older)
+      // Get founding year - show if we have real data
+      // Accept years from 1800 to current year (but filter out 2024 if it's likely createdAt_estimated)
       let foundedYear: number | null = null;
+      const currentYear = new Date().getFullYear();
+      
       if (company.foundedAt) {
         const year = company.foundedAt.getFullYear();
-        // Only trust years before 2020 (to avoid showing createdAt_estimated dates from 2024)
-        if (year < 2020) {
-          foundedYear = year;
-        } else if (company.foundedYear) {
-          // If foundedAt is 2020+, prefer foundedYear if it exists and is older
-          if (company.foundedYear < year && company.foundedYear < 2020) {
-            foundedYear = company.foundedYear;
+        // Accept years from 1800 to current year
+        // But be suspicious of 2024 (might be createdAt_estimated)
+        if (year >= 1800 && year <= currentYear) {
+          // If year is 2024, only trust if we also have foundedYear that confirms it
+          if (year === 2024) {
+            // Only show 2024 if foundedYear also says 2024 (double confirmation)
+            if (company.foundedYear === 2024) {
+              foundedYear = year;
+            }
+            // Or if foundedYear is older, use that instead
+            else if (company.foundedYear && company.foundedYear < 2024) {
+              foundedYear = company.foundedYear;
+            }
+          } else {
+            // For other years (1800-2023), trust them
+            foundedYear = year;
           }
         }
-      } else if (company.foundedYear) {
-        // Only use foundedYear if it's reasonable (before 2020)
-        if (company.foundedYear < 2020) {
+        
+        // If we have foundedYear that's different and older, prefer it
+        if (company.foundedYear && company.foundedYear < year && company.foundedYear >= 1800) {
           foundedYear = company.foundedYear;
+        }
+      } else if (company.foundedYear) {
+        // Only use foundedYear if it's reasonable (1800 to current year, but not 2024 unless confirmed)
+        if (company.foundedYear >= 1800 && company.foundedYear <= currentYear) {
+          if (company.foundedYear === 2024) {
+            // Don't show 2024 from foundedYear alone (might be wrong)
+            foundedYear = null;
+          } else {
+            foundedYear = company.foundedYear;
+          }
         }
       }
 

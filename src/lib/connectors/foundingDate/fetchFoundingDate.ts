@@ -65,17 +65,18 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
     // Patterns must handle: "fondată ... în anul 1996", "fondată în 1996", "înființată în 1996", etc.
     const roPatterns = [
       /înființat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "înființată în anul 1996"
-      /înființat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "înființată în 1996"
-      /înființat(?:ă)?[\s\w,]*(\d{4})/i, // "înființată 1996"
-      /fondat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "fondată în anul 1996"
-      /fondat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "fondată în 1996"
-      /fondat(?:ă)?[\s\w,]*(\d{4})/i, // "fondată 1996"
+      /fondat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "fondată în anul 1996" - PRIORITATE
       /creat(?:ă)?[\s\w,]*în\s+anul\s+(\d{4})/i, // "creată în anul 1996"
+      /înființat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "înființată în 1996"
+      /fondat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "fondată în 1996"
       /creat(?:ă)?[\s\w,]*în\s+(\d{4})/i, // "creată în 1996"
+      /înființat(?:ă)?[\s\w,]*(\d{4})/i, // "înființată 1996"
+      /fondat(?:ă)?[\s\w,]*(\d{4})/i, // "fondată 1996"
       /creat(?:ă)?[\s\w,]*(\d{4})/i, // "creată 1996"
       /(\d{4})[\s\w,]*înființat/i, // "1996 ... înființat"
       /(\d{4})[\s\w,]*fondat/i, // "1996 ... fondat"
       /în\s+anul\s+(\d{4})[\s\w,]*fondat/i, // "în anul 1996 ... fondat"
+      /în\s+anul\s+(\d{4})[\s\w,]*înființat/i, // "în anul 1996 ... înființat"
     ];
     
     for (const pattern of roPatterns) {
@@ -91,6 +92,7 @@ async function fetchFromWikipedia(companyName: string): Promise<Date | null> {
     
     // Fallback: English patterns
     const enPatterns = [
+      /(?:founded|established|created|launched)[\s\w,]*in\s+the\s+year\s+(\d{4})/i, // "founded in the year 1997"
       /(?:founded|established|created|launched)[\s\w,]*in\s+(\d{4})/i, // "founded in 1997", "launched in April 1997"
       /(?:founded|established|created|launched)[\s\w,]*(\d{4})/i, // "founded 1997"
       /(\d{4})[\s\w,]*founded/i, // "1997 ... founded"
