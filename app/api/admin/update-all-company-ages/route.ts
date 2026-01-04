@@ -18,13 +18,15 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const batchSize = parseInt(url.searchParams.get("batchSize") || "10");
-    const maxBatches = parseInt(url.searchParams.get("maxBatches") || "10"); // Limit to 10 batches per call
+    const maxBatches = parseInt(url.searchParams.get("maxBatches") || "20"); // Increased to 20 batches per call
     const useWebSearch = url.searchParams.get("useWebSearch") !== "false"; // Default true
+    const startCursor = url.searchParams.get("cursor") || undefined; // Allow resuming from cursor
 
-    let cursor: string | undefined = undefined;
+    let cursor: string | undefined = startCursor;
     let totalProcessed = 0;
     let totalUpdated = 0;
     const batches: Array<{ batch: number; processed: number; updated: number; cursor?: string }> = [];
+    let allDone = false;
 
     for (let batch = 1; batch <= maxBatches; batch++) {
       const apiUrl = new URL(`${baseUrl}/api/admin/update-company-ages`);
@@ -66,25 +68,28 @@ export async function GET(req: NextRequest) {
 
       console.log(`[update-all-ages] Batch ${batch} complete: ${data.processed} processed, ${data.updated} updated`);
 
-      if (done || !cursor) {
-        console.log(`[update-all-ages] All companies processed`);
+      if (done || !cursor || data.processed === 0) {
+        console.log(`[update-all-ages] All companies processed (done: ${done}, cursor: ${cursor}, processed: ${data.processed})`);
+        allDone = true;
         break;
       }
 
-      // Small delay between batches
+      // Small delay between batches to avoid overwhelming the system
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     return NextResponse.json({
       ok: true,
-      message: `Processed ${totalProcessed} companies, updated ${totalUpdated}`,
+      message: allDone
+        ? `✅ All companies processed! Total: ${totalProcessed} processed, ${totalUpdated} updated`
+        : `Processed ${totalProcessed} companies, updated ${totalUpdated}. More batches available.`,
       totalProcessed,
       totalUpdated,
       batchesProcessed: batches.length,
       batches,
       nextCursor: cursor,
-      done: !cursor,
-      continueUrl: cursor
+      done: allDone,
+      continueUrl: !allDone && cursor
         ? `${baseUrl}/api/admin/update-all-company-ages?batchSize=${batchSize}&maxBatches=${maxBatches}&useWebSearch=${useWebSearch}&cursor=${cursor}`
         : null,
     });

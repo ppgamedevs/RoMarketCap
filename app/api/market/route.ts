@@ -55,7 +55,7 @@ type MarketRow = {
   sparklineTrend: "up" | "down" | "neutral"; // 7-day trend direction
   rankDelta: number | null; // 24h position change
   score24hChangePercent: number | null; // 24h score percentage change
-  ageYears: number | null; // Company age in years
+  foundedYear: number | null; // Year company was founded
   isWatched: boolean; // Is in user's watchlist
 };
 
@@ -315,10 +315,12 @@ export async function GET(req: NextRequest) {
         score24hChangePercent = ((currentScore - yesterdayScore) / yesterdayScore) * 100;
       }
 
-      // Calculate company age
-      let ageYears: number | null = null;
+      // Get founding year
+      let foundedYear: number | null = null;
       if (company.foundedAt) {
-        ageYears = Math.floor((now.getTime() - company.foundedAt.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        foundedYear = company.foundedAt.getFullYear();
+      } else if (company.foundedYear) {
+        foundedYear = company.foundedYear;
       }
 
       return {
@@ -344,7 +346,7 @@ export async function GET(req: NextRequest) {
         sparklineTrend,
         rankDelta: rankDeltaMap[company.id] ?? null,
         score24hChangePercent,
-        ageYears,
+        foundedYear,
         isWatched: watchedCompanyIds.has(company.id),
       };
     });

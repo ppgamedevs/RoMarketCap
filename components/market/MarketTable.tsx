@@ -38,7 +38,7 @@ type MarketRow = {
   sparklineTrend: "up" | "down" | "neutral";
   rankDelta: number | null;
   score24hChangePercent: number | null;
-  ageYears: number | null;
+  foundedYear: number | null; // Year company was founded
   isWatched: boolean;
 };
 
@@ -217,7 +217,7 @@ function MarketTableInner({
                 </div>
               </TH>
               <TH className="w-20">{lang === "ro" ? "24h" : "24h"}</TH>
-              <TH className="w-16">{lang === "ro" ? "Vârstă" : "Age"}</TH>
+              <TH className="w-20">{lang === "ro" ? "An înființare" : "Founded"}</TH>
               <TH className="w-24">{lang === "ro" ? "Acțiuni" : "Actions"}</TH>
             </TR>
           </THead>
@@ -337,8 +337,8 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    {row.ageYears !== null ? (
-                      <span className="text-sm text-muted-foreground">{row.ageYears}y</span>
+                    {row.foundedYear !== null ? (
+                      <span className="text-sm font-medium">{row.foundedYear}</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
