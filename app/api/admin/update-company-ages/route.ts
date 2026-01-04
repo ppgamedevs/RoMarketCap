@@ -156,23 +156,43 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      updates.push({
-        id: company.id,
-        name: company.name,
-        source,
-        foundedAt: foundedAt.toISOString(),
-      });
+      // Only update if we found a date AND it's different from existing
+      const shouldUpdate = foundedAt && (
+        !company.foundedAt || 
+        company.foundedAt.getTime() !== foundedAt.getTime()
+      );
 
-      if (!dryRun) {
-        await prisma.company.update({
-          where: { id: company.id },
-          data: { foundedAt },
+      if (shouldUpdate) {
+        updates.push({
+          id: company.id,
+          name: company.name,
+          source,
+          foundedAt: foundedAt.toISOString(),
         });
-        updated++;
+
+        if (!dryRun) {
+          await prisma.company.update({
+            where: { id: company.id },
+            data: { foundedAt },
+          });
+          updated++;
+        }
+      } else if (foundedAt) {
+        // Found date but it's the same as existing - log for debugging
+        console.log(`[update-ages] Skipping "${company.name}" - same date as existing`);
       }
     }
 
     const lastId = companies[companies.length - 1]?.id;
+
+    // Debug info: show why companies weren't updated
+    const debugInfo = companies.map(c => ({
+      name: c.name,
+      hasFoundedYear: !!c.foundedYear,
+      foundedYear: c.foundedYear,
+      hasFoundedAt: !!c.foundedAt,
+      foundedAtYear: c.foundedAt ? c.foundedAt.getFullYear() : null,
+    }));
 
     return NextResponse.json({
       ok: true,
@@ -184,6 +204,15 @@ export async function POST(req: NextRequest) {
       updated,
       sample: updates.slice(0, 10),
       errors: errors.slice(0, 5),
+      debug: {
+        companiesProcessed: debugInfo,
+        summary: {
+          withFoundedYear: debugInfo.filter(c => c.hasFoundedYear).length,
+          withFoundedAt: debugInfo.filter(c => c.hasFoundedAt).length,
+          suspectDates: debugInfo.filter(c => c.foundedAtYear && c.foundedAtYear >= 2020).length,
+          noData: debugInfo.filter(c => !c.hasFoundedYear && !c.hasFoundedAt).length,
+        },
+      },
       nextCursor: lastId,
       done: companies.length < batchSize,
     });
