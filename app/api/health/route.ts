@@ -27,6 +27,7 @@ export async function GET() {
 
   let kvOk = false;
   let cacheOk = false;
+  let kvRateLimited = false;
   try {
     const key = "health:kv";
     await kv.set(key, "1", { ex: 10 });
@@ -39,36 +40,56 @@ export async function GET() {
     const cacheVal = await kv.get(cacheKey);
     cacheOk = cacheVal != null;
     await kv.del(cacheKey).catch(() => null);
-  } catch {
+  } catch (error: any) {
+    if (error?.message?.includes("max requests limit exceeded")) {
+      kvRateLimited = true;
+      console.warn("[health] Upstash rate limit hit during KV health check");
+    }
     kvOk = false;
     cacheOk = false;
   }
 
   // Fetch cron last run times (with error handling for rate limits)
+  // Skip all KV reads if we detected rate limit during health check
   const cron: Record<string, string | null> = {};
   const cronKeys = ["recalculate", "enrich", "weekly-digest", "watchlist-alerts", "billing"];
   
-  for (const key of cronKeys) {
-    try {
-      cron[key] = (await kv.get<string>(`cron:last:${key}`)) ?? null;
-    } catch (error: any) {
-      // If Upstash is at rate limit, skip this check
-      if (error?.message?.includes("max requests limit exceeded")) {
-        cron[key] = null;
-      } else {
+  if (!kvRateLimited) {
+    for (const key of cronKeys) {
+      try {
+        cron[key] = (await kv.get<string>(`cron:last:${key}`)) ?? null;
+      } catch (error: any) {
+        // If Upstash is at rate limit, stop trying and set all to null
+        if (error?.message?.includes("max requests limit exceeded")) {
+          kvRateLimited = true;
+          // Set remaining keys to null without trying
+          for (const remainingKey of cronKeys.slice(cronKeys.indexOf(key))) {
+            cron[remainingKey] = null;
+          }
+          break;
+        }
         cron[key] = null;
       }
+    }
+  } else {
+    // Already rate limited, set all to null
+    for (const key of cronKeys) {
+      cron[key] = null;
     }
   }
 
   let billingStatsParsed = null;
-  try {
-    const billingStats = await kv.get<string>("cron:stats:billing");
-    billingStatsParsed = billingStats ? JSON.parse(billingStats) : null;
-  } catch (error: any) {
-    // Skip if rate limit hit
-    if (!error?.message?.includes("max requests limit exceeded")) {
-      console.error("[health] Error fetching billing stats:", error);
+  if (!kvRateLimited) {
+    try {
+      const billingStats = await kv.get<string>("cron:stats:billing");
+      billingStatsParsed = billingStats ? JSON.parse(billingStats) : null;
+    } catch (error: any) {
+      // Skip if rate limit hit
+      if (error?.message?.includes("max requests limit exceeded")) {
+        kvRateLimited = true;
+      } else {
+        console.error("[health] Error fetching billing stats:", error);
+      }
     }
   }
 
@@ -108,19 +129,28 @@ export async function GET() {
   // Check lock status for all cron routes (skip if Upstash is at limit)
   const lockStatus: Record<string, boolean> = {};
   const lockKeys = ["cron:recalculate", "cron:enrich", "cron:weekly-digest", "cron:watchlist-alerts", "cron:billing-reconcile"];
-  for (const lockKey of lockKeys) {
-    try {
-      lockStatus[lockKey] = await isLockHeld(lockKey);
-    } catch (error: any) {
-      // If Upstash is at rate limit, set all locks to false (unknown status)
-      if (error?.message?.includes("max requests limit exceeded")) {
-        lockStatus[lockKey] = false;
-        // Skip remaining locks to save requests
-        for (const remainingKey of lockKeys.slice(lockKeys.indexOf(lockKey) + 1)) {
-          lockStatus[remainingKey] = false;
+  
+  if (!kvRateLimited) {
+    for (const lockKey of lockKeys) {
+      try {
+        lockStatus[lockKey] = await isLockHeld(lockKey);
+      } catch (error: any) {
+        // If Upstash is at rate limit, set all locks to false (unknown status)
+        if (error?.message?.includes("max requests limit exceeded")) {
+          kvRateLimited = true;
+          lockStatus[lockKey] = false;
+          // Skip remaining locks to save requests
+          for (const remainingKey of lockKeys.slice(lockKeys.indexOf(lockKey) + 1)) {
+            lockStatus[remainingKey] = false;
+          }
+          break;
         }
-        break;
+        lockStatus[lockKey] = false;
       }
+    }
+  } else {
+    // Already rate limited, set all locks to false
+    for (const lockKey of lockKeys) {
       lockStatus[lockKey] = false;
     }
   }
@@ -218,9 +248,18 @@ async function getIngestionHealth() {
       take: 5,
     });
 
-    // Get KV stats
-    const lastIngestTime = await kv.get<string>("cron:last:ingest").catch(() => null);
-    const ingestStats = await kv.get<string>("cron:stats:ingest").catch(() => null);
+    // Get KV stats (skip if rate limited)
+    let lastIngestTime: string | null = null;
+    let ingestStats: string | null = null;
+    try {
+      lastIngestTime = await kv.get<string>("cron:last:ingest");
+      ingestStats = await kv.get<string>("cron:stats:ingest");
+    } catch (error: any) {
+      // Suppress rate limit errors
+      if (!error?.message?.includes("max requests limit exceeded")) {
+        console.error("[health] Error fetching ingest stats:", error);
+      }
+    }
 
     return {
       lastRun: lastRun
@@ -254,10 +293,18 @@ async function getNationalIngestHealth() {
     const { kv } = await import("@vercel/kv");
     const { readLastRunStats } = await import("@/src/lib/ingestion/national/checkpoint");
 
-    // Last run time
-    const lastRunTime = await kv.get<string>("national-ingest:last-run").catch(() => null);
+    // Last run time (skip if rate limited)
+    let lastRunTime: string | null = null;
+    try {
+      lastRunTime = await kv.get<string>("national-ingest:last-run");
+    } catch (error: any) {
+      // Suppress rate limit errors
+      if (!error?.message?.includes("max requests limit exceeded")) {
+        console.error("[health] Error fetching national ingest last run:", error);
+      }
+    }
     
-    // Last run stats
+    // Last run stats (already handles rate limits internally)
     const lastRunStats = await readLastRunStats();
     
     // Last job

@@ -52,7 +52,12 @@ export async function readLastRunStats(): Promise<CheckpointStats | null> {
   try {
     const stats = await kv.get<CheckpointStats>(STATS_KEY);
     return stats;
-  } catch (error) {
+  } catch (error: any) {
+    // Suppress logging for rate limit errors to reduce console spam
+    if (error?.message?.includes("max requests limit exceeded")) {
+      // Silently return null when rate limit is hit
+      return null;
+    }
     console.error("[national-ingest] Error reading last run stats:", error);
     return null;
   }
