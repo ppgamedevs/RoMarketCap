@@ -57,38 +57,78 @@ async function updateRateLimit(): Promise<void> {
 }
 
 /**
- * Parse Romanian date format (DD.MM.YYYY or DD/MM/YYYY)
+ * Parse Romanian date format (DD.MM.YYYY, DD/MM/YYYY, YYYY-MM-DD, or text formats)
  */
 function parseRomanianDate(dateStr: string): Date | null {
+  if (!dateStr || typeof dateStr !== "string") {
+    return null;
+  }
+
   try {
-    // Try DD.MM.YYYY format
-    let match = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    // Clean the string
+    const cleaned = dateStr.trim().replace(/\s+/g, " ");
+
+    // Try DD.MM.YYYY format (e.g., "24.12.1993")
+    let match = cleaned.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
     if (match) {
       const [, day, month, year] = match;
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      if (!isNaN(date.getTime())) {
+      if (!isNaN(date.getTime()) && date.getFullYear() === parseInt(year)) {
         return date;
       }
     }
 
-    // Try DD/MM/YYYY format
-    match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    // Try DD/MM/YYYY format (e.g., "24/12/1993")
+    match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (match) {
       const [, day, month, year] = match;
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      if (!isNaN(date.getTime())) {
+      if (!isNaN(date.getTime()) && date.getFullYear() === parseInt(year)) {
         return date;
       }
     }
 
-    // Try YYYY-MM-DD format
-    match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    // Try YYYY-MM-DD format (e.g., "1993-12-24")
+    match = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (match) {
       const [, year, month, day] = match;
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      if (!isNaN(date.getTime())) {
+      if (!isNaN(date.getTime()) && date.getFullYear() === parseInt(year)) {
         return date;
       }
+    }
+
+    // Try text format like "24 decembrie 1993" or "24 dec 1993"
+    match = cleaned.match(/(\d{1,2})\s+(?:de\s+)?(?:ianuarie|februarie|martie|aprilie|mai|iunie|iulie|august|septembrie|octombrie|noiembrie|decembrie|ian|feb|mar|apr|mai|iun|iul|aug|sep|oct|nov|dec)\.?\s+(\d{4})/i);
+    if (match) {
+      const [, day, monthName, year] = match;
+      const monthMap: Record<string, number> = {
+        "ianuarie": 1, "ian": 1,
+        "februarie": 2, "feb": 2,
+        "martie": 3, "mar": 3,
+        "aprilie": 4, "apr": 4,
+        "mai": 5,
+        "iunie": 6, "iun": 6,
+        "iulie": 7, "iul": 7,
+        "august": 8, "aug": 8,
+        "septembrie": 9, "sep": 9,
+        "octombrie": 10, "oct": 10,
+        "noiembrie": 11, "nov": 11,
+        "decembrie": 12, "dec": 12,
+      };
+      const month = monthMap[monthName.toLowerCase()];
+      if (month) {
+        const date = new Date(parseInt(year), month - 1, parseInt(day));
+        if (!isNaN(date.getTime()) && date.getFullYear() === parseInt(year)) {
+          return date;
+        }
+      }
+    }
+
+    // Try ISO format or Date.parse as last resort
+    const parsed = new Date(cleaned);
+    if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1800 && parsed.getFullYear() <= new Date().getFullYear() + 1) {
+      return parsed;
     }
 
     return null;
@@ -104,6 +144,45 @@ function parseRomanianDate(dateStr: string): Date | null {
  * by inspecting the real website. These patterns are educated guesses based on
  * common Romanian government website structures.
  */
+/**
+ * Extract text between HTML tags, handling various structures
+ */
+function extractFieldValue(html: string, labelPattern: string, valuePattern?: string): string | null {
+  // Try multiple approaches
+  const patterns = [
+    // Pattern 1: <td>Label</td><td>Value</td>
+    new RegExp(`<td[^>]*>${labelPattern}[^<]*<\\/td>\\s*<td[^>]*>([^<]+)<\\/td>`, "i"),
+    // Pattern 2: <th>Label</th><td>Value</td>
+    new RegExp(`<th[^>]*>${labelPattern}[^<]*<\\/th>\\s*<td[^>]*>([^<]+)<\\/td>`, "i"),
+    // Pattern 3: <label>Label</label> followed by value
+    new RegExp(`<label[^>]*>${labelPattern}[^<]*<\\/label>\\s*<[^>]*>([^<]+)<\\/[^>]*>`, "i"),
+    // Pattern 4: <span>Label</span> followed by value
+    new RegExp(`<span[^>]*>${labelPattern}[^<]*<\\/span>\\s*<[^>]*>([^<]+)<\\/[^>]*>`, "i"),
+    // Pattern 5: <div>Label</div> followed by value
+    new RegExp(`<div[^>]*>${labelPattern}[^<]*<\\/div>\\s*<[^>]*>([^<]+)<\\/[^>]*>`, "i"),
+    // Pattern 6: Label: Value (simple text pattern)
+    new RegExp(`${labelPattern}\\s*[:]\\s*([^<\\n]+)`, "i"),
+    // Pattern 7: Label followed by value in next tag
+    new RegExp(`${labelPattern}[^<]*>([^<]+)<`, "i"),
+  ];
+
+  if (valuePattern) {
+    patterns.unshift(new RegExp(valuePattern, "i"));
+  }
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      const value = match[1].trim();
+      if (value && value.length > 0 && value !== "-" && value !== "N/A" && value !== "n/a") {
+        return value;
+      }
+    }
+  }
+
+  return null;
+}
+
 function parseMFinanteHTML(html: string, cui: string): MFinanteCompanyData | null {
   try {
     const data: MFinanteCompanyData = {
@@ -111,35 +190,42 @@ function parseMFinanteHTML(html: string, cui: string): MFinanteCompanyData | nul
       fetchedAt: new Date(),
     };
 
-    // Extract company name (Denumire)
-    // Try multiple patterns as HTML structure may vary
-    const namePatterns = [
-      /<td[^>]*>Denumire[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Denumire[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Denumire[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    // Extract company name (Denumire) - try multiple label variations
+    const nameLabels = [
+      "Denumire",
+      "denumire",
+      "Denumirea",
+      "Nume",
+      "nume",
+      "Numele",
+      "Denumirea societății",
+      "Denumirea societatii",
     ];
 
-    for (const pattern of namePatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.name = match[1].trim();
+    for (const label of nameLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        data.name = value;
         break;
       }
     }
 
     // Extract founding date (Data înființării) - PRIORITAR
-    const foundingDatePatterns = [
-      /<td[^>]*>Data înființării[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Data înființării[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Data înființării[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Data\s+înființării[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const foundingDateLabels = [
+      "Data înființării",
+      "Data infiintarii",
+      "Data înființării:",
+      "Data infiintarii:",
+      "Data înființării societății",
+      "Data infiintarii societatii",
+      "Data constituirii",
+      "Data constituirii:",
     ];
 
-    for (const pattern of foundingDatePatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        const dateStr = match[1].trim();
-        const parsed = parseRomanianDate(dateStr);
+    for (const label of foundingDateLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        const parsed = parseRomanianDate(value);
         if (parsed) {
           data.foundingDate = parsed;
           break;
@@ -148,17 +234,19 @@ function parseMFinanteHTML(html: string, cui: string): MFinanteCompanyData | nul
     }
 
     // Extract registration date (Data înregistrării)
-    const regDatePatterns = [
-      /<td[^>]*>Data înregistrării[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Data înregistrării[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Data înregistrării[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const regDateLabels = [
+      "Data înregistrării",
+      "Data inregistrarii",
+      "Data înregistrării:",
+      "Data inregistrarii:",
+      "Data înregistrării la",
+      "Data inregistrarii la",
     ];
 
-    for (const pattern of regDatePatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        const dateStr = match[1].trim();
-        const parsed = parseRomanianDate(dateStr);
+    for (const label of regDateLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        const parsed = parseRomanianDate(value);
         if (parsed) {
           data.registrationDate = parsed;
           break;
@@ -167,106 +255,118 @@ function parseMFinanteHTML(html: string, cui: string): MFinanteCompanyData | nul
     }
 
     // Extract registration number (Nr. înregistrare)
-    const regNumberPatterns = [
-      /<td[^>]*>Nr\.?\s*înregistrare[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Nr\.?\s*înregistrare[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Nr\.?\s*înregistrare[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const regNumberLabels = [
+      "Nr\\.?\\s*înregistrare",
+      "Nr\\.?\\s*inregistrare",
+      "Număr înregistrare",
+      "Numar inregistrare",
+      "Nr\\.?\\s*înreg\\.",
+      "Nr\\.?\\s*inreg\\.",
     ];
 
-    for (const pattern of regNumberPatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.registrationNumber = match[1].trim();
+    for (const label of regNumberLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        data.registrationNumber = value;
         break;
       }
     }
 
     // Extract address (Adresă)
-    const addressPatterns = [
-      /<td[^>]*>Adresă[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Adresă[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Adresă[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const addressLabels = [
+      "Adresă",
+      "Adresa",
+      "adresă",
+      "adresa",
+      "Adresă sediu",
+      "Adresa sediu",
     ];
 
-    for (const pattern of addressPatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.address = match[1].trim();
+    for (const label of addressLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        data.address = value;
         break;
       }
     }
 
     // Extract phone (Telefon)
-    const phonePatterns = [
-      /<td[^>]*>Telefon[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Telefon[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Telefon[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const phoneLabels = [
+      "Telefon",
+      "telefon",
+      "Tel\\.",
+      "tel\\.",
+      "Telefon:",
     ];
 
-    for (const pattern of phonePatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.phone = match[1].trim();
+    for (const label of phoneLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        data.phone = value;
         break;
       }
     }
 
-    // Extract email
-    const emailPatterns = [
-      /<td[^>]*>Email[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Email[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /<a[^>]*href="mailto:([^"]+)"[^>]*>/i,
-    ];
-
-    for (const pattern of emailPatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.email = match[1].trim();
-        break;
+    // Extract email - try mailto links first
+    const emailMatch = html.match(/<a[^>]*href="mailto:([^"]+)"[^>]*>/i);
+    if (emailMatch && emailMatch[1]) {
+      data.email = emailMatch[1].trim();
+    } else {
+      const emailLabels = ["Email", "email", "E-mail", "e-mail"];
+      for (const label of emailLabels) {
+        const value = extractFieldValue(html, label);
+        if (value && value.includes("@")) {
+          data.email = value;
+          break;
+        }
       }
     }
 
-    // Extract website
-    const websitePatterns = [
-      /<td[^>]*>Website[^<]*<\/td>\s*<td[^>]*><a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a><\/td>/i,
-      /<a[^>]*href="(https?:\/\/[^"]+)"[^>]*>Website/i,
-      /Website[^<]*<a[^>]*href="([^"]+)"[^>]*>/i,
-    ];
-
-    for (const pattern of websitePatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.website = match[1].trim();
-        break;
+    // Extract website - try links first
+    const websiteMatch = html.match(/<a[^>]*href="(https?:\/\/[^"]+)"[^>]*>/i);
+    if (websiteMatch && websiteMatch[1]) {
+      data.website = websiteMatch[1].trim();
+    } else {
+      const websiteLabels = ["Website", "website", "Site", "site"];
+      for (const label of websiteLabels) {
+        const value = extractFieldValue(html, label);
+        if (value && (value.startsWith("http://") || value.startsWith("https://"))) {
+          data.website = value;
+          break;
+        }
       }
     }
 
     // Extract legal form (Forma juridică)
-    const legalFormPatterns = [
-      /<td[^>]*>Forma juridică[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Forma juridică[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Forma juridică[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const legalFormLabels = [
+      "Forma juridică",
+      "Forma juridica",
+      "Forma juridică:",
+      "Forma juridica:",
     ];
 
-    for (const pattern of legalFormPatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.legalForm = match[1].trim();
+    for (const label of legalFormLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        data.legalForm = value;
         break;
       }
     }
 
     // Extract activity (Activitate)
-    const activityPatterns = [
-      /<td[^>]*>Activitate[^<]*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
-      /<label[^>]*>Activitate[^<]*<\/label>\s*<[^>]*>([^<]+)<\/[^>]*>/i,
-      /Activitate[^<]*<[^>]*>([^<]+)<\/[^>]*>/i,
+    const activityLabels = [
+      "Activitate",
+      "activitate",
+      "Activitate principală",
+      "Activitate principala",
+      "CAEN",
+      "caen",
     ];
 
-    for (const pattern of activityPatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        data.activity = match[1].trim();
+    for (const label of activityLabels) {
+      const value = extractFieldValue(html, label);
+      if (value) {
+        data.activity = value;
         break;
       }
     }

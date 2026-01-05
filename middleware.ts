@@ -40,6 +40,7 @@ export default withAuth({
       pathname === "/api/admin/debug-anaf-response" ||
       pathname === "/api/admin/test-anaf-full-response" ||
       pathname === "/api/admin/test-mfinante" ||
+      pathname === "/api/admin/test-mfinante-html" ||
       pathname === "/api/admin/add-ingest-runs-table" ||
       pathname === "/api/admin/add-financial-snapshots-employees-column" ||
       pathname === "/api/admin/add-financial-snapshots-columns" ||
