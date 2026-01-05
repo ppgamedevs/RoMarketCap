@@ -299,12 +299,11 @@ function MarketTableInner({
                     {row.marketCap !== null ? (
                       <div>
                         <div className="text-sm font-medium">
-                          {new Intl.NumberFormat(lang === "ro" ? "ro-RO" : "en-US", {
-                            style: "currency",
-                            currency: "RON",
-                            notation: "compact",
-                            maximumFractionDigits: 1,
-                          }).format(row.marketCap)}
+                          {formatCurrencyUtil(row.marketCap, { 
+                            currency: "RON", 
+                            locale: lang,
+                            compact: true 
+                          })}
                         </div>
                         {row.isListed && row.stockSymbol && (
                           <div className="text-xs text-primary">{row.stockSymbol}</div>
@@ -313,7 +312,7 @@ function MarketTableInner({
                     ) : row.valuationRangeLow !== null && row.valuationRangeHigh !== null ? (
                       <div className="text-sm">
                         <div className="font-medium">
-                          {formatCurrency(row.valuationRangeLow)} - {formatCurrency(row.valuationRangeHigh)}
+                          {formatCurrencyUtil(row.valuationRangeLow, { currency: "EUR", locale: lang, compact: true })} - {formatCurrencyUtil(row.valuationRangeHigh, { currency: "EUR", locale: lang, compact: true })}
                         </div>
                         <div className="text-xs text-muted-foreground" title={lang === "ro" ? "Estimare" : "Estimate"}>
                           {lang === "ro" ? "est." : "est."}
@@ -431,16 +430,13 @@ function MarketTableSkeleton() {
   );
 }
 
+import { formatCurrency as formatCurrencyUtil } from "@/src/lib/money/formatCurrency";
+
 function formatCurrency(value: number): string {
-  if (value >= 1_000_000_000) {
-    return `€${(value / 1_000_000_000).toFixed(1)}B`;
-  }
-  if (value >= 1_000_000) {
-    return `€${(value / 1_000_000).toFixed(1)}M`;
-  }
-  if (value >= 1_000) {
-    return `€${(value / 1_000).toFixed(1)}K`;
-  }
-  return `€${value.toFixed(0)}`;
+  return formatCurrencyUtil(value, { 
+    currency: "EUR", 
+    locale: "en",
+    compact: true 
+  });
 }
 

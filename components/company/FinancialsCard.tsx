@@ -26,9 +26,15 @@ type FinancialsCardProps = {
   }>;
 };
 
+import { formatCurrency } from "@/src/lib/money/formatCurrency";
+
 function formatMoney(n: number | null, currency: string, locale: string): string {
   if (n == null) return "N/A";
-  return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
+  return formatCurrency(n, { 
+    currency: currency as "RON" | "EUR", 
+    locale: locale === "ro-RO" ? "ro" : "en",
+    compact: true 
+  });
 }
 
 export function FinancialsCard({

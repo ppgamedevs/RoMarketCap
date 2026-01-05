@@ -98,21 +98,24 @@ export function MarketCapGraph({ lang = "ro" }: MarketCapGraphProps) {
         </div>
       </div>
       {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={data}>
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDate}
-              tick={{ fontSize: 12, fill: "currentColor" }}
-              stroke="currentColor"
-              strokeOpacity={0.2}
-            />
-            <YAxis
-              tickFormatter={(value) => formatCurrency(value)}
-              tick={{ fontSize: 12, fill: "currentColor" }}
-              stroke="currentColor"
-              strokeOpacity={0.2}
-            />
+        <div className="w-full" style={{ height: "300px", padding: "8px 0" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                tick={{ fontSize: 12, fill: "currentColor" }}
+                stroke="currentColor"
+                strokeOpacity={0.2}
+              />
+              <YAxis
+                tickFormatter={(value) => formatCurrency(value)}
+                tick={{ fontSize: 12, fill: "currentColor" }}
+                stroke="currentColor"
+                strokeOpacity={0.2}
+                width={80}
+                domain={['dataMin', 'dataMax']}
+              />
             <Tooltip
               formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ""}
               labelFormatter={(label) => formatDate(String(label))}
@@ -130,8 +133,9 @@ export function MarketCapGraph({ lang = "ro" }: MarketCapGraphProps) {
               dot={false}
               activeDot={{ r: 4 }}
             />
-          </LineChart>
-        </ResponsiveContainer>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       ) : (
         <div className="h-48 flex items-center justify-center text-sm text-muted-foreground">
           {lang === "ro" ? "Nu există date istorice" : "No historical data"}

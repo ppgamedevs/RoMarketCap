@@ -22,7 +22,6 @@ import { getPlacementsForLocation } from "@/src/lib/placements";
 import { Placements } from "@/components/placements/Placements";
 import { getSupportEmail } from "@/src/lib/supportEmail";
 import { CorrectionRequestForm } from "@/components/company/CorrectionRequestForm";
-import { RelatedCompanies } from "@/components/company/RelatedCompanies";
 import { RecentChanges } from "@/components/company/RecentChanges";
 import { IntegrityIndicators } from "@/components/company/IntegrityIndicators";
 import { ScoreExplanation } from "@/components/company/ScoreExplanation";
@@ -50,6 +49,7 @@ import {
 import { generateCompanyFAQs, generateFAQSchema } from "@/src/lib/seo/generateCompanyFAQs";
 import { ROMCAIAssistant } from "@/components/ai/ROMCAIAssistant";
 import { AITooltip } from "@/components/ai/AITooltip";
+import { SignalsSection } from "@/components/company/SignalsSection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,11 +58,17 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+import { formatCurrency as formatCurrencyUtil } from "@/src/lib/money/formatCurrency";
+
 function formatMoney(n: unknown, currency: string, locale: string): string {
   if (n == null) return "N/A";
   const num = typeof n === "number" ? n : Number(String(n));
   if (!Number.isFinite(num)) return "N/A";
-  return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(num);
+  return formatCurrencyUtil(num, { 
+    currency: currency as "RON" | "EUR", 
+    locale: locale === "ro-RO" ? "ro" : "en",
+    compact: true 
+  });
 }
 
 function riskFlagsForCompany(c: {
@@ -455,7 +461,7 @@ export default async function CompanyPage({ params }: PageProps) {
             : "N/A",
       },
       { "@type": "PropertyValue", name: "Last scored", value: company.lastScoredAt?.toISOString().slice(0, 10) ?? "N/A" },
-      { "@type": "PropertyValue", name: "Last enriched", value: company.lastEnrichedAt?.toISOString().slice(0, 10) ?? "N/A" },
+      { "@type": "PropertyValue", name: lang === "ro" ? "Ultima îmbogățire" : "Last enriched", value: company.lastEnrichedAt?.toISOString().slice(0, 10) ?? "N/A" },
       { "@type": "PropertyValue", name: "Last updated", value: company.lastUpdatedAt.toISOString().slice(0, 10) },
     ],
     dateModified: company.lastUpdatedAt.toISOString(),
@@ -614,7 +620,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* Company Overview */}
           <div className="space-y-4">
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Data sources" : "Data sources"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "data_sources")}</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-6">
                 {lang === "ro"
                   ? "Public filings, user submissions (verificate), semnale automate. Nu este consultanță financiară."
@@ -638,7 +644,7 @@ export default async function CompanyPage({ params }: PageProps) {
                   <p className="mt-1 text-lg font-semibold">{company.lastScoredAt ? company.lastScoredAt.toISOString().slice(0, 10) : "N/A"}</p>
                 </div>
                 <div className="rounded-md border p-3">
-                  <p className="text-xs text-muted-foreground">{lang === "ro" ? "Last enriched" : "Last enriched"}</p>
+                  <p className="text-xs text-muted-foreground">{t(lang, "last_enriched")}</p>
                   <p className="mt-1 text-lg font-semibold">{company.lastEnrichedAt ? company.lastEnrichedAt.toISOString().slice(0, 10) : "N/A"}</p>
                 </div>
               </div>
@@ -715,26 +721,26 @@ export default async function CompanyPage({ params }: PageProps) {
           </div>
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
-            <h2 className="text-sm font-medium">{lang === "ro" ? "Linkuri" : "Links"}</h2>
+            <h2 className="text-sm font-medium">{t(lang, "links")}</h2>
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
               {company.industrySlug ? (
                 <Link className="underline underline-offset-4" href={`/industries/${encodeURIComponent(company.industrySlug)}`}>
-                  {lang === "ro" ? "Industrie" : "Industry"}: {company.industrySlug}
+                  {t(lang, "industry")}: {company.industrySlug}
                 </Link>
               ) : null}
               {company.countySlug ? (
                 <Link className="underline underline-offset-4" href={`/counties/${encodeURIComponent(company.countySlug)}`}>
-                  {lang === "ro" ? "Județ" : "County"}: {company.countySlug}
+                  {t(lang, "county")}: {company.countySlug}
                 </Link>
               ) : null}
               {company.industrySlug ? (
                 <Link className="underline underline-offset-4" href={`/companies?industry=${encodeURIComponent(company.industrySlug)}`}>
-                  {lang === "ro" ? "Director (industria)" : "Directory (industry)"}
+                  {t(lang, "directory_industry")}
                 </Link>
               ) : null}
               {company.countySlug ? (
                 <Link className="underline underline-offset-4" href={`/companies?county=${encodeURIComponent(company.countySlug)}`}>
-                  {lang === "ro" ? "Director (județ)" : "Directory (county)"}
+                  {t(lang, "directory_county")}
                 </Link>
               ) : null}
               {company.cui ? (
@@ -744,7 +750,7 @@ export default async function CompanyPage({ params }: PageProps) {
                     `Report issue: ${company.name} (CUI ${company.cui})`,
                   )}`}
                 >
-                  {lang === "ro" ? "Raportează o problemă" : "Report an issue"}
+                  {t(lang, "report_issue")}
                 </a>
               ) : null}
             </div>
@@ -753,15 +759,15 @@ export default async function CompanyPage({ params }: PageProps) {
           <CorrectionRequestForm lang={lang} companyId={company.id} companyCui={company.cui ?? undefined} />
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
-            <h2 className="text-sm font-medium">{lang === "ro" ? "Metrici (ultimul an)" : "Metrics (latest year)"}</h2>
+            <h2 className="text-sm font-medium">{t(lang, "metrics_latest_year")}</h2>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-muted-foreground">
                   <tr>
-                    <th className="py-2">{lang === "ro" ? "An" : "Year"}</th>
-                    <th className="py-2">{lang === "ro" ? "Venituri" : "Revenue"}</th>
-                    <th className="py-2">{lang === "ro" ? "Profit" : "Profit"}</th>
-                    <th className="py-2">{lang === "ro" ? "Angajați" : "Employees"}</th>
+                    <th className="py-2">{t(lang, "year")}</th>
+                    <th className="py-2">{t(lang, "revenue")}</th>
+                    <th className="py-2">{t(lang, "profit")}</th>
+                    <th className="py-2">{t(lang, "employees")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -777,19 +783,19 @@ export default async function CompanyPage({ params }: PageProps) {
           </div>
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
-            <h2 className="text-sm font-medium">{lang === "ro" ? "ROMC v1 (componente)" : "ROMC v1 (components)"}</h2>
+            <h2 className="text-sm font-medium">{t(lang, "romc_components")}</h2>
             <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs">
               {company.romcComponents ? JSON.stringify(company.romcComponents, null, 2) : "N/A"}
             </pre>
           </div>
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
-            <h2 className="text-sm font-medium">Scoruri (istoric)</h2>
+            <h2 className="text-sm font-medium">{t(lang, "scores_history")}</h2>
             <div className="mt-3 flex items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
-                Ultima actualizare metrici:{" "}
+                {t(lang, "last_metrics_update")}:{" "}
                 <span className="font-medium">
-                  {metrics?.updatedAt ? metrics.updatedAt.toLocaleDateString("ro-RO") : "N/A"}
+                  {metrics?.updatedAt ? metrics.updatedAt.toLocaleDateString(lang === "ro" ? "ro-RO" : "en-GB") : "N/A"}
                 </span>
               </div>
               <div className="text-foreground">
@@ -816,7 +822,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* Market Position Analysis */}
           {marketPosition && (
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Poziție pe piață" : "Market Position"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "market_position")}</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-6">{marketPosition}</p>
             </div>
           )}
@@ -824,7 +830,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* Growth Trends */}
           {growthAnalysis && (
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Tendințe de creștere" : "Growth Trends"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "growth_trends")}</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-6">{growthAnalysis}</p>
             </div>
           )}
@@ -832,7 +838,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* Competitive Landscape */}
           {competitiveLandscape && (
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Peisaj competitiv" : "Competitive Landscape"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "competitive_landscape")}</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-6">{competitiveLandscape}</p>
             </div>
           )}
@@ -840,7 +846,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* Industry Context */}
           {industryContext && (
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Context industrie" : "Industry Context"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "industry_context")}</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-6">{industryContext}</p>
             </div>
           )}
@@ -848,7 +854,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* Key Insights */}
           {keyInsights && keyInsights.length > 0 && (
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Insight-uri cheie" : "Key Insights"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "key_insights")}</h2>
               <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
                 {keyInsights.map((insight, idx) => (
                   <li key={idx} className="flex items-start">
@@ -863,7 +869,7 @@ export default async function CompanyPage({ params }: PageProps) {
           {/* FAQ Section */}
           {faqs.length > 0 && (
             <div className="rounded-xl border bg-card p-6 text-card-foreground">
-              <h2 className="text-sm font-medium">{lang === "ro" ? "Întrebări frecvente" : "Frequently Asked Questions"}</h2>
+              <h2 className="text-sm font-medium">{t(lang, "faq")}</h2>
               <div className="mt-4 space-y-4">
                 {faqs.map((faq, idx) => (
                   <details key={idx} className="rounded-md border p-4">
@@ -920,28 +926,31 @@ export default async function CompanyPage({ params }: PageProps) {
                 className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
                 href={`/claim?company=${encodeURIComponent(company.slug)}`}
               >
-                Claim this company
+                {t(lang, "claim_company")}
               </a>
             </div>
           </div>
 
-          <div className="rounded-xl border bg-card p-6 text-card-foreground">
-            <h2 className="text-sm font-medium">Signals</h2>
-            <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-              <li>- Hiring velocity: (placeholder)</li>
-              <li>- Web traffic change: (placeholder)</li>
-              <li>- News mentions: (placeholder)</li>
-            </ul>
-          </div>
+          <SignalsSection
+            lang={lang}
+            companyId={company.id}
+            companyCui={company.cui}
+            companyName={company.name}
+            website={company.website}
+            financialSnapshots={financialSnapshots.map((s) => ({
+              fiscalYear: s.fiscalYear,
+              employees: s.employees,
+            }))}
+          />
 
           <div className="rounded-xl border bg-card p-6 text-card-foreground">
-            <h2 className="text-sm font-medium">Valuation model inputs</h2>
+            <h2 className="text-sm font-medium">{t(lang, "valuation_inputs")}</h2>
             <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-              <li>- Revenue & profit history (ANAF)</li>
-              <li>- Employee estimates</li>
-              <li>- Web presence & traffic</li>
-              <li>- Press mentions</li>
-              <li>- Government contracts</li>
+              <li>- {lang === "ro" ? "Istoric venituri și profit (ANAF)" : "Revenue & profit history (ANAF)"}</li>
+              <li>- {lang === "ro" ? "Estimări angajați" : "Employee estimates"}</li>
+              <li>- {lang === "ro" ? "Prezență web și trafic" : "Web presence & traffic"}</li>
+              <li>- {lang === "ro" ? "Mențiuni presă" : "Press mentions"}</li>
+              <li>- {lang === "ro" ? "Contracte guvernamentale" : "Government contracts"}</li>
             </ul>
           </div>
 
@@ -977,9 +986,6 @@ export default async function CompanyPage({ params }: PageProps) {
 
           {/* Similar Companies */}
           <SimilarCompaniesWidget companies={related} lang={lang} />
-
-          {/* Related Companies (legacy) */}
-          <RelatedCompanies lang={lang} items={related} />
         </aside>
       </div>
       <ROMCAIAssistant

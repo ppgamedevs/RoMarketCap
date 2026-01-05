@@ -48,7 +48,7 @@ export function PremiumPanel({ lang, cui }: { lang: Lang; cui: string }) {
     <div className="rounded-xl border bg-card p-6 text-card-foreground">
       <h2 className="text-sm font-medium">{t(lang, "premium_title")}</h2>
 
-      {state.kind === "loading" ? <p className="mt-2 text-sm text-muted-foreground">Loading...</p> : null}
+      {state.kind === "loading" ? <p className="mt-2 text-sm text-muted-foreground">{t(lang, "loading")}</p> : null}
 
       {state.kind === "locked" ? (
         <>
@@ -74,29 +74,6 @@ export function PremiumPanel({ lang, cui }: { lang: Lang; cui: string }) {
               {t(lang, "cta_upgrade")}
             </Link>
           </div>
-          <div className="sticky bottom-0 mt-4 rounded-md border bg-background/95 p-4 backdrop-blur">
-            <p className="text-sm font-medium">{lang === "ro" ? "Deblochează Premium" : "Unlock Premium"}</p>
-            <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
-              <li>{lang === "ro" ? "Forecast 90/180 zile" : "Forecast 90/180 days"}</li>
-              <li>{lang === "ro" ? "Explicații și componente" : "Reasoning and components"}</li>
-              <li>{lang === "ro" ? "Semnale timpurii (coming soon)" : "Early signals (coming soon)"}</li>
-            </ul>
-            <Link
-              className="mt-3 inline-flex rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-              href="/billing"
-              onClick={() => track("PremiumClick", { cui, location: "PremiumPanelSticky" })}
-            >
-              {t(lang, "cta_upgrade")}
-            </Link>
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-medium">{t(lang, "premium_benefits_title")}</p>
-            <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
-              <li>{t(lang, "premium_b1")}</li>
-              <li>{t(lang, "premium_b2")}</li>
-              <li>{t(lang, "premium_b3")}</li>
-            </ul>
-          </div>
         </>
       ) : null}
 
@@ -104,7 +81,7 @@ export function PremiumPanel({ lang, cui }: { lang: Lang; cui: string }) {
         <>
           <p className="mt-2 text-sm text-muted-foreground">{t(lang, "premium_active")}</p>
           <button className="mt-4 inline-flex rounded-md border px-3 py-2 text-sm opacity-60" disabled type="button">
-            Download report (coming soon)
+            {t(lang, "download_report")} ({t(lang, "coming_soon")})
           </button>
           <pre className="mt-4 max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(state.payload, null, 2)}</pre>
         </>

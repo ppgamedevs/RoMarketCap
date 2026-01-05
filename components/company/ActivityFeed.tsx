@@ -1,7 +1,9 @@
+import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ro, enUS } from 'date-fns/locale';
 import type { Lang } from '@/src/lib/i18n';
 import type { CompanyChangeLog, CompanyChangeType } from '@prisma/client';
+import { BarChart3, DollarSign, Edit, CheckCircle2, TrendingUp, RefreshCw } from 'lucide-react';
 
 type ActivityFeedProps = {
   changes: CompanyChangeLog[];
@@ -25,19 +27,37 @@ export function ActivityFeed({ changes, lang }: ActivityFeedProps) {
   const getActivityIcon = (changeType: CompanyChangeType) => {
     switch (changeType) {
       case 'SCORE_CHANGE':
-        return '📊';
+        return BarChart3;
       case 'FINANCIAL_SYNC':
-        return '💰';
+        return DollarSign;
       case 'ENRICHMENT':
-        return '✏️';
+        return Edit;
       case 'CLAIM_APPROVED':
-        return '✅';
+        return CheckCircle2;
       case 'SUBMISSION_APPROVED':
-        return '✓';
+        return CheckCircle2;
       case 'FORECAST_CHANGE':
-        return '📈';
+        return TrendingUp;
       default:
-        return '🔄';
+        return RefreshCw;
+    }
+  };
+
+  const getActivityColor = (changeType: CompanyChangeType): string => {
+    switch (changeType) {
+      case 'SCORE_CHANGE':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'FINANCIAL_SYNC':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'ENRICHMENT':
+        return 'text-purple-600 bg-purple-50 border-purple-200';
+      case 'CLAIM_APPROVED':
+      case 'SUBMISSION_APPROVED':
+        return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+      case 'FORECAST_CHANGE':
+        return 'text-orange-600 bg-orange-50 border-orange-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
@@ -56,18 +76,36 @@ export function ActivityFeed({ changes, lang }: ActivityFeedProps) {
     return changeType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  const formatMetadata = (metadata: any): string => {
-    if (!metadata) return '';
+  const formatMetadata = (metadata: any): React.ReactNode => {
+    if (!metadata) return null;
     if (typeof metadata === 'object') {
+      const entries = Object.entries(metadata).filter(([_, v]) => v != null);
+      if (entries.length === 0) return null;
+      
+      // If it's a simple oldValue -> newValue change
       if (metadata.oldValue && metadata.newValue) {
-        return `${metadata.oldValue} → ${metadata.newValue}`;
+        return (
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground line-through">{String(metadata.oldValue)}</span>
+            <span className="text-muted-foreground">→</span>
+            <span className="font-medium">{String(metadata.newValue)}</span>
+          </div>
+        );
       }
-      if (metadata.field) {
-        return metadata.field;
-      }
-      return JSON.stringify(metadata);
+      
+      // Display key-value pairs
+      return (
+        <div className="mt-1 space-y-1">
+          {entries.slice(0, 3).map(([key, value]) => (
+            <div key={key} className="text-xs">
+              <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>{' '}
+              <span className="font-medium">{String(value)}</span>
+            </div>
+          ))}
+        </div>
+      );
     }
-    return String(metadata);
+    return <p className="text-xs text-muted-foreground mt-0.5">{String(metadata)}</p>;
   };
 
   return (
@@ -76,27 +114,40 @@ export function ActivityFeed({ changes, lang }: ActivityFeedProps) {
         {lang === 'ro' ? 'Activitate recentă' : 'Recent Activity'}
       </h3>
       <div className="mt-3 space-y-3">
-        {changes.slice(0, 10).map((change) => (
-          <div key={change.id} className="flex gap-3 text-sm">
-            <span className="text-lg" aria-hidden="true">
-              {getActivityIcon(change.changeType)}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium">{formatChangeType(change.changeType)}</p>
-              {change.metadata && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatMetadata(change.metadata)}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                {formatDistanceToNow(change.createdAt, {
-                  addSuffix: true,
-                  locale: lang === 'ro' ? ro : enUS,
-                })}
-              </p>
+        {changes.slice(0, 10).map((change) => {
+          const Icon = getActivityIcon(change.changeType);
+          const colorClass = getActivityColor(change.changeType);
+          const relativeTime = formatDistanceToNow(change.createdAt, {
+            addSuffix: true,
+            locale: lang === 'ro' ? ro : enUS,
+          });
+          const absoluteDate = change.createdAt.toLocaleDateString(
+            lang === 'ro' ? 'ro-RO' : 'en-US',
+            { year: 'numeric', month: 'short', day: 'numeric' }
+          );
+
+          return (
+            <div
+              key={change.id}
+              className={`rounded-lg border p-3 transition-all hover:shadow-sm ${colorClass}`}
+            >
+              <div className="flex gap-3">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${colorClass}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{formatChangeType(change.changeType)}</p>
+                  {change.metadata && formatMetadata(change.metadata)}
+                  <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{relativeTime}</span>
+                    <span>•</span>
+                    <span>{absoluteDate}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
