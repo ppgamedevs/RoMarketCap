@@ -45,6 +45,7 @@ export default withAuth({
       pathname === "/api/admin/seed-medium-companies" ||
       pathname === "/api/admin/seed-medium-companies-revenue" ||
       pathname === "/api/admin/add-bvb-columns" ||
+      pathname === "/api/admin/add-company-market-cap-history" ||
       pathname === "/api/admin/cleanup-placeholder-companies" ||
       pathname === "/api/admin/cleanup-public-entities" ||
       pathname === "/api/admin/sync-bvb" ||
