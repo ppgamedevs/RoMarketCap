@@ -60,8 +60,10 @@ export function CompanyContextCard({ lang, context }: CompanyContextCardProps) {
                 <div className="mt-1 text-lg font-semibold">
                   {formatCurrency(
                     context.financialHighlights.revenue2024.value,
-                    context.financialHighlights.revenue2024.currency as "RON" | "EUR",
-                    lang === "ro" ? "ro-RO" : "en-GB"
+                    {
+                      currency: context.financialHighlights.revenue2024.currency as "RON" | "EUR",
+                      locale: lang,
+                    }
                   )}
                 </div>
                 {context.financialHighlights.revenue2024.note && (
@@ -79,8 +81,10 @@ export function CompanyContextCard({ lang, context }: CompanyContextCardProps) {
                 <div className="mt-1 text-lg font-semibold">
                   {formatCurrency(
                     context.financialHighlights.investments2025.value,
-                    context.financialHighlights.investments2025.currency as "RON" | "EUR",
-                    lang === "ro" ? "ro-RO" : "en-GB"
+                    {
+                      currency: context.financialHighlights.investments2025.currency as "RON" | "EUR",
+                      locale: lang,
+                    }
                   )}
                 </div>
                 {context.financialHighlights.investments2025.note && (
