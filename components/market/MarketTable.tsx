@@ -274,10 +274,14 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    <Sparkline 
-                      values={row.sparklineData.map(d => d.score)} 
-                      trend={row.sparklineTrend}
-                    />
+                    {row.sparklineData && row.sparklineData.length > 0 ? (
+                      <Sparkline 
+                        values={row.sparklineData.map(d => d.score)} 
+                        trend={row.sparklineTrend}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TD>
                   <TD>
                     {row.dataConfidence !== null ? (
@@ -320,13 +324,13 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    {row.score24hChangePercent !== null ? (
+                    {row.score24hChangePercent !== null && row.score24hChangePercent !== undefined ? (
                       <div className={`text-sm font-medium ${
                         row.score24hChangePercent > 0 
                           ? "text-green-600" 
                           : row.score24hChangePercent < 0 
                           ? "text-red-600" 
-                          : ""
+                          : "text-muted-foreground"
                       }`}>
                         {row.score24hChangePercent > 0 ? "▲" : row.score24hChangePercent < 0 ? "▼" : ""}
                         {row.score24hChangePercent > 0 ? "+" : ""}
