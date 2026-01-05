@@ -85,7 +85,8 @@ export default withAuth({
       pathname === "/api/admin/score-snapshots" || // Admin endpoint for score snapshots
       pathname === "/api/admin/check-score-snapshots" || // Check score snapshots status
       pathname === "/api/admin/clear-score-snapshots-lock" || // Clear stuck score snapshots lock
-      pathname === "/api/admin/test-score-snapshots") { // Test score snapshot creation
+      pathname === "/api/admin/test-score-snapshots" || // Test score snapshot creation
+      pathname === "/api/admin/test-market-api") { // Test market API response
     return true;
   }
       
