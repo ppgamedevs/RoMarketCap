@@ -331,7 +331,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch last 7 days of market cap history for trends
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const marketCapHistory = await prisma.companyMarketCapHistory.findMany({
       where: {
         companyId: { in: companyIds },
