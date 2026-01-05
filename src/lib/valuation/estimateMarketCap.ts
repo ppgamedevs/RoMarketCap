@@ -242,28 +242,54 @@ export function estimateMarketCap(data: {
     };
   }
   
-  // 5. Ultra-minimal fallback: Give a very conservative estimate based on company existence
+  // 5. Ultra-minimal fallback: Give a conservative estimate based on company existence
   // This ensures all public companies have at least some market cap estimate
-  // Assumes a micro-company with minimal revenue
-  const MINIMAL_MARKET_CAP_RON = 100000; // 100k RON (~20k EUR) - very conservative minimum
+  // Uses industry-based minimums for better estimates
   const multiple = getRevenueMultiple(data.industry);
   
-  // Scale based on industry (some industries have higher minimums)
-  const industryMultiplier = data.industry 
-    ? (data.industry.toLowerCase().includes("tech") || 
-       data.industry.toLowerCase().includes("it") ||
-       data.industry.toLowerCase().includes("software") ? 2.0 : 1.0)
-    : 1.0;
+  // Industry-based minimum revenue estimates (in RON)
+  // These are conservative estimates for companies without data
+  const getIndustryMinimumRevenue = (industry: string | null): number => {
+    if (!industry) return 500000; // 500k RON default
+    
+    const lowerIndustry = industry.toLowerCase();
+    
+    // Large industries (retail, healthcare, finance) - higher minimums
+    if (lowerIndustry.includes("retail") || lowerIndustry.includes("e-commerce") || lowerIndustry.includes("commerce")) {
+      return 5000000; // 5M RON for retail/e-commerce
+    }
+    if (lowerIndustry.includes("healthcare") || lowerIndustry.includes("medical") || lowerIndustry.includes("health")) {
+      return 10000000; // 10M RON for healthcare
+    }
+    if (lowerIndustry.includes("banking") || lowerIndustry.includes("finance") || lowerIndustry.includes("financial")) {
+      return 20000000; // 20M RON for finance
+    }
+    if (lowerIndustry.includes("tech") || lowerIndustry.includes("it") || lowerIndustry.includes("software")) {
+      return 2000000; // 2M RON for tech
+    }
+    if (lowerIndustry.includes("manufacturing") || lowerIndustry.includes("production")) {
+      return 3000000; // 3M RON for manufacturing
+    }
+    if (lowerIndustry.includes("energy") || lowerIndustry.includes("utilities")) {
+      return 10000000; // 10M RON for energy
+    }
+    
+    // Default for other industries
+    return 1000000; // 1M RON default
+  };
+  
+  const minimumRevenue = getIndustryMinimumRevenue(data.industry);
+  const estimatedMarketCap = minimumRevenue * multiple;
   
   return {
-    estimatedMarketCap: MINIMAL_MARKET_CAP_RON * multiple * industryMultiplier,
+    estimatedMarketCap,
     method: "minimal",
     confidence: "low",
     details: {
-      revenue: MINIMAL_MARKET_CAP_RON / multiple, // Reverse calculate estimated revenue
+      revenue: minimumRevenue,
       revenueMultiple: multiple,
       industry: data.industry || "Unknown",
-      note: "Ultra-minimal estimate - no financial data available",
+      note: "Ultra-minimal estimate - no financial data available, using industry-based minimum",
     },
   };
 }

@@ -388,6 +388,9 @@ model Company {
   // PROMPT 55: Last seen from sources
   lastSeenAtFromSources DateTime? @map("last_seen_at_from_sources") // Last time seen by any source
 
+  // Company Context: Financial highlights, key insights, growth plans, market context
+  companyContext Json? @map("company_context") // Structured context: {financialHighlights, keyInsights, growthPlans, marketContext}
+
   // PROMPT 57: Universe source tracking
   universeSource      String? @map("universe_source") // SEAP | EU_FUNDS | ANAF | USER | THIRD_PARTY
   universeConfidence Int?    @map("universe_confidence") // 0..100

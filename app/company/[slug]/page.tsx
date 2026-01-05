@@ -26,6 +26,7 @@ import { RecentChanges } from "@/components/company/RecentChanges";
 import { IntegrityIndicators } from "@/components/company/IntegrityIndicators";
 import { ScoreExplanation } from "@/components/company/ScoreExplanation";
 import { FreshnessIndicator } from "@/components/company/FreshnessIndicator";
+import { CompanyContextCard } from "@/components/company/CompanyContextCard";
 import { getOrSetPageCache, getLangForCache, isAdminForCache, PAGE_CACHE_TTLS } from "@/src/lib/cache/pageCache";
 import { generateBreadcrumbJsonLd } from "@/src/lib/seo/breadcrumbs";
 import { Metric } from "@/components/ui/Metric";
@@ -686,6 +687,12 @@ export default async function CompanyPage({ params }: PageProps) {
                 dataSource: s.dataSource,
                 fetchedAt: s.fetchedAt,
               }))}
+            />
+
+            {/* Company Context - Financial Highlights, Key Insights, Growth Plans */}
+            <CompanyContextCard
+              lang={lang}
+              context={company.companyContext as any}
             />
 
             {/* Stock Information for Listed Companies */}

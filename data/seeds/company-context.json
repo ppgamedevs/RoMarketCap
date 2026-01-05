@@ -1,0 +1,42 @@
+{
+  "lastUpdated": "2026-01-05",
+  "source": "Public reports, news articles, company announcements",
+  "companies": {
+    "7889260": {
+      "name": "Regina Maria SRL",
+      "financialHighlights": {
+        "revenue2024": {
+          "value": 2750000000,
+          "currency": "RON",
+          "note": "550M EUR - includes MediGroup acquisition"
+        },
+        "investments2025": {
+          "value": 475000000,
+          "currency": "RON",
+          "note": "95M EUR allocated for 2025"
+        }
+      },
+      "keyInsights": [
+        "Cifra de afaceri cumulată (Regina Maria + MediGroup) a depășit 550 milioane de euro în 2024",
+        "Planuri de investiții de 95 milioane de euro pentru anul 2025",
+        "Obiectiv: dublarea dimensiunii business-ului până în 2030, cu scopul de a depăși 1 miliard de euro cifră de afaceri pe piața locală",
+        "În competiție directă cu MedLife pentru poziția de lider pe piața serviciilor medicale private din România"
+      ],
+      "growthPlans": [
+        "Extindere agresivă prin achiziții și deschidere de clinici noi",
+        "Investiții în tehnologie și digitalizare servicii medicale",
+        "Consolidare poziție pe piața serviciilor medicale private"
+      ],
+      "marketContext": "Una dintre cele mai mari rețele de servicii medicale private din România, în competiție directă cu MedLife (listată la BVB) pentru poziția de lider pe piață."
+    },
+    "67890567": {
+      "name": "Cel.ro SA",
+      "keyInsights": [
+        "Unul dintre principalii retailer-e de produse IT și electronice din România",
+        "Prezență puternică online și în retail fizic",
+        "Poziție consolidată pe piața e-commerce din România"
+      ],
+      "marketContext": "Retailer important pe piața IT și electronice, cu prezență atât online cât și în retail fizic."
+    }
+  }
+}

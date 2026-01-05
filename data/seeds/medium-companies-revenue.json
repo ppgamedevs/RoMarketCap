@@ -157,9 +157,10 @@
     },
     "67890567": {
       "name": "Cel.ro SA",
-      "revenue": 120000000,
-      "employees": 250,
-      "industry": "E-commerce"
+      "revenue": 200000000,
+      "employees": 300,
+      "industry": "E-commerce",
+      "note": "Updated revenue estimate based on market position"
     },
     "78901678": {
       "name": "PC Parts SA",

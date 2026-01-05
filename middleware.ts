@@ -42,6 +42,9 @@ export default withAuth({
       pathname === "/api/admin/test-mfinante" ||
       pathname === "/api/admin/test-mfinante-html" ||
       pathname === "/api/admin/calculate-all-market-caps" ||
+      pathname === "/api/admin/update-company-revenue-and-marketcap" ||
+      pathname === "/api/admin/seed-company-context" ||
+      pathname === "/api/admin/add-company-context-column" ||
       pathname === "/api/admin/add-ingest-runs-table" ||
       pathname === "/api/admin/add-financial-snapshots-employees-column" ||
       pathname === "/api/admin/add-financial-snapshots-columns" ||
