@@ -14,7 +14,7 @@ import { estimateMarketCap } from "@/src/lib/valuation/estimateMarketCap";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5 minutes
+export const maxDuration = 600; // 10 minutes (increased for processing all companies)
 
 export async function GET(req: Request) {
   return POST(req);
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
   const batchSize = parseInt(url.searchParams.get("batchSize") || "100");
   const cursor = url.searchParams.get("cursor") || undefined;
   const overwriteListed = url.searchParams.get("overwriteListed") === "true"; // Don't overwrite BVB by default
+  const processAll = url.searchParams.get("processAll") === "true"; // Process all companies in one go
 
   try {
     const results = {
@@ -47,6 +48,9 @@ export async function POST(req: Request) {
       },
       errorDetails: [] as Array<{ cui: string; error: string }>,
     };
+
+    // Determine actual batch size
+    const actualBatchSize = processAll ? 10000 : batchSize; // Process all if processAll=true
 
     // Fetch companies that need market cap estimation
     const companies = await prisma.company.findMany({
@@ -77,7 +81,7 @@ export async function POST(req: Request) {
         valuationRangeHigh: true,
       },
       orderBy: { id: "asc" },
-      take: batchSize,
+      take: actualBatchSize,
     });
 
     results.total = companies.length;
@@ -152,9 +156,15 @@ export async function POST(req: Request) {
     }
 
     const duration = Date.now() - startTime;
-    const nextCursor = companies.length === batchSize ? companies[companies.length - 1].id : null;
+    const nextCursor = companies.length === actualBatchSize ? companies[companies.length - 1].id : null;
 
     console.log(`[calculate-market-caps] Completed: ${results.updated} updated, ${results.skipped} skipped, ${results.errors} errors in ${duration}ms`);
+
+    // If processAll and there are more companies, provide instructions to continue
+    const hasMore = nextCursor !== null;
+    const continueMessage = hasMore && processAll
+      ? `Processed ${results.updated} companies. More companies may need processing. Run again with ?processAll=true&cursor=${nextCursor} to continue.`
+      : null;
 
     return NextResponse.json({
       ok: true,
@@ -162,8 +172,11 @@ export async function POST(req: Request) {
         ? `Dry run: Would update ${results.updated} companies`
         : `Updated ${results.updated} companies with estimated market caps`,
       dryRun,
+      processAll,
       cursor: nextCursor,
       done: !nextCursor,
+      hasMore,
+      continueMessage,
       duration,
       ...results,
     });
