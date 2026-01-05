@@ -163,6 +163,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable BVB stock price fetching from Yahoo Finance API for market cap calculation",
     risky: false,
   },
+  BVB_INTRADAY_SYNC_ENABLED: {
+    label: "BVB: Intraday Sync",
+    description: "Enable/disable BVB intraday sync cron for frequent market cap updates during trading hours (BET index companies)",
+    risky: false,
+  },
   ANAF_BULK_FINANCIALS_ENABLED: {
     label: "ANAF: Bulk Financials",
     description: "Enable/disable ANAF bulk financials ingestion from data.gov.ro (revenue, profit, employees)",
