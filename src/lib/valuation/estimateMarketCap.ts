@@ -116,6 +116,7 @@ export type MarketCapEstimate = {
     assets?: number;
     assetMultiplier?: number;
     industry?: string;
+    note?: string;
   };
 };
 
@@ -241,8 +242,30 @@ export function estimateMarketCap(data: {
     };
   }
   
-  // No data available to estimate
-  return null;
+  // 5. Ultra-minimal fallback: Give a very conservative estimate based on company existence
+  // This ensures all public companies have at least some market cap estimate
+  // Assumes a micro-company with minimal revenue
+  const MINIMAL_MARKET_CAP_RON = 100000; // 100k RON (~20k EUR) - very conservative minimum
+  const multiple = getRevenueMultiple(data.industry);
+  
+  // Scale based on industry (some industries have higher minimums)
+  const industryMultiplier = data.industry 
+    ? (data.industry.toLowerCase().includes("tech") || 
+       data.industry.toLowerCase().includes("it") ||
+       data.industry.toLowerCase().includes("software") ? 2.0 : 1.0)
+    : 1.0;
+  
+  return {
+    estimatedMarketCap: MINIMAL_MARKET_CAP_RON * multiple * industryMultiplier,
+    method: "minimal",
+    confidence: "low",
+    details: {
+      revenue: MINIMAL_MARKET_CAP_RON / multiple, // Reverse calculate estimated revenue
+      revenueMultiple: multiple,
+      industry: data.industry || "Unknown",
+      note: "Ultra-minimal estimate - no financial data available",
+    },
+  };
 }
 
 /**
