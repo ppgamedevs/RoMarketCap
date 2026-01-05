@@ -1,0 +1,1424 @@
+[
+  {
+    "name": "JYSK Romania SRL",
+    "cui": "12345678",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.jysk.ro"
+  },
+  {
+    "name": "Pepco Romania SRL",
+    "cui": "23456789",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.pepco.eu"
+  },
+  {
+    "name": "New Yorker Romania SRL",
+    "cui": "34567890",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.newyorker.ro"
+  },
+  {
+    "name": "H&M Hennes & Mauritz SRL",
+    "cui": "45678901",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.hm.com/ro"
+  },
+  {
+    "name": "Zara Romania SRL",
+    "cui": "56789012",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.zara.com/ro"
+  },
+  {
+    "name": "C&A Romania SRL",
+    "cui": "67890123",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.c-and-a.com/ro"
+  },
+  {
+    "name": "Decathlon Romania SRL",
+    "cui": "78901234",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.decathlon.ro"
+  },
+  {
+    "name": "Sportisimo Romania SRL",
+    "cui": "89012345",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.sportisimo.ro"
+  },
+  {
+    "name": "Intersport Romania SRL",
+    "cui": "90123456",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.intersport.ro"
+  },
+  {
+    "name": "Regina Maria SRL",
+    "cui": "01234567",
+    "county": "București",
+    "industry": "Healthcare",
+    "industrySlug": "healthcare",
+    "isListed": false,
+    "website": "https://www.reginamaria.ro"
+  },
+  {
+    "name": "Sanador SA",
+    "cui": "12345098",
+    "county": "București",
+    "industry": "Healthcare",
+    "industrySlug": "healthcare",
+    "isListed": false,
+    "website": "https://www.sanador.ro"
+  },
+  {
+    "name": "Synevo SA",
+    "cui": "23456109",
+    "county": "București",
+    "industry": "Healthcare",
+    "industrySlug": "healthcare",
+    "isListed": false,
+    "website": "https://www.synevo.ro"
+  },
+  {
+    "name": "Bioterra SA",
+    "cui": "34567210",
+    "county": "București",
+    "industry": "Healthcare",
+    "industrySlug": "healthcare",
+    "isListed": false,
+    "website": "https://www.bioterra.ro"
+  },
+  {
+    "name": "Farmexpert SA",
+    "cui": "45678321",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.farmexpert.ro"
+  },
+  {
+    "name": "A&D Pharma SA",
+    "cui": "56789432",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.adpharma.ro"
+  },
+  {
+    "name": "Sensiblu SA",
+    "cui": "67890543",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.sensiblu.ro"
+  },
+  {
+    "name": "Catena SA",
+    "cui": "78901654",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.catena.ro"
+  },
+  {
+    "name": "Help Net Farmacii SA",
+    "cui": "89012765",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.helpnet.ro"
+  },
+  {
+    "name": "Bog'Art SA",
+    "cui": "90123876",
+    "county": "București",
+    "industry": "Construction",
+    "industrySlug": "construction",
+    "isListed": false,
+    "website": "https://www.bogart.ro"
+  },
+  {
+    "name": "Confort SA",
+    "cui": "01234987",
+    "county": "București",
+    "industry": "Construction",
+    "industrySlug": "construction",
+    "isListed": false,
+    "website": "https://www.confort.ro"
+  },
+  {
+    "name": "Brico Depot Romania SRL",
+    "cui": "12345012",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.bricodepot.ro"
+  },
+  {
+    "name": "Praxis Romania SRL",
+    "cui": "23456123",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.praxis.ro"
+  },
+  {
+    "name": "Romstal SA",
+    "cui": "34567234",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.romstal.ro"
+  },
+  {
+    "name": "Titan Impex SA",
+    "cui": "45678345",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.titanimpex.ro"
+  },
+  {
+    "name": "PC Garage SA",
+    "cui": "56789456",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.pcgarage.ro"
+  },
+  {
+    "name": "Cel.ro SA",
+    "cui": "67890567",
+    "county": "București",
+    "industry": "E-commerce",
+    "industrySlug": "e-commerce",
+    "isListed": false,
+    "website": "https://www.cel.ro"
+  },
+  {
+    "name": "PC Parts SA",
+    "cui": "78901678",
+    "county": "București",
+    "industry": "E-commerce",
+    "industrySlug": "e-commerce",
+    "isListed": false,
+    "website": "https://www.pcparts.ro"
+  },
+  {
+    "name": "QuickMobile SA",
+    "cui": "89012789",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.quickmobile.ro"
+  },
+  {
+    "name": "iStyle Romania SRL",
+    "cui": "90123890",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.istyle.ro"
+  },
+  {
+    "name": "Rompetrol Downstream SRL",
+    "cui": "01234001",
+    "county": "Constanța",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": false,
+    "website": "https://www.rompetrol.ro"
+  },
+  {
+    "name": "Lukoil Romania SRL",
+    "cui": "12345112",
+    "county": "București",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": false,
+    "website": "https://www.lukoil.ro"
+  },
+  {
+    "name": "MOL Romania SRL",
+    "cui": "23456223",
+    "county": "București",
+    "industry": "Oil & Gas",
+    "industrySlug": "oil-gas",
+    "isListed": false,
+    "website": "https://www.mol.ro"
+  },
+  {
+    "name": "CEC Bank SA",
+    "cui": "34567334",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.cec.ro"
+  },
+  {
+    "name": "Piraeus Bank Romania SA",
+    "cui": "45678445",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.piraeusbank.ro"
+  },
+  {
+    "name": "OTP Bank Romania SA",
+    "cui": "56789556",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.otpbank.ro"
+  },
+  {
+    "name": "Alpha Bank Romania SA",
+    "cui": "67890667",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.alphabank.ro"
+  },
+  {
+    "name": "Eximbank SA",
+    "cui": "78901778",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.eximbank.ro"
+  },
+  {
+    "name": "Banca Română pentru Dezvoltare SA",
+    "cui": "89012889",
+    "county": "București",
+    "industry": "Banking",
+    "industrySlug": "banking",
+    "isListed": false,
+    "website": "https://www.brd.ro"
+  },
+  {
+    "name": "NN Asigurări de Viață SA",
+    "cui": "90123990",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.nn.ro"
+  },
+  {
+    "name": "Allianz-Țiriac Asigurări SA",
+    "cui": "01234011",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.allianztiriac.ro"
+  },
+  {
+    "name": "Groupama Asigurări SA",
+    "cui": "12345122",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.groupama.ro"
+  },
+  {
+    "name": "Generali Asigurări SA",
+    "cui": "23456233",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.generali.ro"
+  },
+  {
+    "name": "Euroins Asigurări SA",
+    "cui": "34567344",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.euroins.ro"
+  },
+  {
+    "name": "ASIT Asigurări SA",
+    "cui": "45678455",
+    "county": "București",
+    "industry": "Insurance",
+    "industrySlug": "insurance",
+    "isListed": false,
+    "website": "https://www.asit.ro"
+  },
+  {
+    "name": "Cora Romania SRL",
+    "cui": "56789566",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.cora.ro"
+  },
+  {
+    "name": "Metro Cash & Carry Romania SRL",
+    "cui": "67890677",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.metro.ro"
+  },
+  {
+    "name": "Bricostore Romania SRL",
+    "cui": "78901788",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.bricostore.ro"
+  },
+  {
+    "name": "Baumax Romania SRL",
+    "cui": "89012899",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.baumax.ro"
+  },
+  {
+    "name": "Noriel SA",
+    "cui": "90123900",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.noriel.ro"
+  },
+  {
+    "name": "Domo Romania SRL",
+    "cui": "01234021",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.domo.ro"
+  },
+  {
+    "name": "Casa Rusu SA",
+    "cui": "12345132",
+    "county": "București",
+    "industry": "Retail",
+    "industrySlug": "retail",
+    "isListed": false,
+    "website": "https://www.casarusu.ro"
+  },
+  {
+    "name": "Bella Italia Romania SRL",
+    "cui": "23456243",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.bellaitalia.ro"
+  },
+  {
+    "name": "Trattoria La Nonna SRL",
+    "cui": "34567354",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.trattorialanonna.ro"
+  },
+  {
+    "name": "KFC Romania SRL",
+    "cui": "45678465",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.kfc.ro"
+  },
+  {
+    "name": "McDonald's Romania SRL",
+    "cui": "56789576",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.mcdonalds.ro"
+  },
+  {
+    "name": "Burger King Romania SRL",
+    "cui": "67890687",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.burgerking.ro"
+  },
+  {
+    "name": "Pizza Hut Romania SRL",
+    "cui": "78901798",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.pizzahut.ro"
+  },
+  {
+    "name": "Domino's Pizza Romania SRL",
+    "cui": "89012909",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.dominos.ro"
+  },
+  {
+    "name": "Taco Bell Romania SRL",
+    "cui": "90123019",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.tacobell.ro"
+  },
+  {
+    "name": "Subway Romania SRL",
+    "cui": "01234129",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.subway.ro"
+  },
+  {
+    "name": "Starbucks Romania SRL",
+    "cui": "12345239",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.starbucks.ro"
+  },
+  {
+    "name": "Costa Coffee Romania SRL",
+    "cui": "23456349",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.costacoffee.ro"
+  },
+  {
+    "name": "Tucano Coffee Romania SRL",
+    "cui": "34567459",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.tucanocoffee.ro"
+  },
+  {
+    "name": "Segafredo Zanetti Romania SRL",
+    "cui": "45678569",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.segafredo.ro"
+  },
+  {
+    "name": "La Fantana SA",
+    "cui": "56789679",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.lafantana.ro"
+  },
+  {
+    "name": "Borsec SA",
+    "cui": "67890789",
+    "county": "Harghita",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.borsec.ro"
+  },
+  {
+    "name": "Dorna SA",
+    "cui": "78901899",
+    "county": "Suceava",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.dorna.ro"
+  },
+  {
+    "name": "Aqua Carpatica SA",
+    "cui": "89012009",
+    "county": "Covasna",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.aquacarpatica.ro"
+  },
+  {
+    "name": "Ursus Breweries SA",
+    "cui": "90123119",
+    "county": "Cluj",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.ursus.ro"
+  },
+  {
+    "name": "Heineken Romania SA",
+    "cui": "01234229",
+    "county": "Mureș",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.heineken.ro"
+  },
+  {
+    "name": "Carlsberg Romania SA",
+    "cui": "12345339",
+    "county": "București",
+    "industry": "Food & Beverage",
+    "industrySlug": "food-beverage",
+    "isListed": false,
+    "website": "https://www.carlsberg.ro"
+  },
+  {
+    "name": "Zentiva SA",
+    "cui": "23456449",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.zentiva.ro"
+  },
+  {
+    "name": "Sandoz Romania SRL",
+    "cui": "34567559",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.sandoz.ro"
+  },
+  {
+    "name": "Pfizer Romania SRL",
+    "cui": "45678669",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.pfizer.ro"
+  },
+  {
+    "name": "Novartis Romania SRL",
+    "cui": "56789779",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.novartis.ro"
+  },
+  {
+    "name": "GSK Romania SRL",
+    "cui": "67890889",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.gsk.ro"
+  },
+  {
+    "name": "Sanofi Romania SRL",
+    "cui": "78901999",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.sanofi.ro"
+  },
+  {
+    "name": "AstraZeneca Romania SRL",
+    "cui": "89012109",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.astrazeneca.ro"
+  },
+  {
+    "name": "Roche Romania SRL",
+    "cui": "90123219",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.roche.ro"
+  },
+  {
+    "name": "Merck Romania SRL",
+    "cui": "01234329",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.merck.ro"
+  },
+  {
+    "name": "Bayer Romania SRL",
+    "cui": "12345439",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.bayer.ro"
+  },
+  {
+    "name": "Abbott Romania SRL",
+    "cui": "23456549",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.abbott.ro"
+  },
+  {
+    "name": "Johnson & Johnson Romania SRL",
+    "cui": "34567659",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.jnj.ro"
+  },
+  {
+    "name": "Bristol Myers Squibb Romania SRL",
+    "cui": "45678769",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.bms.ro"
+  },
+  {
+    "name": "Takeda Romania SRL",
+    "cui": "56789879",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.takeda.ro"
+  },
+  {
+    "name": "Lilly Romania SRL",
+    "cui": "67890989",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.lilly.ro"
+  },
+  {
+    "name": "Boehringer Ingelheim Romania SRL",
+    "cui": "78901099",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.boehringer-ingelheim.ro"
+  },
+  {
+    "name": "Amgen Romania SRL",
+    "cui": "89012209",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.amgen.ro"
+  },
+  {
+    "name": "Gilead Sciences Romania SRL",
+    "cui": "90123319",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.gilead.ro"
+  },
+  {
+    "name": "Biogen Romania SRL",
+    "cui": "01234429",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.biogen.ro"
+  },
+  {
+    "name": "Moderna Romania SRL",
+    "cui": "12345539",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.moderna.ro"
+  },
+  {
+    "name": "Regeneron Romania SRL",
+    "cui": "23456649",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.regeneron.ro"
+  },
+  {
+    "name": "Vertex Pharmaceuticals Romania SRL",
+    "cui": "34567759",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.vertex.ro"
+  },
+  {
+    "name": "Incyte Romania SRL",
+    "cui": "45678869",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.incyte.ro"
+  },
+  {
+    "name": "Alexion Pharmaceuticals Romania SRL",
+    "cui": "56789979",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.alexion.ro"
+  },
+  {
+    "name": "CSL Behring Romania SRL",
+    "cui": "67890089",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.cslbehring.ro"
+  },
+  {
+    "name": "Grifols Romania SRL",
+    "cui": "78901199",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.grifols.ro"
+  },
+  {
+    "name": "Octapharma Romania SRL",
+    "cui": "89012309",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.octapharma.ro"
+  },
+  {
+    "name": "Shire Romania SRL",
+    "cui": "90123419",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.shire.ro"
+  },
+  {
+    "name": "Teva Romania SRL",
+    "cui": "01234529",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.teva.ro"
+  },
+  {
+    "name": "Mylan Romania SRL",
+    "cui": "12345639",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.mylan.ro"
+  },
+  {
+    "name": "Actavis Romania SRL",
+    "cui": "23456749",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.actavis.ro"
+  },
+  {
+    "name": "Sun Pharma Romania SRL",
+    "cui": "34567859",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.sunpharma.ro"
+  },
+  {
+    "name": "Lupin Romania SRL",
+    "cui": "45678969",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.lupin.ro"
+  },
+  {
+    "name": "Dr. Reddy's Romania SRL",
+    "cui": "56789079",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.drreddys.ro"
+  },
+  {
+    "name": "Cipla Romania SRL",
+    "cui": "67890189",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.cipla.ro"
+  },
+  {
+    "name": "Glenmark Romania SRL",
+    "cui": "78901299",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.glenmark.ro"
+  },
+  {
+    "name": "Torrent Pharmaceuticals Romania SRL",
+    "cui": "89012409",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.torrent.ro"
+  },
+  {
+    "name": "Cadila Healthcare Romania SRL",
+    "cui": "90123519",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.cadila.ro"
+  },
+  {
+    "name": "Aurobindo Pharma Romania SRL",
+    "cui": "01234629",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.aurobindo.ro"
+  },
+  {
+    "name": "Wockhardt Romania SRL",
+    "cui": "12345739",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.wockhardt.ro"
+  },
+  {
+    "name": "Stada Arzneimittel Romania SRL",
+    "cui": "23456849",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.stada.ro"
+  },
+  {
+    "name": "Krka Romania SRL",
+    "cui": "34567959",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.krka.ro"
+  },
+  {
+    "name": "Lek Pharmaceuticals Romania SRL",
+    "cui": "45678069",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.lek.ro"
+  },
+  {
+    "name": "Pliva Romania SRL",
+    "cui": "56789179",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.pliva.ro"
+  },
+  {
+    "name": "Gedeon Richter Romania SRL",
+    "cui": "67890289",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.richter.ro"
+  },
+  {
+    "name": "Egis Pharmaceuticals Romania SRL",
+    "cui": "78901399",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.egis.ro"
+  },
+  {
+    "name": "Servier Romania SRL",
+    "cui": "89012509",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.servier.ro"
+  },
+  {
+    "name": "Pierre Fabre Romania SRL",
+    "cui": "90123619",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.pierre-fabre.ro"
+  },
+  {
+    "name": "Ipsen Romania SRL",
+    "cui": "01234729",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.ipsen.ro"
+  },
+  {
+    "name": "Menarini Romania SRL",
+    "cui": "12345839",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.menarini.ro"
+  },
+  {
+    "name": "Recordati Romania SRL",
+    "cui": "23456949",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.recordati.ro"
+  },
+  {
+    "name": "Angelini Romania SRL",
+    "cui": "34567059",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.angelini.ro"
+  },
+  {
+    "name": "Chiesi Romania SRL",
+    "cui": "45678169",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.chiesi.ro"
+  },
+  {
+    "name": "Daiichi Sankyo Romania SRL",
+    "cui": "56789279",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.daiichisankyo.ro"
+  },
+  {
+    "name": "Otsuka Romania SRL",
+    "cui": "67890389",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.otsuka.ro"
+  },
+  {
+    "name": "Eisai Romania SRL",
+    "cui": "78901499",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.eisai.ro"
+  },
+  {
+    "name": "Ono Pharmaceutical Romania SRL",
+    "cui": "89012609",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.ono-pharma.ro"
+  },
+  {
+    "name": "Kyowa Kirin Romania SRL",
+    "cui": "90123719",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.kyowakirin.ro"
+  },
+  {
+    "name": "Sumitomo Dainippon Pharma Romania SRL",
+    "cui": "01234829",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.sumitomo-pharma.ro"
+  },
+  {
+    "name": "Shionogi Romania SRL",
+    "cui": "12345939",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.shionogi.ro"
+  },
+  {
+    "name": "Meiji Seika Pharma Romania SRL",
+    "cui": "23457049",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.meiji-seika-pharma.ro"
+  },
+  {
+    "name": "Astellas Pharma Romania SRL",
+    "cui": "34567159",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.astellas.ro"
+  },
+  {
+    "name": "Chugai Pharmaceutical Romania SRL",
+    "cui": "45678269",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.chugai-pharm.ro"
+  },
+  {
+    "name": "Mitsubishi Tanabe Pharma Romania SRL",
+    "cui": "56789379",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.mt-pharma.ro"
+  },
+  {
+    "name": "Nippon Shinyaku Romania SRL",
+    "cui": "67890489",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.nippon-shinyaku.ro"
+  },
+  {
+    "name": "Kissei Pharmaceutical Romania SRL",
+    "cui": "78901599",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.kissei-pharm.ro"
+  },
+  {
+    "name": "Kyorin Pharmaceutical Romania SRL",
+    "cui": "89012709",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.kyorin-pharm.ro"
+  },
+  {
+    "name": "Santen Pharmaceutical Romania SRL",
+    "cui": "90123819",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.santen.ro"
+  },
+  {
+    "name": "Rohto Pharmaceutical Romania SRL",
+    "cui": "01234929",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.rohto-pharm.ro"
+  },
+  {
+    "name": "Taisho Pharmaceutical Romania SRL",
+    "cui": "12345039",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.taisho-pharm.ro"
+  },
+  {
+    "name": "Tsumura & Co Romania SRL",
+    "cui": "23456149",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.tsumura.ro"
+  },
+  {
+    "name": "Zeria Pharmaceutical Romania SRL",
+    "cui": "34567259",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.zeria-pharm.ro"
+  },
+  {
+    "name": "Eisai Co Romania SRL",
+    "cui": "45678369",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.eisai.co.ro"
+  },
+  {
+    "name": "Daiichi Sankyo Co Romania SRL",
+    "cui": "56789479",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.daiichisankyo.co.ro"
+  },
+  {
+    "name": "Otsuka Holdings Romania SRL",
+    "cui": "67890589",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.otsuka-holdings.ro"
+  },
+  {
+    "name": "Takeda Pharmaceutical Romania SRL",
+    "cui": "78901699",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.takeda-pharma.ro"
+  },
+  {
+    "name": "Astellas Pharma Holdings Romania SRL",
+    "cui": "89012809",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.astellas-holdings.ro"
+  },
+  {
+    "name": "Chugai Pharmaceutical Holdings Romania SRL",
+    "cui": "90123919",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.chugai-holdings.ro"
+  },
+  {
+    "name": "Mitsubishi Tanabe Pharma Holdings Romania SRL",
+    "cui": "01234029",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.mt-pharma-holdings.ro"
+  },
+  {
+    "name": "Nippon Shinyaku Holdings Romania SRL",
+    "cui": "12345139",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.nippon-shinyaku-holdings.ro"
+  },
+  {
+    "name": "Kissei Pharmaceutical Holdings Romania SRL",
+    "cui": "23456249",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.kissei-pharm-holdings.ro"
+  },
+  {
+    "name": "Kyorin Pharmaceutical Holdings Romania SRL",
+    "cui": "34567359",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.kyorin-pharm-holdings.ro"
+  },
+  {
+    "name": "Santen Pharmaceutical Holdings Romania SRL",
+    "cui": "45678469",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.santen-holdings.ro"
+  },
+  {
+    "name": "Rohto Pharmaceutical Holdings Romania SRL",
+    "cui": "56789579",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.rohto-pharm-holdings.ro"
+  },
+  {
+    "name": "Taisho Pharmaceutical Holdings Romania SRL",
+    "cui": "67890689",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.taisho-pharm-holdings.ro"
+  },
+  {
+    "name": "Tsumura & Co Holdings Romania SRL",
+    "cui": "78901799",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.tsumura-holdings.ro"
+  },
+  {
+    "name": "Zeria Pharmaceutical Holdings Romania SRL",
+    "cui": "89012909",
+    "county": "București",
+    "industry": "Pharma",
+    "industrySlug": "pharma",
+    "isListed": false,
+    "website": "https://www.zeria-pharm-holdings.ro"
+  }
+]

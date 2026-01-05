@@ -55,6 +55,9 @@ type MarketRow = {
   sparklineTrend: "up" | "down" | "neutral"; // 7-day trend direction
   rankDelta: number | null; // 24h position change
   score24hChangePercent: number | null; // 24h score percentage change
+  marketCap24hChangePercent: number | null; // 24h market cap percentage change
+  marketCapSparklineData: Array<{ date: string; marketCap: number }>; // Last 7 days
+  marketCapTrend: "up" | "down" | "neutral"; // 7-day market cap trend
   foundedYear: number | null; // Year company was founded
   isWatched: boolean; // Is in user's watchlist
 };
@@ -298,6 +301,63 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Fetch 24h ago market cap for all companies
+    const nowFor24h = new Date();
+    const twentyFourHoursAgo = new Date(nowFor24h.getTime() - 24 * 60 * 60 * 1000);
+    const twoHoursBefore = new Date(twentyFourHoursAgo.getTime() - 2 * 60 * 60 * 1000);
+    const twoHoursAfter = new Date(twentyFourHoursAgo.getTime() + 2 * 60 * 60 * 1000);
+
+    const yesterdayMarketCaps = await prisma.companyMarketCapHistory.findMany({
+      where: {
+        companyId: { in: companyIds },
+        recordedAt: {
+          gte: twoHoursBefore,
+          lte: twoHoursAfter,
+        },
+      },
+      select: {
+        companyId: true,
+        marketCap: true,
+        recordedAt: true,
+      },
+      orderBy: { recordedAt: "desc" },
+    });
+
+    // Group by company (take most recent per company, closest to 24h ago)
+    const yesterdayMarketCapByCompany = new Map<string, number>();
+    for (const record of yesterdayMarketCaps) {
+      if (!yesterdayMarketCapByCompany.has(record.companyId)) {
+        yesterdayMarketCapByCompany.set(record.companyId, Number(record.marketCap));
+      }
+    }
+
+    // Fetch last 7 days of market cap history for trends
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const marketCapHistory = await prisma.companyMarketCapHistory.findMany({
+      where: {
+        companyId: { in: companyIds },
+        recordedAt: { gte: sevenDaysAgo },
+      },
+      select: {
+        companyId: true,
+        recordedAt: true,
+        marketCap: true,
+      },
+      orderBy: { recordedAt: "asc" },
+    });
+
+    // Group by company
+    const marketCapHistoryByCompany = new Map<string, Array<{ date: string; marketCap: number }>>();
+    for (const record of marketCapHistory) {
+      if (!marketCapHistoryByCompany.has(record.companyId)) {
+        marketCapHistoryByCompany.set(record.companyId, []);
+      }
+      marketCapHistoryByCompany.get(record.companyId)!.push({
+        date: record.recordedAt.toISOString().split("T")[0],
+        marketCap: Number(record.marketCap),
+      });
+    }
+
     // Fetch watchlist status if user is authenticated (session already fetched above)
     const userId = session?.user?.id;
     const watchlistCompanyIds = userId
@@ -336,6 +396,24 @@ export async function GET(req: NextRequest) {
       let score24hChangePercent: number | null = null;
       if (currentScore !== null && yesterdayScore !== undefined && yesterdayScore !== 0) {
         score24hChangePercent = ((currentScore - yesterdayScore) / yesterdayScore) * 100;
+      }
+
+      // Calculate 24h market cap change
+      const currentMarketCap = company.marketCap ? Number(company.marketCap) : null;
+      const yesterdayMarketCap = yesterdayMarketCapByCompany.get(company.id);
+      let marketCap24hChangePercent: number | null = null;
+      if (currentMarketCap !== null && yesterdayMarketCap !== undefined && yesterdayMarketCap !== 0) {
+        marketCap24hChangePercent = ((currentMarketCap - yesterdayMarketCap) / yesterdayMarketCap) * 100;
+      }
+
+      // Calculate 7d market cap trend
+      const marketCapSparkline = marketCapHistoryByCompany.get(company.id) || [];
+      let marketCapTrend: "up" | "down" | "neutral" = "neutral";
+      if (marketCapSparkline.length >= 2) {
+        const first = marketCapSparkline[0]!.marketCap;
+        const last = marketCapSparkline[marketCapSparkline.length - 1]!.marketCap;
+        if (last > first) marketCapTrend = "up";
+        else if (last < first) marketCapTrend = "down";
       }
 
       // Get founding year - show if we have real data
@@ -403,6 +481,9 @@ export async function GET(req: NextRequest) {
         sparklineTrend,
         rankDelta: rankDeltaMap[company.id] ?? null,
         score24hChangePercent,
+        marketCap24hChangePercent,
+        marketCapSparklineData: marketCapSparkline,
+        marketCapTrend,
         foundedYear,
         isWatched: watchedCompanyIds.has(company.id),
       };

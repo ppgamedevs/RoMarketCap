@@ -1,5 +1,5 @@
 /**
- * Boost data confidence for major companies with revenue data
+ * Boost data confidence for major and medium companies with revenue data
  * These are well-known companies that deserve high confidence
  */
 
@@ -15,22 +15,41 @@ export async function GET() {
 
 export async function POST() {
   try {
-    // Update companies with revenue > 1B RON to have at least 60% confidence
+    // Update companies with revenue > 1B RON to have at least 70% confidence
     // These are major companies and should be visible
-    const updated = await prisma.company.updateMany({
+    const majorUpdated = await prisma.company.updateMany({
       where: {
         revenueLatest: { gt: 1000000000 }, // > 1B RON
-        dataConfidence: { lt: 60 }, // Currently low confidence
+        dataConfidence: { lt: 70 }, // Currently lower than 70%
       },
       data: {
         dataConfidence: 70, // Boost to 70% for major revenue companies
       },
     });
 
+    // Update medium companies with revenue > 1M RON to have at least 70% confidence
+    // These are medium companies with significant revenue
+    const mediumUpdated = await prisma.company.updateMany({
+      where: {
+        revenueLatest: { 
+          gt: 1000000, // > 1M RON
+          lte: 1000000000, // <= 1B RON (medium range)
+        },
+        dataConfidence: { lt: 70 }, // Currently lower than 70%
+      },
+      data: {
+        dataConfidence: 70, // Boost to 70% for medium revenue companies
+      },
+    });
+
+    const totalUpdated = majorUpdated.count + mediumUpdated.count;
+
     return NextResponse.json({
       ok: true,
-      message: `Boosted confidence for ${updated.count} major companies to 70%`,
-      count: updated.count,
+      message: `Boosted confidence for ${totalUpdated} companies (${majorUpdated.count} major, ${mediumUpdated.count} medium) to 70%`,
+      majorCount: majorUpdated.count,
+      mediumCount: mediumUpdated.count,
+      totalCount: totalUpdated,
     });
 
   } catch (error) {

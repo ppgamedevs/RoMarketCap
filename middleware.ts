@@ -42,6 +42,8 @@ export default withAuth({
       pathname === "/api/admin/add-financial-snapshots-employees-column" ||
       pathname === "/api/admin/add-financial-snapshots-columns" ||
       pathname === "/api/admin/seed-top100" ||
+      pathname === "/api/admin/seed-medium-companies" ||
+      pathname === "/api/admin/seed-medium-companies-revenue" ||
       pathname === "/api/admin/add-bvb-columns" ||
       pathname === "/api/admin/cleanup-placeholder-companies" ||
       pathname === "/api/admin/cleanup-public-entities" ||

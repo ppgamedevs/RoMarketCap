@@ -150,13 +150,45 @@ model Company {
 **Frequency**: Once per day  
 **Feature Flag**: `BVB_PRICE_FETCH_ENABLED`
 
-### Process
+**Process:**
+1. Fetch all symbols from `BVB_SYMBOL_TO_CUI`
+2. For each symbol:
+   - Check if company exists in database
+   - Fetch stock price from Yahoo Finance
+   - Update `Company.marketCap` and `Company.stockPrice`
+   - Create `CompanyMarketCapHistory` snapshot
+
+### Intraday Sync
+
+**Time**: Every 30 minutes during trading hours (09:00-18:00 EET)  
+**Frequency**: Every 30 minutes  
+**Feature Flag**: `BVB_INTRADAY_SYNC_ENABLED` (default: false)  
+**Scope**: BET index companies only (20 companies)
+
+**Process:**
+1. Fetch BET index symbols only
+2. For each symbol:
+   - Fetch real-time stock price
+   - Update `Company.marketCap` and `Company.stockPrice`
+   - Create `CompanyMarketCapHistory` snapshot with source="realtime"
+
+## Market Cap History
+
+Market cap changes are tracked in the `CompanyMarketCapHistory` table:
+- **Purpose**: Enable 24h percentage changes and 7d trends
+- **Frequency**: Daily snapshots + intraday snapshots for BET companies
+- **Fields**: `stockPrice`, `marketCap`, `volume`, `changePercent`, `currency`, `source`
+- **Indexes**: `[recordedAt]`, `[companyId, recordedAt]` for fast queries
+
+### Process (Daily Sync)
 
 1. Fetch all symbols from `BVB_SYMBOL_TO_CUI`
 2. For each symbol:
    - Check if company exists in database
    - Fetch name from ANAF if needed
    - Fetch price from Yahoo Finance
+   - Update `Company.marketCap` and `Company.stockPrice`
+   - Create `CompanyMarketCapHistory` snapshot
    - Update company record with:
      - `isListed: true`
      - `stockSymbol`

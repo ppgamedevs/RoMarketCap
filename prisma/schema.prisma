@@ -400,6 +400,7 @@ model Company {
   stockSymbol   String?   @map("stock_symbol") // BVB stock symbol (e.g., "TLV", "SNP", "H2O")
   stockExchange String?   @map("stock_exchange") // "BVB", "AeRO", etc.
   marketCap     Decimal?  @map("market_cap") @db.Decimal(18, 2) // Real market cap from stock price
+  stockPrice    Decimal?  @map("stock_price") @db.Decimal(10, 4) // Price per share
   lastPriceAt   DateTime? @map("last_price_at") // Last time stock price was updated
 
   // PROMPT 58: ANAF Financial Sync
@@ -423,6 +424,7 @@ model Company {
   claims             CompanyClaim[]
   submissions        CompanySubmission[]
   scoreHistoryV1     CompanyScoreHistory[]
+  marketCapHistory   CompanyMarketCapHistory[]
   forecasts          CompanyForecast[]
   watchlistItems     WatchlistItem[]
   changeLogs         CompanyChangeLog[]
@@ -497,6 +499,26 @@ model CompanyScoreHistory {
   @@index([recordedAt])
   @@index([companyId, recordedAt])
   @@map("company_score_history")
+}
+
+model CompanyMarketCapHistory {
+  id         String   @id @default(cuid()) @map("id")
+  companyId  String   @map("company_id") @db.Uuid
+  recordedAt DateTime @map("recorded_at")
+
+  stockPrice     Decimal @map("stock_price") @db.Decimal(10, 4)
+  marketCap      Decimal @map("market_cap") @db.Decimal(18, 2)
+  volume         BigInt? @map("volume")
+  changePercent  Float?  @map("change_percent")
+  currency       String  @default("RON") @map("currency")
+
+  source String @default("bvb_sync") @map("source") // "bvb_sync" | "realtime"
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([recordedAt])
+  @@index([companyId, recordedAt])
+  @@map("company_market_cap_history")
 }
 
 model CompanyForecast {

@@ -93,14 +93,23 @@ The orchestrator (`/api/cron/orchestrate`) runs jobs in this order:
 
 ## BVB Sync
 
-In addition to the orchestrator, there's a separate daily BVB sync:
+In addition to the orchestrator, there are separate BVB sync jobs:
 
 **BVB Sync** (daily at 18:00 Bucharest time)
 - Syncs BVB (Bucharest Stock Exchange) listed companies
 - Fetches real-time stock prices from Yahoo Finance API
-- Updates market cap for all 55 BVB listed companies
+- Updates market cap and stock price for all 55 BVB listed companies
+- Creates market cap history snapshots
 - Runs if `BVB_PRICE_FETCH_ENABLED` flag is enabled (default: true)
 - Schedule: `0 16 * * *` (18:00 EET = 16:00 UTC)
+
+**BVB Intraday Sync** (every 30 minutes during trading hours)
+- Syncs BET index companies only (20 main listed companies)
+- Fetches real-time stock prices during market hours
+- Creates market cap history snapshots for real-time tracking
+- Runs if `BVB_INTRADAY_SYNC_ENABLED` flag is enabled (default: false)
+- Schedule: `*/30 7-15 * * 1-5` (every 30 minutes, 07:00-16:00 UTC, weekdays only)
+- Trading hours: 09:00-18:00 EET (07:00-16:00 UTC)
 
 ## Manual Execution
 

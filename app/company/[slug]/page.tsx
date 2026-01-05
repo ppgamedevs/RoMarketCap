@@ -688,6 +688,56 @@ export default async function CompanyPage({ params }: PageProps) {
               }))}
             />
 
+            {/* Stock Information for Listed Companies */}
+            {company.isListed && company.stockPrice && (
+              <div className="rounded-xl border bg-card p-6 text-card-foreground">
+                <h2 className="text-sm font-medium">
+                  {lang === "ro" ? "Acțiuni" : "Stock Information"}
+                </h2>
+                <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {lang === "ro" ? "Preț per acțiune" : "Price per share"}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold">
+                      {company.stockPrice ? formatCurrencyUtil(Number(company.stockPrice), { 
+                        currency: "RON", 
+                        locale: lang,
+                        compact: false,
+                        maximumFractionDigits: 4 
+                      }) : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {lang === "ro" ? "Market Cap" : "Market Cap"}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold">
+                      {company.marketCap ? formatCurrencyUtil(Number(company.marketCap), { 
+                        currency: "RON", 
+                        locale: lang,
+                        compact: true 
+                      }) : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {lang === "ro" ? "Simbol" : "Symbol"}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold">
+                      {company.stockSymbol || "—"}
+                    </p>
+                  </div>
+                </div>
+                {company.lastPriceAt && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {lang === "ro" ? "Ultima actualizare:" : "Last updated:"}{" "}
+                    {company.lastPriceAt.toLocaleString(lang === "ro" ? "ro-RO" : "en-GB")}
+                  </p>
+                )}
+              </div>
+            )}
+
             <details className="rounded-xl border bg-card p-6 text-card-foreground">
               <summary className="cursor-pointer text-sm font-medium">{t(lang, "how_romc_works")}</summary>
               <p className="mt-3 text-sm text-muted-foreground leading-6">{t(lang, "how_romc_body")}</p>

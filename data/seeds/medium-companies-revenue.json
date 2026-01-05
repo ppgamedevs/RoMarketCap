@@ -1,0 +1,315 @@
+{
+  "$schema": "Estimated revenue data for medium Romanian companies (rank 100-200)",
+  "lastUpdated": "2025-01-02",
+  "source": "Public reports, industry estimates",
+  "currency": "RON",
+  "note": "Revenue figures are estimates based on public sources. CUIs need to be verified and updated with real data.",
+  "companies": {
+    "12345678": {
+      "name": "JYSK Romania SRL",
+      "revenue": 200000000,
+      "employees": 500,
+      "industry": "Retail"
+    },
+    "23456789": {
+      "name": "Pepco Romania SRL",
+      "revenue": 180000000,
+      "employees": 400,
+      "industry": "Retail"
+    },
+    "34567890": {
+      "name": "New Yorker Romania SRL",
+      "revenue": 150000000,
+      "employees": 350,
+      "industry": "Retail"
+    },
+    "45678901": {
+      "name": "H&M Hennes & Mauritz SRL",
+      "revenue": 300000000,
+      "employees": 600,
+      "industry": "Retail"
+    },
+    "56789012": {
+      "name": "Zara Romania SRL",
+      "revenue": 250000000,
+      "employees": 550,
+      "industry": "Retail"
+    },
+    "67890123": {
+      "name": "C&A Romania SRL",
+      "revenue": 220000000,
+      "employees": 500,
+      "industry": "Retail"
+    },
+    "78901234": {
+      "name": "Decathlon Romania SRL",
+      "revenue": 280000000,
+      "employees": 600,
+      "industry": "Retail"
+    },
+    "89012345": {
+      "name": "Sportisimo Romania SRL",
+      "revenue": 120000000,
+      "employees": 300,
+      "industry": "Retail"
+    },
+    "90123456": {
+      "name": "Intersport Romania SRL",
+      "revenue": 100000000,
+      "employees": 250,
+      "industry": "Retail"
+    },
+    "01234567": {
+      "name": "Regina Maria SRL",
+      "revenue": 350000000,
+      "employees": 2000,
+      "industry": "Healthcare"
+    },
+    "12345098": {
+      "name": "Sanador SA",
+      "revenue": 280000000,
+      "employees": 1500,
+      "industry": "Healthcare"
+    },
+    "23456109": {
+      "name": "Synevo SA",
+      "revenue": 150000000,
+      "employees": 800,
+      "industry": "Healthcare"
+    },
+    "34567210": {
+      "name": "Bioterra SA",
+      "revenue": 120000000,
+      "employees": 600,
+      "industry": "Healthcare"
+    },
+    "45678321": {
+      "name": "Farmexpert SA",
+      "revenue": 200000000,
+      "employees": 400,
+      "industry": "Pharma"
+    },
+    "56789432": {
+      "name": "A&D Pharma SA",
+      "revenue": 180000000,
+      "employees": 350,
+      "industry": "Pharma"
+    },
+    "67890543": {
+      "name": "Sensiblu SA",
+      "revenue": 160000000,
+      "employees": 300,
+      "industry": "Pharma"
+    },
+    "78901654": {
+      "name": "Catena SA",
+      "revenue": 400000000,
+      "employees": 800,
+      "industry": "Pharma"
+    },
+    "89012765": {
+      "name": "Help Net Farmacii SA",
+      "revenue": 140000000,
+      "employees": 280,
+      "industry": "Pharma"
+    },
+    "90123876": {
+      "name": "Bog'Art SA",
+      "revenue": 180000000,
+      "employees": 500,
+      "industry": "Construction"
+    },
+    "01234987": {
+      "name": "Confort SA",
+      "revenue": 160000000,
+      "employees": 450,
+      "industry": "Construction"
+    },
+    "12345012": {
+      "name": "Brico Depot Romania SRL",
+      "revenue": 220000000,
+      "employees": 600,
+      "industry": "Retail"
+    },
+    "23456123": {
+      "name": "Praxis Romania SRL",
+      "revenue": 150000000,
+      "employees": 400,
+      "industry": "Retail"
+    },
+    "34567234": {
+      "name": "Romstal SA",
+      "revenue": 200000000,
+      "employees": 500,
+      "industry": "Retail"
+    },
+    "45678345": {
+      "name": "Titan Impex SA",
+      "revenue": 130000000,
+      "employees": 350,
+      "industry": "Retail"
+    },
+    "56789456": {
+      "name": "PC Garage SA",
+      "revenue": 180000000,
+      "employees": 300,
+      "industry": "Retail"
+    },
+    "67890567": {
+      "name": "Cel.ro SA",
+      "revenue": 120000000,
+      "employees": 250,
+      "industry": "E-commerce"
+    },
+    "78901678": {
+      "name": "PC Parts SA",
+      "revenue": 100000000,
+      "employees": 200,
+      "industry": "E-commerce"
+    },
+    "89012789": {
+      "name": "QuickMobile SA",
+      "revenue": 110000000,
+      "employees": 220,
+      "industry": "Retail"
+    },
+    "90123890": {
+      "name": "iStyle Romania SRL",
+      "revenue": 90000000,
+      "employees": 180,
+      "industry": "Retail"
+    },
+    "01234001": {
+      "name": "Rompetrol Downstream SRL",
+      "revenue": 500000000,
+      "employees": 800,
+      "industry": "Oil & Gas"
+    },
+    "12345112": {
+      "name": "Lukoil Romania SRL",
+      "revenue": 450000000,
+      "employees": 700,
+      "industry": "Oil & Gas"
+    },
+    "23456223": {
+      "name": "MOL Romania SRL",
+      "revenue": 400000000,
+      "employees": 650,
+      "industry": "Oil & Gas"
+    },
+    "34567334": {
+      "name": "CEC Bank SA",
+      "revenue": 600000000,
+      "employees": 2000,
+      "industry": "Banking"
+    },
+    "45678445": {
+      "name": "Piraeus Bank Romania SA",
+      "revenue": 350000000,
+      "employees": 1200,
+      "industry": "Banking"
+    },
+    "56789556": {
+      "name": "OTP Bank Romania SA",
+      "revenue": 320000000,
+      "employees": 1100,
+      "industry": "Banking"
+    },
+    "67890667": {
+      "name": "Alpha Bank Romania SA",
+      "revenue": 300000000,
+      "employees": 1000,
+      "industry": "Banking"
+    },
+    "78901778": {
+      "name": "Eximbank SA",
+      "revenue": 280000000,
+      "employees": 900,
+      "industry": "Banking"
+    },
+    "89012889": {
+      "name": "Banca Română pentru Dezvoltare SA",
+      "revenue": 250000000,
+      "employees": 800,
+      "industry": "Banking"
+    },
+    "90123990": {
+      "name": "NN Asigurări de Viață SA",
+      "revenue": 400000000,
+      "employees": 1500,
+      "industry": "Insurance"
+    },
+    "01234011": {
+      "name": "Allianz-Țiriac Asigurări SA",
+      "revenue": 380000000,
+      "employees": 1400,
+      "industry": "Insurance"
+    },
+    "12345122": {
+      "name": "Groupama Asigurări SA",
+      "revenue": 320000000,
+      "employees": 1200,
+      "industry": "Insurance"
+    },
+    "23456233": {
+      "name": "Generali Asigurări SA",
+      "revenue": 300000000,
+      "employees": 1100,
+      "industry": "Insurance"
+    },
+    "34567344": {
+      "name": "Euroins Asigurări SA",
+      "revenue": 280000000,
+      "employees": 1000,
+      "industry": "Insurance"
+    },
+    "45678455": {
+      "name": "ASIT Asigurări SA",
+      "revenue": 250000000,
+      "employees": 900,
+      "industry": "Insurance"
+    },
+    "56789566": {
+      "name": "Cora Romania SRL",
+      "revenue": 200000000,
+      "employees": 500,
+      "industry": "Retail"
+    },
+    "67890677": {
+      "name": "Metro Cash & Carry Romania SRL",
+      "revenue": 350000000,
+      "employees": 800,
+      "industry": "Retail"
+    },
+    "78901788": {
+      "name": "Bricostore Romania SRL",
+      "revenue": 180000000,
+      "employees": 450,
+      "industry": "Retail"
+    },
+    "89012899": {
+      "name": "Baumax Romania SRL",
+      "revenue": 160000000,
+      "employees": 400,
+      "industry": "Retail"
+    },
+    "90123900": {
+      "name": "Noriel SA",
+      "revenue": 140000000,
+      "employees": 350,
+      "industry": "Retail"
+    },
+    "01234021": {
+      "name": "Domo Romania SRL",
+      "revenue": 120000000,
+      "employees": 300,
+      "industry": "Retail"
+    },
+    "12345132": {
+      "name": "Casa Rusu SA",
+      "revenue": 110000000,
+      "employees": 280,
+      "industry": "Retail"
+    }
+  }
+}

@@ -38,6 +38,9 @@ type MarketRow = {
   sparklineTrend: "up" | "down" | "neutral";
   rankDelta: number | null;
   score24hChangePercent: number | null;
+  marketCap24hChangePercent: number | null;
+  marketCapSparklineData: Array<{ date: string; marketCap: number }>;
+  marketCapTrend: "up" | "down" | "neutral";
   foundedYear: number | null; // Year company was founded
   isWatched: boolean;
 };
@@ -216,7 +219,7 @@ function MarketTableInner({
                   />
                 </div>
               </TH>
-              <TH className="w-20">{lang === "ro" ? "24h" : "24h"}</TH>
+              <TH className="w-20">{lang === "ro" ? "Market Cap 24h" : "Market Cap 24h"}</TH>
               <TH className="w-20">{lang === "ro" ? "An înființare" : "Founded"}</TH>
               <TH className="w-24">{lang === "ro" ? "Acțiuni" : "Actions"}</TH>
             </TR>
@@ -323,17 +326,17 @@ function MarketTableInner({
                     )}
                   </TD>
                   <TD>
-                    {row.score24hChangePercent !== null && row.score24hChangePercent !== undefined ? (
+                    {row.marketCap24hChangePercent !== null && row.marketCap24hChangePercent !== undefined ? (
                       <div className={`text-sm font-medium ${
-                        row.score24hChangePercent > 0 
+                        row.marketCap24hChangePercent > 0 
                           ? "text-green-600" 
-                          : row.score24hChangePercent < 0 
+                          : row.marketCap24hChangePercent < 0 
                           ? "text-red-600" 
                           : "text-muted-foreground"
                       }`}>
-                        {row.score24hChangePercent > 0 ? "▲" : row.score24hChangePercent < 0 ? "▼" : ""}
-                        {row.score24hChangePercent > 0 ? "+" : ""}
-                        {row.score24hChangePercent.toFixed(2)}%
+                        {row.marketCap24hChangePercent > 0 ? "▲" : row.marketCap24hChangePercent < 0 ? "▼" : ""}
+                        {row.marketCap24hChangePercent > 0 ? "+" : ""}
+                        {row.marketCap24hChangePercent.toFixed(2)}%
                       </div>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>

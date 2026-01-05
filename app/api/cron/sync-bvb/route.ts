@@ -109,14 +109,10 @@ export async function POST(req: Request) {
           }
 
           // Fetch real-time stock price and market cap
-          let marketCapData: { marketCap: Prisma.Decimal; lastPriceAt: Date } | undefined;
+          let stockPrice: Awaited<ReturnType<typeof fetchBVBStockPrice>> = null;
           try {
-            const stockPrice = await fetchBVBStockPrice(symbol);
+            stockPrice = await fetchBVBStockPrice(symbol);
             if (stockPrice && stockPrice.marketCap) {
-              marketCapData = {
-                marketCap: new Prisma.Decimal(stockPrice.marketCap),
-                lastPriceAt: stockPrice.lastUpdated,
-              };
               results.marketCapUpdated++;
               console.log(`[sync-bvb] Fetched market cap for ${symbol}: ${stockPrice.marketCap} ${stockPrice.currency}`);
             }
@@ -136,14 +132,26 @@ export async function POST(req: Request) {
                 officialName,
                 anafVerifiedAt: new Date(),
               } : {}),
-              ...(marketCapData ? {
-                marketCap: marketCapData.marketCap,
-                lastPriceAt: marketCapData.lastPriceAt,
+              ...(stockPrice ? {
+                marketCap: new Prisma.Decimal(stockPrice.marketCap),
+                stockPrice: new Prisma.Decimal(stockPrice.price),
+                lastPriceAt: stockPrice.lastUpdated,
               } : {}),
               dataConfidence: Math.max(existing.isListed ? 80 : 70, 70), // Boost confidence for listed companies
               lastSeenAtFromSources: new Date(),
             },
           });
+
+          // Create market cap history snapshot
+          if (stockPrice) {
+            try {
+              const { createMarketCapSnapshot } = await import("@/src/lib/snapshots/createMarketCapSnapshot");
+              await createMarketCapSnapshot(existing.id, stockPrice, "bvb_sync");
+            } catch (err) {
+              console.warn(`[sync-bvb] Failed to create market cap snapshot for ${symbol}:`, err);
+              // Don't fail the sync if snapshot creation fails
+            }
+          }
 
           results.updated++;
           
@@ -168,16 +176,12 @@ export async function POST(req: Request) {
           }
 
           // Fetch real-time stock price and market cap for new company
-          let marketCapData: { marketCap: Prisma.Decimal; lastPriceAt: Date } | undefined;
+          let newStockPrice: Awaited<ReturnType<typeof fetchBVBStockPrice>> = null;
           try {
-            const stockPrice = await fetchBVBStockPrice(symbol);
-            if (stockPrice && stockPrice.marketCap) {
-              marketCapData = {
-                marketCap: new Prisma.Decimal(stockPrice.marketCap),
-                lastPriceAt: stockPrice.lastUpdated,
-              };
+            newStockPrice = await fetchBVBStockPrice(symbol);
+            if (newStockPrice && newStockPrice.marketCap) {
               results.marketCapUpdated++;
-              console.log(`[sync-bvb] Fetched market cap for new ${symbol}: ${stockPrice.marketCap} ${stockPrice.currency}`);
+              console.log(`[sync-bvb] Fetched market cap for new ${symbol}: ${newStockPrice.marketCap} ${newStockPrice.currency}`);
             }
           } catch (err) {
             console.warn(`[sync-bvb] Failed to fetch price for new ${symbol}:`, err);
@@ -207,15 +211,27 @@ export async function POST(req: Request) {
               universeSource: "BVB",
               universeVerified: true,
               lastSeenAtFromSources: new Date(),
-              ...(marketCapData ? {
-                marketCap: marketCapData.marketCap,
-                lastPriceAt: marketCapData.lastPriceAt,
+              ...(newStockPrice ? {
+                marketCap: new Prisma.Decimal(newStockPrice.marketCap),
+                stockPrice: new Prisma.Decimal(newStockPrice.price),
+                lastPriceAt: newStockPrice.lastUpdated,
               } : {}),
             },
           });
 
           results.created++;
           
+          // Create market cap history snapshot for new company
+          if (newStockPrice) {
+            try {
+              const { createMarketCapSnapshot } = await import("@/src/lib/snapshots/createMarketCapSnapshot");
+              await createMarketCapSnapshot(newCompany.id, newStockPrice, "bvb_sync");
+            } catch (err) {
+              console.warn(`[sync-bvb] Failed to create market cap snapshot for new ${symbol}:`, err);
+              // Don't fail the sync if snapshot creation fails
+            }
+          }
+
           // Apply post-ingestion hooks
           await applyPostIngestionHooks(newCompany.id).catch((err) => {
             console.error(`[sync-bvb] Post-hooks failed for new ${symbol}:`, err);
