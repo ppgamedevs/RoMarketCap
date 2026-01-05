@@ -6,6 +6,9 @@
  */
 
 import { kv } from "@vercel/kv";
+import { verifyCompanyANAF } from "@/src/lib/verification/anaf";
+import { fetchCompanyDataFromMFinante } from "@/src/lib/connectors/mfinante/fetchCompanyData";
+import { isFlagEnabled } from "@/src/lib/flags/flags";
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 365; // Cache for 1 year (founding dates don't change)
 const NULL_CACHE_TTL_SECONDS = 60 * 60 * 24 * 30; // Cache null results for 30 days
@@ -288,4 +291,134 @@ export async function fetchFoundingDate(
   }
   
   return foundedAt;
+}
+
+/**
+ * Fetch founding date from official sources (ANAF API and MFinante.gov.ro)
+ * 
+ * Priority:
+ * 1. ANAF API (if returns foundingDate)
+ * 2. MFinante.gov.ro (if ANAF doesn't have it and feature flag is enabled)
+ * 
+ * @param cui - Company CUI (with or without RO prefix)
+ * @param options - Options including skipCache
+ * @returns Founding date or null if not found
+ */
+export async function fetchFoundingDateFromOfficialSources(
+  cui: string,
+  options: { skipCache?: boolean } = {}
+): Promise<Date | null> {
+  const normalizedCui = cui.replace(/^RO/i, "").trim();
+  const cacheKey = `founding-date-official:${normalizedCui}`;
+
+  // Check cache first
+  if (!options.skipCache) {
+    try {
+      const cached = await kv.get<string>(cacheKey);
+      if (cached) {
+        if (cached === "null") {
+          return null; // Cached null result
+        }
+        const date = new Date(cached);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+    } catch {
+      // If cache fails, continue
+    }
+  }
+
+  console.log(`[founding-date-official] Starting search for CUI ${normalizedCui}`);
+
+  // Priority 1: Try ANAF API
+  try {
+    const anafResult = await verifyCompanyANAF(normalizedCui, { force: options.skipCache });
+    
+    if (anafResult.foundingDate) {
+      console.log(`[founding-date-official] ✅ Found in ANAF for CUI ${normalizedCui}: ${anafResult.foundingDate.toISOString()}`);
+      
+      // Cache result
+      try {
+        await kv.set(cacheKey, anafResult.foundingDate.toISOString(), { ex: CACHE_TTL_SECONDS });
+      } catch {
+        // Ignore cache errors
+      }
+      
+      return anafResult.foundingDate;
+    }
+
+    // Also check registrationDate as fallback (if foundingDate not available)
+    if (anafResult.registrationDate) {
+      console.log(`[founding-date-official] ⚠️ Using registrationDate from ANAF for CUI ${normalizedCui}: ${anafResult.registrationDate.toISOString()}`);
+      
+      // Cache result
+      try {
+        await kv.set(cacheKey, anafResult.registrationDate.toISOString(), { ex: CACHE_TTL_SECONDS });
+      } catch {
+        // Ignore cache errors
+      }
+      
+      return anafResult.registrationDate;
+    }
+
+    console.log(`[founding-date-official] ANAF did not return founding date for CUI ${normalizedCui}`);
+  } catch (error) {
+    console.log(`[founding-date-official] ANAF error for CUI ${normalizedCui}:`, error instanceof Error ? error.message : "Unknown error");
+    // Continue to MFinante fallback
+  }
+
+  // Priority 2: Try MFinante.gov.ro (if feature flag is enabled)
+  try {
+    const mfinanteEnabled = await isFlagEnabled("MFINANTE_FOUNDING_DATE_ENABLED", true);
+    
+    if (!mfinanteEnabled) {
+      console.log(`[founding-date-official] MFinante scraping is disabled via feature flag for CUI ${normalizedCui}`);
+      return null;
+    }
+
+    const mfinanteData = await fetchCompanyDataFromMFinante(normalizedCui, { skipCache: options.skipCache });
+    
+    if (mfinanteData?.foundingDate) {
+      console.log(`[founding-date-official] ✅ Found in MFinante for CUI ${normalizedCui}: ${mfinanteData.foundingDate.toISOString()}`);
+      
+      // Cache result
+      try {
+        await kv.set(cacheKey, mfinanteData.foundingDate.toISOString(), { ex: CACHE_TTL_SECONDS });
+      } catch {
+        // Ignore cache errors
+      }
+      
+      return mfinanteData.foundingDate;
+    }
+
+    // Also check registrationDate as fallback
+    if (mfinanteData?.registrationDate) {
+      console.log(`[founding-date-official] ⚠️ Using registrationDate from MFinante for CUI ${normalizedCui}: ${mfinanteData.registrationDate.toISOString()}`);
+      
+      // Cache result
+      try {
+        await kv.set(cacheKey, mfinanteData.registrationDate.toISOString(), { ex: CACHE_TTL_SECONDS });
+      } catch {
+        // Ignore cache errors
+      }
+      
+      return mfinanteData.registrationDate;
+    }
+
+    console.log(`[founding-date-official] MFinante did not return founding date for CUI ${normalizedCui}`);
+  } catch (error) {
+    console.log(`[founding-date-official] MFinante error for CUI ${normalizedCui}:`, error instanceof Error ? error.message : "Unknown error");
+    // Return null if both sources fail
+  }
+
+  // Cache null result
+  try {
+    await kv.set(cacheKey, "null", { ex: NULL_CACHE_TTL_SECONDS });
+  } catch {
+    // Ignore cache errors
+  }
+
+  console.log(`[founding-date-official] ❌ No founding date found in official sources for CUI ${normalizedCui}`);
+  return null;
 }

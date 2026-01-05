@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/db";
 import { requireAdminSession } from "@/src/lib/auth/requireAdmin";
-import { fetchFoundingDate } from "@/src/lib/connectors/foundingDate/fetchFoundingDate";
+import { fetchFoundingDate, fetchFoundingDateFromOfficialSources } from "@/src/lib/connectors/foundingDate/fetchFoundingDate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,8 +104,32 @@ export async function POST(req: NextRequest) {
         source = "foundedYear";
         console.log(`[update-ages] ✅ Using foundedYear for "${company.name}": ${company.foundedYear}`);
       }
-      // Strategy 2: Fetch from web (Wikipedia + company website)
-      else if (useWebSearch) {
+      // Strategy 2: Fetch from official sources (ANAF > MFinante) - NOU
+      else if (company.cui) {
+        try {
+          console.log(`[update-ages] Fetching from official sources for "${company.name}" (CUI: ${company.cui})`);
+          
+          // Rate limit: 1 second between requests (ANAF rate limit)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          
+          foundedAt = await fetchFoundingDateFromOfficialSources(company.cui);
+          if (foundedAt) {
+            source = "official"; // ANAF or mfinante
+            console.log(`[update-ages] ✅ Found founding date from official sources for "${company.name}": ${foundedAt.toISOString()}`);
+          } else {
+            console.log(`[update-ages] ❌ No founding date found in official sources for "${company.name}"`);
+          }
+        } catch (error) {
+          console.error(`[update-ages] Error fetching from official sources for "${company.name}":`, error);
+          errors.push({
+            id: company.id,
+            name: company.name,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      }
+      // Strategy 3: Fetch from web (Wikipedia + company website)
+      if (!foundedAt && useWebSearch) {
         try {
           console.log(`[update-ages] Searching web for "${company.name}" (website: ${company.website || "none"})`);
           
@@ -129,7 +153,7 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Strategy 3: Don't set foundedAt if we don't have real data
+      // Strategy 4: Don't set foundedAt if we don't have real data
       // createdAt_estimated is unreliable - better to leave it null than show wrong data
       // We'll only set it if we have at least foundedYear or web search result
       if (!foundedAt) {

@@ -183,6 +183,11 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, { label: string; description: strin
     description: "Enable/disable daily market cap snapshot for historical tracking",
     risky: false,
   },
+  MFINANTE_FOUNDING_DATE_ENABLED: {
+    label: "MFinante: Founding Date",
+    description: "Enable/disable scraping from mfinante.gov.ro for company founding dates (used as fallback if ANAF doesn't provide this data)",
+    risky: false,
+  },
   READ_ONLY_MODE: {
     label: "Read-Only Mode",
     description: "Enable read-only mode (blocks all mutations)",

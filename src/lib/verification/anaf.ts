@@ -28,6 +28,9 @@ export type ANAFVerificationResult = {
   registrationStatus?: string;
   fiscalAuthority?: string;
   endpointUsed?: string; // Which endpoint succeeded
+  // Founding date integration: Data de înființare (dacă disponibilă în ANAF)
+  foundingDate?: Date;
+  registrationDate?: Date;
 };
 
 // PROMPT 62: Rate limiting: 1 request per second
@@ -86,6 +89,8 @@ export async function getCachedVerification(cui: string): Promise<ANAFVerificati
     return {
       ...parsed,
       verifiedAt: new Date(parsed.verifiedAt),
+      foundingDate: parsed.foundingDate ? new Date(parsed.foundingDate) : undefined,
+      registrationDate: parsed.registrationDate ? new Date(parsed.registrationDate) : undefined,
     };
   } catch {
     return null;
@@ -100,6 +105,8 @@ async function cacheVerification(cui: string, result: ANAFVerificationResult): P
   const serialized = JSON.stringify({
     ...result,
     verifiedAt: result.verifiedAt.toISOString(),
+    foundingDate: result.foundingDate?.toISOString(),
+    registrationDate: result.registrationDate?.toISOString(),
   });
   
   await kv.set(cacheKey, serialized, { ex: CACHE_TTL_SECONDS }).catch(() => null);
@@ -248,6 +255,58 @@ async function tryAnafEndpoint(
 /**
  * PROMPT 62: Parse ANAF response to extract company info
  */
+/**
+ * Parse a date string from ANAF response
+ * Supports multiple formats: DD.MM.YYYY, YYYY-MM-DD, DD/MM/YYYY
+ */
+function parseAnafDate(dateStr: unknown): Date | null {
+  if (!dateStr || typeof dateStr !== "string") {
+    return null;
+  }
+
+  try {
+    // Try DD.MM.YYYY format
+    let match = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+
+    // Try YYYY-MM-DD format
+    match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, year, month, day] = match;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+
+    // Try DD/MM/YYYY format
+    match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+
+    // Try ISO format or Date.parse as fallback
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function parseAnafResponse(result: unknown): {
   isActive: boolean;
   isVatRegistered: boolean;
@@ -260,6 +319,8 @@ function parseAnafResponse(result: unknown): {
   iban?: string;
   registrationStatus?: string;
   fiscalAuthority?: string;
+  foundingDate?: Date;
+  registrationDate?: Date;
 } {
   if (!result || typeof result !== "object") {
     return {
@@ -285,6 +346,48 @@ function parseAnafResponse(result: unknown): {
   const iban = dateGenerale?.iban as string | undefined;
   const registrationStatus = dateGenerale?.stare_inregistrare as string | undefined;
   const fiscalAuthority = dateGenerale?.organFiscalCompetent as string | undefined;
+
+  // Extract founding date (data înființării) - check multiple possible field names
+  let foundingDate: Date | undefined;
+  const foundingDateFields = [
+    dateGenerale?.data_infiintare,
+    dateGenerale?.dataInfiintare,
+    dateGenerale?.data_infiintarii,
+    dateGenerale?.dataInfiintarii,
+    dateGenerale?.data_constituire,
+    dateGenerale?.dataConstituire,
+    raw.data_infiintare,
+    raw.dataInfiintare,
+    raw.data_constituire,
+    raw.dataConstituire,
+  ];
+
+  for (const field of foundingDateFields) {
+    const parsed = parseAnafDate(field);
+    if (parsed) {
+      foundingDate = parsed;
+      break;
+    }
+  }
+
+  // Extract registration date (data înregistrării)
+  let registrationDate: Date | undefined;
+  const registrationDateFields = [
+    dateGenerale?.data_inregistrare,
+    dateGenerale?.dataInregistrare,
+    dateGenerale?.data_inregistrarii,
+    dateGenerale?.dataInregistrarii,
+    raw.data_inregistrare,
+    raw.dataInregistrare,
+  ];
+
+  for (const field of registrationDateFields) {
+    const parsed = parseAnafDate(field);
+    if (parsed) {
+      registrationDate = parsed;
+      break;
+    }
+  }
 
   // Fallback: try root level fields if date_generale not present
   const isActive = 
@@ -315,6 +418,8 @@ function parseAnafResponse(result: unknown): {
     iban,
     registrationStatus,
     fiscalAuthority,
+    foundingDate,
+    registrationDate,
   };
 }
 
