@@ -302,7 +302,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch 24h ago market cap for all companies
-    const nowFor24h = new Date();
     const twentyFourHoursAgo = new Date(nowFor24h.getTime() - 24 * 60 * 60 * 1000);
     const twoHoursBefore = new Date(twentyFourHoursAgo.getTime() - 2 * 60 * 60 * 1000);
     const twoHoursAfter = new Date(twentyFourHoursAgo.getTime() + 2 * 60 * 60 * 1000);
