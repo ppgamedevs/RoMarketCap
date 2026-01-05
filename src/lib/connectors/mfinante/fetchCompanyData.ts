@@ -349,6 +349,13 @@ export async function fetchCompanyDataFromMFinante(
     // Parse HTML to extract company data
     const data = parseMFinanteHTML(html, normalizedCui);
 
+    // Debug: Log if no data found
+    if (!data || (!data.foundingDate && !data.registrationDate && !data.name)) {
+      console.log(`[mfinante] Warning: No data extracted from HTML for CUI ${normalizedCui}. HTML length: ${html.length}`);
+      // Log a sample of the HTML for debugging (first 500 chars)
+      console.log(`[mfinante] HTML sample (first 500 chars): ${html.substring(0, 500)}`);
+    }
+
     // Update rate limit
     await updateRateLimit();
 

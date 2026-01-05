@@ -347,7 +347,29 @@ function parseAnafResponse(result: unknown): {
   const registrationStatus = dateGenerale?.stare_inregistrare as string | undefined;
   const fiscalAuthority = dateGenerale?.organFiscalCompetent as string | undefined;
 
+  // Extract registration date (data înregistrării) - ANAF returnează acest câmp!
+  // Format: "1993-12-24" (YYYY-MM-DD)
+  let registrationDate: Date | undefined;
+  const registrationDateFields = [
+    dateGenerale?.data_inregistrare, // ANAF returnează acest câmp în date_generale
+    dateGenerale?.dataInregistrare,
+    dateGenerale?.data_inregistrarii,
+    dateGenerale?.dataInregistrarii,
+    raw.data_inregistrare,
+    raw.dataInregistrare,
+  ];
+
+  for (const field of registrationDateFields) {
+    const parsed = parseAnafDate(field);
+    if (parsed) {
+      registrationDate = parsed;
+      break;
+    }
+  }
+
   // Extract founding date (data înființării) - check multiple possible field names
+  // Note: ANAF returnează de obicei data_inregistrare, nu data_infiintare
+  // Dacă nu există data_infiintare, folosim data_inregistrare ca fallback
   let foundingDate: Date | undefined;
   const foundingDateFields = [
     dateGenerale?.data_infiintare,
@@ -370,23 +392,10 @@ function parseAnafResponse(result: unknown): {
     }
   }
 
-  // Extract registration date (data înregistrării)
-  let registrationDate: Date | undefined;
-  const registrationDateFields = [
-    dateGenerale?.data_inregistrare,
-    dateGenerale?.dataInregistrare,
-    dateGenerale?.data_inregistrarii,
-    dateGenerale?.dataInregistrarii,
-    raw.data_inregistrare,
-    raw.dataInregistrare,
-  ];
-
-  for (const field of registrationDateFields) {
-    const parsed = parseAnafDate(field);
-    if (parsed) {
-      registrationDate = parsed;
-      break;
-    }
+  // Fallback: Use registrationDate as foundingDate if foundingDate not found
+  // (data_inregistrare este de obicei foarte aproape de data_infiintare)
+  if (!foundingDate && registrationDate) {
+    foundingDate = registrationDate;
   }
 
   // Fallback: try root level fields if date_generale not present
